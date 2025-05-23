@@ -1,0 +1,43 @@
+﻿
+@{
+    Layout = null;
+}
+<style>
+    body {
+        background-color: #45E2F8;
+    }
+    main{
+        display:flex;
+        justify-content: center;    
+    }
+    form {
+        background-color: white;
+        width: 425px;
+        height: 62px;
+    }
+</style>
+<main>
+    <form>
+        @Html.DevExpress().Label(settings =>
+        {
+                settings.Name = "Label";
+                    settings.Text = "LOGIN";
+        }).GetHtml()
+        <div id="usernameInput">
+            @Html.DevExpress().TextBox(settings =>
+            {
+                    settings.Name = "TextBox1";
+                            settings.Properties.NullText = "Username";
+                }).GetHtml()
+        </div>
+        <div id="passwordInput">
+            @Html.DevExpress().TextBox(settings =>
+            {
+                    settings.Name = "TextBox2";
+                            settings.Properties.NullText = "Password";
+                }).Bind(Model).GetHtml()
+
+        </div>
+
+    </form>
+</main>
