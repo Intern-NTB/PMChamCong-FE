@@ -11,7 +11,7 @@ namespace PMChamcong.Controllers
         // GET: Account
         public ActionResult Login()
         {
-            return View();
+            return View();//Test
         }
     }
 }
