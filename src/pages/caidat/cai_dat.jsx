@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import './cai_dat.css'
 import { DoiTuongUuTienComponent } from "./doi_tuong_uu_tien";
 import { CaLamComponent } from './ca_lam.jsx'
+import { VaiTroComponent } from "./vai_tro.jsx";
 
 export default function CaiDat() {
     // State
@@ -39,7 +40,7 @@ export default function CaiDat() {
         {
             key: '4',
             label: 'Vai trò', // Sửa label trùng lặp
-            children: 'content of Tab pane 4'
+            children: <VaiTroComponent />
         },
     ]
 
