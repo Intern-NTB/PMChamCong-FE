@@ -1,0 +1,10 @@
+@media (max-width: 480px) {
+
+    .ant-tabs-tab {
+        flex: 0 0 auto !important;
+        padding: 8px 12px !important;
+        white-space: nowrap !important;
+        font-size: small;
+    }
+
+}

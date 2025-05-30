@@ -1,0 +1,261 @@
+/* Enhanced Employee Management Styles */
+
+.container-column {
+  background-color: #f5f5f5;
+  min-height: 100vh;
+}
+
+/* Statistics Cards */
+.ant-card .ant-statistic {
+  text-align: center;
+}
+
+.ant-card .ant-statistic-title {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.ant-card .ant-statistic-content {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+/* Search and Filter Section */
+.ant-input-group-wrapper,
+.ant-select {
+  border-radius: 6px;
+}
+
+.ant-input-prefix {
+  color: #1890ff;
+}
+
+.ant-select-selection-placeholder {
+  color: #bfbfbf;
+}
+
+/* Table Enhancements */
+.ant-table-thead > tr > th {
+  text-align: center !important;
+  background-color: var(--color-primary) !important;
+  font-weight: 600;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.ant-table-tbody > tr:hover > td {
+  background-color: #e6f7ff !important;
+}
+
+.ant-table-tbody > tr > td {
+  text-align: center !important;
+}
+
+
+/* Status Tags */
+.ant-tag {
+  border-radius: 16px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  border: none;
+}
+
+/* Action Dropdown */
+.ant-dropdown-menu {
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.ant-dropdown-menu-item {
+  padding: 8px 16px;
+  transition: all 0.3s;
+}
+
+.ant-dropdown-menu-item:hover {
+  background-color: #f5f5f5;
+}
+
+/* Highlighted Search Text */
+.search-highlight {
+  background-color: #fff566;
+  font-weight: bold;
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .container-column {
+    padding: 12px !important;
+  }
+  
+  .ant-card {
+    margin-bottom: 12px;
+  }
+  
+  .ant-space {
+    width: 100%;
+  }
+  
+  .ant-space-item {
+    width: 100%;
+  }
+  
+  .ant-btn {
+    width: 100%;
+    margin-bottom: 8px;
+  }
+  
+  .ant-table-pagination {
+    text-align: center;
+  }
+}
+
+@media (max-width: 576px) {
+  .ant-row {
+    margin: 0 -4px;
+  }
+  
+  .ant-col {
+    padding: 0 4px;
+  }
+  
+  .ant-statistic-content {
+    font-size: 20px !important;
+  }
+}
+
+/* Custom Button Styles */
+.ant-btn-primary {
+  background: linear-gradient(135deg, #1890ff 0%, #40a9ff 100%);
+  border: none;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.3);
+  transition: all 0.3s;
+}
+
+.ant-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.4);
+}
+
+.ant-btn-dangerous {
+  background: linear-gradient(135deg, #ff4d4f 0%, #ff7875 100%);
+  border: none;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(255, 77, 79, 0.3);
+}
+
+.ant-btn-dangerous:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 77, 79, 0.4);
+}
+
+/* Loading Animation */
+.ant-spin-container {
+  transition: opacity 0.3s;
+}
+
+.ant-table-placeholder {
+  padding: 40px;
+  text-align: center;
+  color: #666;
+}
+
+/* Badge for bulk actions */
+.ant-badge {
+  .ant-badge-count {
+    font-size: 10px;
+    height: 16px;
+    line-height: 14px;
+    min-width: 16px;
+    border-radius: 8px;
+  }
+}
+
+/* AutoComplete Dropdown */
+.ant-select-dropdown {
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.ant-select-item {
+  padding: 8px 12px;
+  transition: background-color 0.3s;
+}
+
+.ant-select-item:hover {
+  background-color: #f5f5f5;
+}
+
+/* Card Hover Effects */
+.ant-card {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s;
+}
+
+.ant-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+/* Filter Section Styling */
+.filter-section {
+  background: white;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* Pagination Styling */
+.ant-pagination {
+  text-align: center;
+  margin-top: 24px;
+}
+
+.ant-pagination-item-active {
+  border-color: #1890ff;
+  background-color: #1890ff;
+}
+
+.ant-pagination-item-active a {
+  color: white;
+}
+
+/* Scroll Bar Styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Animation for new features */
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.slide-in-right {
+  animation: slideInRight 0.3s ease-out}

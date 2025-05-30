@@ -1,0 +1,59 @@
+nav {
+    display: flex;
+    flex-direction: column;
+}
+
+.ant-layout-sider {
+    width: 250px !important;
+    height: 100% !important;
+}
+
+/* Hoặc target cụ thể hơn */
+.ant-menu-inline {
+    background: #71A5E0 !important;
+    font-size: 20px !important;
+}
+
+
+/* Style cho các item menu */
+.ant-menu-item {
+    padding: 20px !important;
+    font-size: 20px !important;
+    color: black !important;
+    border: 1px solid rgba(255, 255, 255, 0.4) !important; /* viền trắng mờ */
+    border-radius: 10px !important; /* bo tròn viền */
+    margin-bottom: 12px !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important; /* bóng nhẹ */
+}
+
+.ant-menu-item-selected {
+    background-color: #004080 !important;  /* màu nền bạn muốn */
+    color: white !important;               /* màu chữ khi active */
+    border-color: #002f5f !important;      /* nếu muốn giữ border */
+}
+
+.ant-menu-submenu-title {
+    padding: 20px !important;
+    font-size: 20px !important;
+    color: black !important;
+    border: 1px solid rgba(255, 255, 255, 0.4) !important; /* viền trắng mờ */
+    border-radius: 10px !important; /* bo tròn viền */
+    margin-bottom: 12px !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important; /* bóng nhẹ */
+
+}
+
+.ant-menu-sub .ant-menu-item{
+    border: 0 !important;
+
+}
+
+.ant-menu-item-icon {
+  font-size: 20px !important;
+}
+
+.ant-layout-sider-zero-width-trigger{
+    background-color: #71A5E0 !important;
+}

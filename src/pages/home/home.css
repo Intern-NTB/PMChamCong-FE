@@ -1,0 +1,19 @@
+.container-column {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.row{
+    display: flex;
+    width: 100%;
+}
+
+.row-1{
+    height: 30%;
+}
+
+.row-2{
+    height: 70%;
+    background-color: black;
+}
