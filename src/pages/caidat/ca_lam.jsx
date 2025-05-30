@@ -1,96 +1,40 @@
 import React, { useEffect, useState } from 'react';
-import { 
-  Table, 
-  Button, 
-  Modal, 
-  Form, 
-  Input, 
-  TimePicker, 
-  Space, 
-  Card, 
-  Statistic, 
-  Row, 
-  Col, 
-  Typography, 
-  Tag, 
-  Popconfirm, 
-  message,
-  Divider
-} from 'antd';
-import { 
-  PlusOutlined, 
-  EditOutlined, 
-  DeleteOutlined, 
-  ClockCircleOutlined, 
-  TeamOutlined, 
-  SearchOutlined 
-} from '@ant-design/icons';
+import { Table, Button, Modal, Form, Input, TimePicker, Space, Card, Statistic, Row, Col, Typography, Tag, Popconfirm, message, Divider } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, ClockCircleOutlined, TeamOutlined, SearchOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import { useCaLam } from '../../component/hooks/useCaLam';
 
 const { Title, Text } = Typography;
 const { Search } = Input;
 
 export const CaLamComponent = () => {
-  const [shifts, setShifts] = useState([
-    {
-      id: 1,
-      maCa: 'CA001',
-      tenCa: 'Ca Sáng',
-      thoiGianBatDau: '08:00',
-      thoiGianKetThuc: '17:00',
-      gioNghiTruaBatDau: '12:00',
-      gioNghiTruaKetThuc: '13:00',
-      tongSoGioThucNhan: 8
-    },
-    {
-      id: 2,
-      maCa: 'CA002',
-      tenCa: 'Ca Chiều',
-      thoiGianBatDau: '13:00',
-      thoiGianKetThuc: '22:00',
-      gioNghiTruaBatDau: '17:00',
-      gioNghiTruaKetThuc: '18:00',
-      tongSoGioThucNhan: 8
-    },
-    {
-      id: 3,
-      maCa: 'CA003',
-      tenCa: 'Ca Đêm',
-      thoiGianBatDau: '22:00',
-      thoiGianKetThuc: '06:00',
-      gioNghiTruaBatDau: '02:00',
-      gioNghiTruaKetThuc: '03:00',
-      tongSoGioThucNhan: 7
-    }
-  ]);
-
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [editingShift, setEditingShift] = useState(null);
   const [searchText, setSearchText] = useState('');
-  const [isMobile,setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const [form] = Form.useForm();
+  const [currentRecord, setCurrentRecord] = useState(null);
+  const [previewHours, setPreviewHours] = useState(0);
 
+  const { danhSachCaLam, loadingCaLam, createCaLam, updateCaLam, deleteCaLam, getAllCaLam } = useCaLam();
+
+  // Load data on component mount
   useEffect(() => {
-    const checkScreenSize = () => {
-
-    }
-
-
-  })
+    getAllCaLam();
+  }, []);
 
   // Tính toán tổng số giờ thực nhận
   const calculateWorkingHours = (start, end, breakStart, breakEnd) => {
     const startTime = dayjs(`2000-01-01 ${start}`);
     let endTime = dayjs(`2000-01-01 ${end}`);
-    
+
     // Xử lý ca đêm (qua ngày)
     if (endTime.isBefore(startTime)) {
       endTime = endTime.add(1, 'day');
     }
-    
+
     const breakStartTime = dayjs(`2000-01-01 ${breakStart}`);
     let breakEndTime = dayjs(`2000-01-01 ${breakEnd}`);
-    
+
     // Xử lý giờ nghỉ qua ngày
     if (breakEndTime.isBefore(breakStartTime)) {
       breakEndTime = breakEndTime.add(1, 'day');
@@ -98,95 +42,108 @@ export const CaLamComponent = () => {
 
     const totalHours = endTime.diff(startTime, 'hour', true);
     const breakHours = breakEndTime.diff(breakStartTime, 'hour', true);
-    
+
     return Math.max(0, Math.round((totalHours - breakHours) * 10) / 10);
   };
 
-  const handleSubmit = (values) => {
-    const tongSoGioThucNhan = calculateWorkingHours(
-      values.thoiGianBatDau.format('HH:mm'),
-      values.thoiGianKetThuc.format('HH:mm'),
-      values.gioNghiTruaBatDau.format('HH:mm'),
-      values.gioNghiTruaKetThuc.format('HH:mm')
-    );
+  // Data source mapping
+  const dataSource = Array.isArray(danhSachCaLam) ? danhSachCaLam.map(cl => ({
+    key: cl.maCa,
+    maCa: cl.maCa,
+    tenCa: cl.tenCa,
+    gioBatDau: cl.gioBatDau,
+    gioKetThuc: cl.gioKetThuc,
+    gioNghiBatDau: cl.gioNghiBatDau,
+    gioNghiKetThuc: cl.gioNghiKetThuc,
+    soGioLamViec: cl.soGioLamViec,
+    originalData: cl
+  })) : [];
 
-    const shiftData = {
-      maCa: values.maCa,
-      tenCa: values.tenCa,
-      thoiGianBatDau: values.thoiGianBatDau.format('HH:mm'),
-      thoiGianKetThuc: values.thoiGianKetThuc.format('HH:mm'),
-      gioNghiTruaBatDau: values.gioNghiTruaBatDau.format('HH:mm'),
-      gioNghiTruaKetThuc: values.gioNghiTruaKetThuc.format('HH:mm'),
-      tongSoGioThucNhan
-    };
-
-    if (editingShift) {
-      setShifts(shifts.map(shift => 
-        shift.id === editingShift.id 
-          ? { ...shiftData, id: editingShift.id }
-          : shift
-      ));
-      message.success('Cập nhật ca làm thành công!');
-    } else {
-      const newShift = {
-        ...shiftData,
-        id: Date.now()
+  const handleSubmit = async (values) => {
+    console.log(`values : ${JSON.stringify(values)}`)
+    try {
+      const shiftData = {
+        tenCa: values.tenCa,
+        gioBatDau: values.gioBatDau && dayjs(values.gioBatDau).isValid()
+          ? dayjs(values.gioBatDau).format('HH:mm')
+          : null,
+        gioKetThuc: values.gioKetThuc && dayjs(values.gioKetThuc).isValid()
+          ? dayjs(values.gioKetThuc).format('HH:mm')
+          : null,
+        gioNghiBatDau: values.gioNghiBatDau && dayjs(values.gioNghiBatDau).isValid()
+          ? dayjs(values.gioNghiBatDau).format('HH:mm')
+          : null,
+        gioNghiKetThuc: values.gioNghiKetThuc && dayjs(values.gioNghiKetThuc).isValid()
+          ? dayjs(values.gioNghiKetThuc).format('HH:mm')
+          : null,
       };
-      setShifts([...shifts, newShift]);
-      message.success('Thêm ca làm thành công!');
-    }
 
-    handleCancel();
+      if (currentRecord) {
+        shiftData.maCa = currentRecord.maCa;
+        await updateCaLam(currentRecord.maCa, shiftData);
+        message.success('Cập nhật ca làm thành công!');
+      } else {
+        await createCaLam(shiftData);
+        message.success('Thêm ca làm thành công!');
+      }
+      handleCancel();
+    } catch (err) {
+      console.error('Error saving shift:', err);
+      message.error('Đã xảy ra lỗi khi lưu ca làm: ' + (err.response?.data?.message || err.message));
+    }
   };
 
   const handleCancel = () => {
-    form.resetFields();
-    setEditingShift(null);
+    // form.resetFields();
+    setCurrentRecord(null);
     setIsModalVisible(false);
+    setPreviewHours(0);
   };
 
-  const handleEdit = (shift) => {
-    setEditingShift(shift);
+  const handleEdit = (record) => {
+    setCurrentRecord(record);
     form.setFieldsValue({
-      maCa: shift.maCa,
-      tenCa: shift.tenCa,
-      thoiGianBatDau: dayjs(shift.thoiGianBatDau, 'HH:mm'),
-      thoiGianKetThuc: dayjs(shift.thoiGianKetThuc, 'HH:mm'),
-      gioNghiTruaBatDau: dayjs(shift.gioNghiTruaBatDau, 'HH:mm'),
-      gioNghiTruaKetThuc: dayjs(shift.gioNghiTruaKetThuc, 'HH:mm')
+      tenCa: record.tenCa,
+      gioBatDau: dayjs(record.gioBatDau, 'HH:mm:ss'),
+      gioKetThuc: dayjs(record.gioKetThuc, 'HH:mm:ss'),
+      gioNghiBatDau: record.gioNghiBatDau === 'Invalid Date' ? null : dayjs(record.gioNghiBatDau, 'HH:mm:ss'),
+      gioNghiKetThuc: record.gioNghiKetThuc === 'Invalid Date' ? null : dayjs(record.gioNghiKetThuc, 'HH:mm:ss')
     });
     setIsModalVisible(true);
   };
 
-  const handleDelete = (id) => {
-    setShifts(shifts.filter(shift => shift.id !== id));
-    message.success('Xóa ca làm thành công!');
+  const handleDelete = async (maCa) => {
+    console.log(maCa)
+    try {
+      await deleteCaLam(maCa);
+      message.success('Xóa ca làm thành công!');
+    } catch (error) {
+      message.error('Đã xảy ra lỗi khi xóa ca làm');
+    }
   };
 
   const handleAdd = () => {
-    setEditingShift(null);
+    setCurrentRecord(null);
     form.resetFields();
+    setPreviewHours(0);
     setIsModalVisible(true);
   };
 
   // Tính toán preview giờ làm trong form
-  const [previewHours, setPreviewHours] = useState(0);
-  
   const handleFormChange = () => {
     const values = form.getFieldsValue();
-    if (values.thoiGianBatDau && values.thoiGianKetThuc && 
-        values.gioNghiTruaBatDau && values.gioNghiTruaKetThuc) {
+    if (values.gioBatDau && values.gioKetThuc &&
+      values.gioNghiBatDau && values.gioNghiKetThuc) {
       const hours = calculateWorkingHours(
-        values.thoiGianBatDau.format('HH:mm'),
-        values.thoiGianKetThuc.format('HH:mm'),
-        values.gioNghiTruaBatDau.format('HH:mm'),
-        values.gioNghiTruaKetThuc.format('HH:mm')
+        values.gioBatDau.format('HH:mm:ss'),
+        values.gioKetThuc.format('HH:mm:ss'),
+        values.gioNghiBatDau.format('HH:mm:ss'),
+        values.gioNghiKetThuc.format('HH:mm:ss')
       );
       setPreviewHours(hours);
     }
   };
 
-  // Cấu hình columns cho Table
   const columns = [
     {
       title: 'Mã Ca',
@@ -196,8 +153,8 @@ export const CaLamComponent = () => {
       render: (text) => <Tag color="blue">{text}</Tag>,
       filteredValue: searchText ? [searchText] : null,
       onFilter: (value, record) =>
-        record.maCa.toLowerCase().includes(value.toLowerCase()) ||
-        record.tenCa.toLowerCase().includes(value.toLowerCase()),
+        record.maCa?.toString().toLowerCase().includes(value.toLowerCase()) ||
+        record.tenCa?.toLowerCase().includes(value.toLowerCase()),
     },
     {
       title: 'Tên Ca',
@@ -208,8 +165,8 @@ export const CaLamComponent = () => {
     },
     {
       title: 'Giờ Bắt Đầu',
-      dataIndex: 'thoiGianBatDau',
-      key: 'thoiGianBatDau',
+      dataIndex: 'gioBatDau',
+      key: 'gioBatDau',
       width: 120,
       render: (text) => (
         <Space>
@@ -220,8 +177,8 @@ export const CaLamComponent = () => {
     },
     {
       title: 'Giờ Kết Thúc',
-      dataIndex: 'thoiGianKetThuc',
-      key: 'thoiGianKetThuc',
+      dataIndex: 'gioKetThuc',
+      key: 'gioKetThuc',
       width: 120,
       render: (text) => (
         <Space>
@@ -231,22 +188,22 @@ export const CaLamComponent = () => {
       ),
     },
     {
-      title: 'Nghỉ Trưa',
-      key: 'nghiTrua',
+      title: 'Giờ Nghỉ',
+      key: 'gioNghi',
       width: 150,
       render: (_, record) => (
         <Text type="secondary">
-          {record.gioNghiTruaBatDau} - {record.gioNghiTruaKetThuc}
+          {record.gioNghiBatDau} - {record.gioNghiKetThuc}
         </Text>
       ),
     },
     {
       title: 'Tổng Giờ',
-      dataIndex: 'tongSoGioThucNhan',
-      key: 'tongSoGioThucNhan',
+      dataIndex: 'soGioLamViec',
+      key: 'soGioLamViec',
       width: 100,
       render: (hours) => <Tag color="green">{hours}h</Tag>,
-      sorter: (a, b) => a.tongSoGioThucNhan - b.tongSoGioThucNhan,
+      sorter: (a, b) => a.soGioLamViec - b.soGioLamViec,
     },
     {
       title: 'Thao Tác',
@@ -264,7 +221,7 @@ export const CaLamComponent = () => {
           <Popconfirm
             title="Xóa ca làm"
             description="Bạn có chắc chắn muốn xóa ca làm này?"
-            onConfirm={() => handleDelete(record.id)}
+            onConfirm={() => handleDelete(record.maCa)}
             okText="Có"
             cancelText="Không"
           >
@@ -281,15 +238,15 @@ export const CaLamComponent = () => {
   ];
 
   // Tính toán thống kê
-  const totalShifts = shifts.length;
-  const averageHours = totalShifts > 0 
-    ? (shifts.reduce((acc, shift) => acc + shift.tongSoGioThucNhan, 0) / totalShifts).toFixed(1)
+  const totalShifts = dataSource.length;
+  const averageHours = totalShifts > 0
+    ? (dataSource.reduce((acc, shift) => acc + (shift.soGioLamViec || 0), 0) / totalShifts).toFixed(1)
     : 0;
-  const totalHours = shifts.reduce((acc, shift) => acc + shift.tongSoGioThucNhan, 0);
+  const totalHours = dataSource.reduce((acc, shift) => acc + (shift.soGioLamViec || 0), 0);
 
   return (
     <div style={{ padding: '24px', background: '#f5f5f5', minHeight: '100vh' }}>
-      <div style={{  margin: '0 auto' }}>
+      <div style={{ margin: '0 auto' }}>
         {/* Header */}
         <Card style={{ marginBottom: '24px' }}>
           <Row justify="space-between" align="middle">
@@ -363,11 +320,12 @@ export const CaLamComponent = () => {
               />
             </Col>
           </Row>
-          
+
           <Table
             columns={columns}
-            dataSource={shifts}
-            rowKey="id"
+            dataSource={dataSource}
+            rowKey="maCa"
+            loading={loadingCaLam}
             pagination={{
               pageSize: 10,
               showSizeChanger: true,
@@ -382,16 +340,18 @@ export const CaLamComponent = () => {
 
         {/* Modal Form */}
         <Modal
+          centered
+          size='large'
           title={
             <Space>
               <ClockCircleOutlined />
-              {editingShift ? 'Chỉnh Sửa Ca Làm' : 'Thêm Ca Làm Mới'}
+              {currentRecord ? 'Chỉnh Sửa Ca Làm' : 'Thêm Ca Làm'}
             </Space>
           }
           open={isModalVisible}
           onCancel={handleCancel}
           footer={null}
-          width={600}
+          width={800}
         >
           <Form
             form={form}
@@ -415,11 +375,11 @@ export const CaLamComponent = () => {
               <Col xs={24} sm={12}>
                 <Form.Item
                   label="Thời Gian Bắt Đầu"
-                  name="thoiGianBatDau"
+                  name="gioBatDau"
                   rules={[{ required: true, message: 'Vui lòng chọn giờ bắt đầu!' }]}
                 >
                   <TimePicker
-                    format="HH:mm"
+                    format="HH:mm:ss"
                     placeholder="Chọn giờ bắt đầu"
                     style={{ width: '100%' }}
                   />
@@ -428,11 +388,11 @@ export const CaLamComponent = () => {
               <Col xs={24} sm={12}>
                 <Form.Item
                   label="Thời Gian Kết Thúc"
-                  name="thoiGianKetThuc"
+                  name="gioKetThuc"
                   rules={[{ required: true, message: 'Vui lòng chọn giờ kết thúc!' }]}
                 >
                   <TimePicker
-                    format="HH:mm"
+                    format="HH:mm:ss"
                     placeholder="Chọn giờ kết thúc"
                     style={{ width: '100%' }}
                   />
@@ -444,11 +404,10 @@ export const CaLamComponent = () => {
               <Col xs={24} sm={12}>
                 <Form.Item
                   label="Giờ Nghỉ Trưa Bắt Đầu"
-                  name="gioNghiTruaBatDau"
-                  rules={[{ required: true, message: 'Vui lòng chọn giờ nghỉ trưa!' }]}
+                  name="gioNghiBatDau"
                 >
                   <TimePicker
-                    format="HH:mm"
+                    format="HH:mm:ss"
                     placeholder="Chọn giờ bắt đầu nghỉ"
                     style={{ width: '100%' }}
                   />
@@ -457,11 +416,10 @@ export const CaLamComponent = () => {
               <Col xs={24} sm={12}>
                 <Form.Item
                   label="Giờ Nghỉ Trưa Kết Thúc"
-                  name="gioNghiTruaKetThuc"
-                  rules={[{ required: true, message: 'Vui lòng chọn giờ kết thúc nghỉ!' }]}
+                  name="gioNghiKetThuc"
                 >
                   <TimePicker
-                    format="HH:mm"
+                    format="HH:mm:ss"
                     placeholder="Chọn giờ kết thúc nghỉ"
                     style={{ width: '100%' }}
                   />
@@ -487,7 +445,7 @@ export const CaLamComponent = () => {
               </Col>
               <Col>
                 <Button type="primary" htmlType="submit">
-                  {editingShift ? 'Cập Nhật' : 'Thêm Mới'}
+                  {currentRecord ? 'Cập Nhật' : 'Thêm Mới'}
                 </Button>
               </Col>
             </Row>

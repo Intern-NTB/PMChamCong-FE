@@ -4,10 +4,12 @@ import { useEffect, useState } from "react";
 import './cai_dat.css'
 import { DoiTuongUuTienComponent } from "./doi_tuong_uu_tien";
 import { CaLamComponent } from './ca_lam.jsx'
+import { useCaLam } from "../../component/hooks/useCaLam.js";
 
 export default function CaiDat() {
     // State
     const [isMobile, setIsMobile] = useState(false)
+  
 
     useEffect(() => {
         // Check screen size

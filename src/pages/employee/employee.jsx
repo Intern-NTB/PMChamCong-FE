@@ -31,7 +31,6 @@ export default function NhanVien() {
     // Search and filter states
     const [globalSearchValue, setGlobalSearchValue] = useState('');
     const [searchHistory, setSearchHistory] = useState([]);
-    const [savedFilters, setSavedFilters] = useState([]);
     const [currentFilter, setCurrentFilter] = useState({
         phongBan: null,
         vaiTro: null,
