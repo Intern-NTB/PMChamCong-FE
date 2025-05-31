@@ -26,7 +26,6 @@ import {
     SearchOutlined,
     CalendarOutlined
 } from '@ant-design/icons';
-import { MaxRange } from 'devextreme-react/cjs/range-selector';
 
 const { Text, Title } = Typography;
 const { Search } = Input;
@@ -90,7 +89,7 @@ export const VaiTroComponent = () => {
                     updatedDate: new Date().toISOString().split('T')[0]
                 } : item
             ));
-            message.success('Cập nhật phòng ban thành công!');
+            message.success('Cập nhật vai trò thành công!');
         } else {
             const newItem = {
                 id: Date.now(),
@@ -98,8 +97,8 @@ export const VaiTroComponent = () => {
                 status: 'Hoạt động',
                 createdDate: new Date().toISOString().split('T')[0]
             };
-            setPhongBanList(prev => [...prev, newItem]);
-            message.success('Thêm phòng ban thành công!');
+            setVaiTroList(prev => [...prev, newItem]);
+            message.success('Thêm vai trò thành công!');
         }
         handleCancel();
     };
@@ -208,7 +207,7 @@ export const VaiTroComponent = () => {
                             onChange={(e) => handleCardSelect(item.id, e.target.checked)}
                         />
                         <Text type="secondary" style={{ fontSize: 12 }}>
-                            ID: {item.maVaiTro}
+                            Mã vai trò: {item.maVaiTro}
                         </Text>
                     </div>
                 </div>
@@ -216,7 +215,7 @@ export const VaiTroComponent = () => {
                 <div style={{ display: 'flex' }}>
                     <Space size="small">
                         <Title level={5} style={{ margin: 0, marginBottom: 8 }}>
-                            {item.tenPhongBan}
+                            Chức vụ: {item.tenVaiTro}
                         </Title>
 
                         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
@@ -245,9 +244,7 @@ export const VaiTroComponent = () => {
 
                     </Space>
                 </div>
-                <Title level={5} style={{ margin: 0, marginBottom: 8 }}>
-                    Ca : {item.tenVaiTro}
-                </Title>
+                
             </Card>
         </Col>
     );
@@ -405,7 +402,7 @@ export const VaiTroComponent = () => {
                     style={{ marginTop: 16 }}
                 >
                     <Form.Item
-                        name="tenVaiTro"
+                        name="tenPhongBan"
                         label="Tên phòng ban">                        
                         <Select
                             style={{ width: '100%' }}
@@ -416,7 +413,7 @@ export const VaiTroComponent = () => {
                     </Form.Item>
 
                     <Form.Item
-                        name="maCa"
+                        name="tenVaitro"
                         label="Tên vai trò"
                         rules={[
                             { required: true, message: 'Vui lòng nhập tên vai trò!' },
@@ -430,7 +427,7 @@ export const VaiTroComponent = () => {
                     </Form.Item>
 
                     <Form.Item
-                        name="maCa"
+                        name="maVaitro"
                         label="Mã vai trò"
                         rules={[
                             { required: true, message: 'Vui lòng nhập Mã vai trò!' },

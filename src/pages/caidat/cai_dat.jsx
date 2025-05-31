@@ -3,8 +3,9 @@ import { PhongBanComponent } from "./phong_ban";
 import { useEffect, useState } from "react";
 import './cai_dat.css'
 import { DoiTuongUuTienComponent } from "./doi_tuong_uu_tien";
-import { CaLamComponent } from './ca_lam.jsx'
+import { CaLamComponent } from './ca_lam.jsx';
 import { VaiTroComponent } from "./vai_tro.jsx";
+import { NgayLeComponent } from  "./ngay_le.jsx"
 
 export default function CaiDat() {
     // State
@@ -39,8 +40,13 @@ export default function CaiDat() {
         },
         {
             key: '4',
-            label: 'Vai trò', // Sửa label trùng lặp
+            label: 'Vai trò',
             children: <VaiTroComponent />
+        },
+        {
+            key: '5',
+            label: 'Nghỉ lễ',
+            children: <NgayLeComponent />
         },
     ]
 

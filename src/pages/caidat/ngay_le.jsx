@@ -15,7 +15,8 @@ import {
     Typography,
     Empty,
     Pagination,
-    Select
+    Select,
+    Collapse
 } from "antd";
 import {
     PlusOutlined,
@@ -29,8 +30,10 @@ import {
 const { Text, Title } = Typography;
 const { Search } = Input;
 const { Option } = Select;
+const { Panel } = Collapse;
 
-export const DoiTuongUuTienComponent = () => {
+export const NgayLeComponent = () => {
+
     const [form] = Form.useForm();
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [isModalConfirmVisible, setIsModalConfirmVisible] = useState({
@@ -45,14 +48,18 @@ export const DoiTuongUuTienComponent = () => {
     const [pageSize, setPageSize] = useState(8);
 
     // Mock data
-    const [doiTuongUuTienList, setDoiTuongUuTienList] = useState([
-        { id: 1, name: 'Thai sản' },
-        { id: 2, name: 'Có con' },
+    const [ngayLeList, setNgayLeList] = useState([
+        { maNgayLe: 1, tenNgayLe: 'Tết Dương lịch', ngayBatDau: '2025-01-01', ngayKetThuc: '2025-01-01', soNgayNghi: 1 },
+        { maNgayLe: 2, tenNgayLe: 'Tết Nguyên đán', ngayBatDau: '2025-01-29', ngayKetThuc: '2025-02-02', soNgayNghi: 5 },
+        { maNgayLe: 3, tenNgayLe: 'Giỗ Tổ Hùng Vương', ngayBatDau: '2025-04-10', ngayKetThuc: '2025-04-10', soNgayNghi: 1 },
+        { maNgayLe: 4, tenNgayLe: 'Ngày Giải phóng miền Nam', ngayBatDau: '2025-04-30', ngayKetThuc: '2025-04-30', soNgayNghi: 1 },
+        { maNgayLe: 5, tenNgayLe: 'Ngày Quốc tế Lao động', ngayBatDau: '2025-05-01', ngayKetThuc: '2025-05-01', soNgayNghi: 1 },
+        { maNgayLe: 6, tenNgayLe: 'Quốc khánh 2/9', ngayBatDau: '2025-09-02', ngayKetThuc: '2025-09-03', soNgayNghi: 2 },
     ]);
 
     // Filter data
-    const filteredData = doiTuongUuTienList.filter(item => {
-        const matchSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const filteredData = ngayLeList.filter(item => {
+        const matchSearch = item.tenNgayLe.toLowerCase().includes(searchTerm.toLowerCase()) ||
             item.note.toLowerCase().includes(searchTerm.toLowerCase());
         const matchStatus = statusFilter === 'all' || item.status === statusFilter;
         return matchSearch && matchStatus;
@@ -65,14 +72,14 @@ export const DoiTuongUuTienComponent = () => {
 
     const onFinish = (values) => {
         if (editingId) {
-            setDoiTuongUuTienList(prev => prev.map(item =>
+            setVaiTroList(prev => prev.map(item =>
                 item.id === editingId ? {
                     ...item,
                     ...values,
                     updatedDate: new Date().toISOString().split('T')[0]
                 } : item
             ));
-            message.success('Cập nhật phòng ban thành công!');
+            message.success('Cập nhật ngày lễ thành công!');
         } else {
             const newItem = {
                 id: Date.now(),
@@ -80,8 +87,8 @@ export const DoiTuongUuTienComponent = () => {
                 status: 'Hoạt động',
                 createdDate: new Date().toISOString().split('T')[0]
             };
-            setDoiTuongUuTienList(prev => [...prev, newItem]);
-            message.success('Thêm phòng ban thành công!');
+            setVaiTroList(prev => [...prev, newItem]);
+            message.success('Thêm ngày lễ thành công!');
         }
         handleCancel();
     };
@@ -98,18 +105,6 @@ export const DoiTuongUuTienComponent = () => {
         setIsModalVisible(true);
     }, [form]);
 
-    const handleView = useCallback((data) => {
-        Modal.info({
-            title: 'Thông tin phòng ban',
-            width: 600,
-            content: (
-                <div style={{ marginTop: 16 }}>
-                    <p><strong>Tên phòng ban:</strong> {data.name}</p>
-                </div>
-            )
-        });
-    }, []);
-
     const handleDelete = useCallback((data) => {
         setIsModalConfirmVisible({
             visible: true,
@@ -119,20 +114,20 @@ export const DoiTuongUuTienComponent = () => {
 
     const handleBulkDelete = () => {
         if (selectedRowKeys.length === 0) {
-            message.warning('Vui lòng chọn ít nhất một đối tượng ưu tiên để xóa!');
+            message.warning('Vui lòng chọn ít nhất một ngày lễ để xóa!');
             return;
         }
 
         Modal.confirm({
             title: 'Xác nhận xóa nhiều',
-            content: `Bạn có chắc chắn muốn xóa ${selectedRowKeys.length} đối tượng ưu tiên đã chọn?`,
+            content: `Bạn có chắc chắn muốn xóa ${selectedRowKeys.length} ngày lễ đã chọn?`,
             okText: 'Xóa',
             cancelText: 'Hủy',
             okType: 'danger',
             onOk: () => {
-                setDoiTuongUuTienList(prev => prev.filter(item => !selectedRowKeys.includes(item.id)));
+                setPhongBanList(prev => prev.filter(item => !selectedRowKeys.includes(item.id)));
                 setSelectedRowKeys([]);
-                message.success(`Đã xóa ${selectedRowKeys.length} đối tượng ưu tiên thành công!`);
+                message.success(`Đã xóa ${selectedRowKeys.length} ngày lễ thành công!`);
             }
         });
     };
@@ -159,13 +154,23 @@ export const DoiTuongUuTienComponent = () => {
         }
     };
 
-    const renderPhongBanCard = (item) => (
+    const groupedByNgayLe = paginatedData.reduce((acc, item) => {
+        const { tenNgayLe } = item;
+        if (!acc[tenNgayLe]) {
+            acc[tenNgayLe] = [];
+        }
+        acc[tenNgayLe].push(item);
+        return acc;
+    }, {});
+
+    const renderNgayLeCard = (item) => (
         <Col xs={24} sm={12} md={8} lg={6} key={item.id}>
             <Card
                 hoverable
                 style={{
                     marginBottom: 16,
                     borderRadius: 8,
+                    height: '150px',
                     boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                     border: selectedRowKeys.includes(item.id) ? '2px solid #1890ff' : '1px solid #d9d9d9'
                 }}
@@ -177,7 +182,7 @@ export const DoiTuongUuTienComponent = () => {
                             onChange={(e) => handleCardSelect(item.id, e.target.checked)}
                         />
                         <Text type="secondary" style={{ fontSize: 12 }}>
-                            ID: {item.id}
+                            ID: {item.maNgayLe}
                         </Text>
                     </div>
                 </div>
@@ -185,10 +190,10 @@ export const DoiTuongUuTienComponent = () => {
                 <div style={{ display: 'flex' }}>
                     <Space size="small">
                         <Title level={5} style={{ margin: 0, marginBottom: 8 }}>
-                            {item.name}
+                            {item.tenNgayLe}
                         </Title>
-                        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
 
+                        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                             <AntButton
                                 type="text"
                                 icon={<EditOutlined />}
@@ -199,7 +204,6 @@ export const DoiTuongUuTienComponent = () => {
                                     marginRight: 12
                                 }}
                             />
-
                             <AntButton
                                 type="text"
                                 danger
@@ -210,20 +214,23 @@ export const DoiTuongUuTienComponent = () => {
                                 style={{ color: 'white' }}
                             />
                         </div>
-
-                    </Space>
+                    </Space>            
+                </div>
+                <div>
+                    <Text level={5} style={{ margin: 0, marginBottom: 8 }}>
+                        Số ngày nghỉ: {item.soNgayNghi}
+                    </Text>
                 </div>
             </Card>
         </Col>
     );
-
     return (
         <div style={{ padding: '0 16px' }}>
             {/* Header Section */}
             <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
                 <Col>
                     <Title level={3} style={{ marginBottom: 12 }}>
-                        Quản lý đối tượng ưu tiên
+                        Quản lý Ngày lễ
                     </Title>
                 </Col>
                 <Col>
@@ -237,7 +244,13 @@ export const DoiTuongUuTienComponent = () => {
                                 Xóa đã chọn ({selectedRowKeys.length})
                             </AntButton>
                         )}
-
+                        <AntButton
+                            type="primary"
+                            icon={<PlusOutlined />}
+                            onClick={handleAdd}
+                        >
+                            Thêm ngày lễ
+                        </AntButton>
                     </Space>
                 </Col>
             </Row>
@@ -246,12 +259,12 @@ export const DoiTuongUuTienComponent = () => {
             <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
                 <Col xs={24} sm={12} md={8}>
                     <Search
-                        placeholder="Tìm kiếm đối tượng ưu tiên..."
+                        placeholder="Tìm kiếm ngày lễ..."
                         allowClear
                         enterButton={<SearchOutlined />}
                         value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        onSearch={setSearchTerm}
+                    //onChange={(e) => setSearchTerm(e.target.value)}
+                    //onSearch={setSearchTerm}
                     />
                 </Col>
                 <Col xs={24} sm={24} md={10}>
@@ -263,13 +276,6 @@ export const DoiTuongUuTienComponent = () => {
                         >
                             Chọn tất cả
                         </Checkbox>
-                        <AntButton
-                            type="primary"
-                            icon={<PlusOutlined />}
-                            onClick={handleAdd}
-                        >
-                            Thêm đối tượng ưu tiên
-                        </AntButton>
                     </div>
                 </Col>
             </Row>
@@ -279,82 +285,18 @@ export const DoiTuongUuTienComponent = () => {
             {/* Cards Section */}
             {paginatedData.length > 0 ? (
                 <Row gutter={[16, 16]}>
-                    {paginatedData.map(renderPhongBanCard)}
+                    {paginatedData.map(renderNgayLeCard)}
                 </Row>
             ) : (
                 <Empty
-                    description="Không tìm thấy phòng ban nào"
+                    description="Không tìm thấy ngày lễ nào"
                     style={{ margin: '40px 0' }}
                 />
             )}
 
-            {/* Pagination */}
-            {filteredData.length > pageSize && (
-                <Row justify="center" style={{ marginTop: 24 }}>
-                    <Pagination
-                        current={currentPage}
-                        pageSize={pageSize}
-                        total={filteredData.length}
-                        showSizeChanger
-                        showQuickJumper
-                        showTotal={(total, range) =>
-                            `${range[0]}-${range[1]} của ${total} mục`
-                        }
-                        pageSizeOptions={['8', '16', '24', '32']}
-                        onChange={(page, size) => {
-                            setCurrentPage(page);
-                            setPageSize(size);
-                        }}
-                        onShowSizeChange={(current, size) => {
-                            setCurrentPage(1);
-                            setPageSize(size);
-                        }}
-                    />
-                </Row>
-            )}
-            <Text type="secondary">
-                Tổng: {filteredData.length} đối tượng ưu tiên
-            </Text>
-
-            {/* Modal Confirm Delete */}
-            <Modal
-                title="Xác nhận xóa"
-                open={isModalConfirmVisible.visible}
-                centered
-                width={400}
-                onCancel={() => setIsModalConfirmVisible({ visible: false, data: null })}
-                footer={[
-                    <AntButton
-                        key="cancel"
-                        onClick={() => setIsModalConfirmVisible({ visible: false, data: null })}
-                    >
-                        Hủy
-                    </AntButton>,
-                    <AntButton
-                        key="delete"
-                        type="primary"
-                        danger
-                        onClick={() => {
-                            setDoiTuongUuTienList(prev =>
-                                prev.filter(item => item.id !== isModalConfirmVisible.data.id)
-                            );
-                            setIsModalConfirmVisible({ visible: false, data: null });
-                            message.success('Xóa phòng ban thành công!');
-                        }}
-                    >
-                        Xóa
-                    </AntButton>
-                ]}
-            >
-                <p>
-                    Bạn có chắc chắn muốn xóa phòng ban
-                    <strong> "{isModalConfirmVisible.data?.name}"</strong> không?
-                </p>
-            </Modal>
-
             {/* Modal Form */}
             <Modal
-                title={editingId ? 'Sửa phòng ban' : 'Thêm phòng ban'}
+                title={editingId ? 'Sửa ngày lễ' : 'Thêm ngày lễ'}
                 open={isModalVisible}
                 onCancel={handleCancel}
                 footer={null}
@@ -362,36 +304,51 @@ export const DoiTuongUuTienComponent = () => {
             >
                 <Form
                     form={form}
-                    name="phongBanForm"
+                    name="ngayLeform"
                     onFinish={onFinish}
                     layout="vertical"
                     style={{ marginTop: 16 }}
                 >
                     <Form.Item
-                        name="name"
-                        label="Tên phòng ban"
+                        name="tenNgayle"
+                        label="Tên ngày lễ"
                         rules={[
-                            { required: true, message: 'Vui lòng nhập tên phòng ban!' },
-                            { min: 2, message: 'Tên phòng ban phải có ít nhất 2 ký tự!' }
+                            { required: true, message: 'Vui lòng nhập tên vai trò!' },
+                            { min: 2, message: 'Tên vai trò phải có ít nhất 2 ký tự!' }
                         ]}
                     >
                         <Input
-                            placeholder="Nhập tên phòng ban"
-                            size="large"
+                            placeholder="Nhập tên ngày lễ"
+                            size="default"
+                        />
+                        
+                    </Form.Item>
+
+                    <Form.Item
+                        name="soNgaynghi"
+                        label="Số ngày nghỉ"
+                        rules={[
+                            { required: true, message: 'Vui lòng nhập tên vai trò!' },
+                            { min: 2, message: 'Tên vai trò phải có ít nhất 2 ký tự!' }
+                        ]}
+                    >
+                        <Input
+                            placeholder="Nhập số ngày nghỉ lễ"
+                            size="default"
                         />
                     </Form.Item>
 
                     <Form.Item
-                        name="note"
-                        label="Ghi chú"
+                        name="maNgayle"
+                        label="Mã ngày lễ"
                         rules={[
-                            { required: true, message: 'Vui lòng nhập ghi chú!' }
+                            { required: true, message: 'Vui lòng nhập Mã vai trò!' },
+                            { min: 2, message: 'Mã vai trò phải có ít nhất 2 ký tự!' }
                         ]}
                     >
-                        <Input.TextArea
-                            placeholder="Nhập ghi chú về phòng ban"
-                            rows={4}
-                            size="large"
+                        <Input
+                            placeholder="Nhập Mã ngày lễ"
+                            size="default"
                         />
                     </Form.Item>
 
@@ -423,5 +380,5 @@ export const DoiTuongUuTienComponent = () => {
                 </Form>
             </Modal>
         </div>
-    );
-};
+    )
+}
