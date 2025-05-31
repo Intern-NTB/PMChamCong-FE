@@ -40,8 +40,13 @@ export default function CaiDat() {
         },
         {
             key: '4',
-            label: 'Vai trò', // Sửa label trùng lặp
-            children: 'content of Tab pane 4'
+            label: 'Vai trò',
+            children: <VaiTroComponent />
+        },
+        {
+            key: '5',
+            label: 'Nghỉ lễ',
+            children: <NgayLeComponent />
         },
     ]
 

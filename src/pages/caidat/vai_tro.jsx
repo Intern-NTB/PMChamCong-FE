@@ -15,7 +15,8 @@ import {
     Typography,
     Empty,
     Pagination,
-    Select
+    Select,
+    Collapse
 } from "antd";
 import {
     PlusOutlined,
@@ -29,8 +30,10 @@ import {
 const { Text, Title } = Typography;
 const { Search } = Input;
 const { Option } = Select;
+const { Panel } = Collapse;
 
-export const DoiTuongUuTienComponent = () => {
+export const VaiTroComponent = () => {
+
     const [form] = Form.useForm();
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [isModalConfirmVisible, setIsModalConfirmVisible] = useState({
@@ -45,14 +48,28 @@ export const DoiTuongUuTienComponent = () => {
     const [pageSize, setPageSize] = useState(8);
 
     // Mock data
-    const [doiTuongUuTienList, setDoiTuongUuTienList] = useState([
-        { id: 1, name: 'Thai sản' },
-        { id: 2, name: 'Có con' },
+    const [vaiTroList, setVaiTroList] = useState([
+        { maVaiTro: 'IT-MGR', tenPhongBan: 'Phòng IT', tenVaiTro: 'Trưởng phòng IT' },
+        { maVaiTro: 'IT-STAFF', tenPhongBan: 'Phòng IT', tenVaiTro: 'Nhân viên IT' },
+        { maVaiTro: 'HR-MGR', tenPhongBan: 'Phòng HR', tenVaiTro: 'Trưởng phòng nhân sự' },
+        { maVaiTro: 'HR-STAFF', tenPhongBan: 'Phòng HR', tenVaiTro: 'Nhân viên nhân sự' },
+        { maVaiTro: 'ACC_MGR', tenPhongBan: 'Phòng Kế toán', tenVaiTro: 'Trưởng phòng kế toán' },
+        { maVaiTro: 'ACC_STAFF', tenPhongBan: 'Phòng Kế toán', tenVaiTro: 'Nhân viên kế toán' },
+        { maVaiTro: 'MKT_MGR', tenPhongBan: 'Phòng Marketing', tenVaiTro: 'Trưởng phòng Marketing' },
+        { maVaiTro: 'MKT_STAFF', tenPhongBan: 'Phòng Marketing', tenVaiTro: 'Nhân viên Marketing' },
+        { maVaiTro: 'SALE_MGR', tenPhongBan: 'Phòng Kinh doanh', tenVaiTro: 'Trưởng phòng Kinh doanh' },
+        { maVaiTro: 'SALE_STAFF', tenPhongBan: 'Phòng Kinh doanh', tenVaiTro: 'Nhân viên Kinh doanh' },
+        { maVaiTro: 'PROD_MGR', tenPhongBan: 'Phòng Sản xuất', tenVaiTro: 'Trưởng phòng Sản xuất' },
+        { maVaiTro: 'PROD_STAFF', tenPhongBan: 'Phòng Sản xuất', tenVaiTro: 'Nhân viên Sản xuất' },
+        { maVaiTro: 'QAQC_MGR', tenPhongBan: 'Phòng QA/QC', tenVaiTro: 'Trưởng phòng QA/QC' },
+        { maVaiTro: 'QAQC_STAFF', tenPhongBan: 'Phòng QA/QC', tenVaiTro: 'Nhân viên QA/QC' },
+        { maVaiTro: 'RND_MGR', tenPhongBan: 'Phòng R&D', tenVaiTro: 'Trưởng phòng R&D' },
+        { maVaiTro: 'RND_STAFF', tenPhongBan: 'Phòng R&D', tenVaiTro: 'Nhân viên R&D' },
     ]);
 
     // Filter data
-    const filteredData = doiTuongUuTienList.filter(item => {
-        const matchSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const filteredData = vaiTroList.filter(item => {
+        const matchSearch = item.tenPhongBan.toLowerCase().includes(searchTerm.toLowerCase()) ||
             item.note.toLowerCase().includes(searchTerm.toLowerCase());
         const matchStatus = statusFilter === 'all' || item.status === statusFilter;
         return matchSearch && matchStatus;
@@ -65,14 +82,14 @@ export const DoiTuongUuTienComponent = () => {
 
     const onFinish = (values) => {
         if (editingId) {
-            setDoiTuongUuTienList(prev => prev.map(item =>
+            setVaiTroList(prev => prev.map(item =>
                 item.id === editingId ? {
                     ...item,
                     ...values,
                     updatedDate: new Date().toISOString().split('T')[0]
                 } : item
             ));
-            message.success('Cập nhật phòng ban thành công!');
+            message.success('Cập nhật vai trò thành công!');
         } else {
             const newItem = {
                 id: Date.now(),
@@ -80,8 +97,8 @@ export const DoiTuongUuTienComponent = () => {
                 status: 'Hoạt động',
                 createdDate: new Date().toISOString().split('T')[0]
             };
-            setDoiTuongUuTienList(prev => [...prev, newItem]);
-            message.success('Thêm phòng ban thành công!');
+            setVaiTroList(prev => [...prev, newItem]);
+            message.success('Thêm vai trò thành công!');
         }
         handleCancel();
     };
@@ -98,18 +115,6 @@ export const DoiTuongUuTienComponent = () => {
         setIsModalVisible(true);
     }, [form]);
 
-    const handleView = useCallback((data) => {
-        Modal.info({
-            title: 'Thông tin phòng ban',
-            width: 600,
-            content: (
-                <div style={{ marginTop: 16 }}>
-                    <p><strong>Tên phòng ban:</strong> {data.name}</p>
-                </div>
-            )
-        });
-    }, []);
-
     const handleDelete = useCallback((data) => {
         setIsModalConfirmVisible({
             visible: true,
@@ -119,20 +124,20 @@ export const DoiTuongUuTienComponent = () => {
 
     const handleBulkDelete = () => {
         if (selectedRowKeys.length === 0) {
-            message.warning('Vui lòng chọn ít nhất một đối tượng ưu tiên để xóa!');
+            message.warning('Vui lòng chọn ít nhất một vai trò để xóa!');
             return;
         }
 
         Modal.confirm({
             title: 'Xác nhận xóa nhiều',
-            content: `Bạn có chắc chắn muốn xóa ${selectedRowKeys.length} đối tượng ưu tiên đã chọn?`,
+            content: `Bạn có chắc chắn muốn xóa ${selectedRowKeys.length} vai trò đã chọn?`,
             okText: 'Xóa',
             cancelText: 'Hủy',
             okType: 'danger',
             onOk: () => {
-                setDoiTuongUuTienList(prev => prev.filter(item => !selectedRowKeys.includes(item.id)));
+                setPhongBanList(prev => prev.filter(item => !selectedRowKeys.includes(item.id)));
                 setSelectedRowKeys([]);
-                message.success(`Đã xóa ${selectedRowKeys.length} đối tượng ưu tiên thành công!`);
+                message.success(`Đã xóa ${selectedRowKeys.length} vai trò thành công!`);
             }
         });
     };
@@ -159,7 +164,32 @@ export const DoiTuongUuTienComponent = () => {
         }
     };
 
-    const renderPhongBanCard = (item) => (
+    const groupedByPhongBan = paginatedData.reduce((acc, item) => {
+        const { tenPhongBan } = item;
+        if (!acc[tenPhongBan]) {
+            acc[tenPhongBan] = [];
+        }
+        acc[tenPhongBan].push(item);
+        return acc;
+    }, {});
+
+    //Danh sách phòng ban không trùng lặp
+    const phongBanOptions = Array.from(
+        new Set(vaiTroList.map(item => item.tenPhongBan))
+    ).map((tenPhongBan, index) => ({
+        value: tenPhongBan,
+        label: tenPhongBan
+    }));
+
+    //Danh sách mã Vai trò không trùng lặp
+    const maVaitroOptions = Array.from(
+        new Set(vaiTroList.map(item => item.maVaiTro))
+    ).map((maVaiTro, index) => ({
+        value: maVaiTro,
+        label: maVaiTro
+    }));
+
+    const renderVaiTroCard = (item) => (
         <Col xs={24} sm={12} md={8} lg={6} key={item.id}>
             <Card
                 hoverable
@@ -177,7 +207,7 @@ export const DoiTuongUuTienComponent = () => {
                             onChange={(e) => handleCardSelect(item.id, e.target.checked)}
                         />
                         <Text type="secondary" style={{ fontSize: 12 }}>
-                            ID: {item.id}
+                            Mã vai trò: {item.maVaiTro}
                         </Text>
                     </div>
                 </div>
@@ -185,8 +215,9 @@ export const DoiTuongUuTienComponent = () => {
                 <div style={{ display: 'flex' }}>
                     <Space size="small">
                         <Title level={5} style={{ margin: 0, marginBottom: 8 }}>
-                            {item.name}
+                            Chức vụ: {item.tenVaiTro}
                         </Title>
+
                         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
 
                             <AntButton
@@ -213,17 +244,17 @@ export const DoiTuongUuTienComponent = () => {
 
                     </Space>
                 </div>
+                
             </Card>
         </Col>
     );
-
     return (
         <div style={{ padding: '0 16px' }}>
             {/* Header Section */}
             <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
                 <Col>
                     <Title level={3} style={{ marginBottom: 12 }}>
-                        Quản lý đối tượng ưu tiên
+                        Quản lý Vai trò
                     </Title>
                 </Col>
                 <Col>
@@ -237,7 +268,13 @@ export const DoiTuongUuTienComponent = () => {
                                 Xóa đã chọn ({selectedRowKeys.length})
                             </AntButton>
                         )}
-
+                        <AntButton
+                            type="primary"
+                            icon={<PlusOutlined />}
+                            onClick={handleAdd}
+                        >
+                            Thêm vai trò
+                        </AntButton>
                     </Space>
                 </Col>
             </Row>
@@ -246,12 +283,12 @@ export const DoiTuongUuTienComponent = () => {
             <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
                 <Col xs={24} sm={12} md={8}>
                     <Search
-                        placeholder="Tìm kiếm đối tượng ưu tiên..."
+                        placeholder="Tìm kiếm vai trò..."
                         allowClear
                         enterButton={<SearchOutlined />}
                         value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        onSearch={setSearchTerm}
+                    //onChange={(e) => setSearchTerm(e.target.value)}
+                    //onSearch={setSearchTerm}
                     />
                 </Col>
                 <Col xs={24} sm={24} md={10}>
@@ -263,13 +300,6 @@ export const DoiTuongUuTienComponent = () => {
                         >
                             Chọn tất cả
                         </Checkbox>
-                        <AntButton
-                            type="primary"
-                            icon={<PlusOutlined />}
-                            onClick={handleAdd}
-                        >
-                            Thêm đối tượng ưu tiên
-                        </AntButton>
                     </div>
                 </Col>
             </Row>
@@ -278,16 +308,21 @@ export const DoiTuongUuTienComponent = () => {
 
             {/* Cards Section */}
             {paginatedData.length > 0 ? (
-                <Row gutter={[16, 16]}>
-                    {paginatedData.map(renderPhongBanCard)}
-                </Row>
+                <Collapse accordion>
+                    {Object.entries(groupedByPhongBan).map(([tenPhongBan, vaiTro]) => (
+                        <Panel header={tenPhongBan} key={tenPhongBan}>
+                            <Row gutter={[16, 16]}>
+                                {vaiTro.map(renderVaiTroCard)}
+                            </Row>
+                        </Panel>
+                    ))}
+                </Collapse>
             ) : (
                 <Empty
                     description="Không tìm thấy phòng ban nào"
                     style={{ margin: '40px 0' }}
                 />
             )}
-
             {/* Pagination */}
             {filteredData.length > pageSize && (
                 <Row justify="center" style={{ marginTop: 24 }}>
@@ -300,7 +335,7 @@ export const DoiTuongUuTienComponent = () => {
                         showTotal={(total, range) =>
                             `${range[0]}-${range[1]} của ${total} mục`
                         }
-                        pageSizeOptions={['8', '16', '24', '32']}
+                        pageSizeOptions={['2', '4', '6', '8']}
                         onChange={(page, size) => {
                             setCurrentPage(page);
                             setPageSize(size);
@@ -313,7 +348,7 @@ export const DoiTuongUuTienComponent = () => {
                 </Row>
             )}
             <Text type="secondary">
-                Tổng: {filteredData.length} đối tượng ưu tiên
+                Tổng: {filteredData.length} vai trò
             </Text>
 
             {/* Modal Confirm Delete */}
@@ -335,11 +370,10 @@ export const DoiTuongUuTienComponent = () => {
                         type="primary"
                         danger
                         onClick={() => {
-                            setDoiTuongUuTienList(prev =>
+                            setPhongBanList(prev =>
                                 prev.filter(item => item.id !== isModalConfirmVisible.data.id)
                             );
                             setIsModalConfirmVisible({ visible: false, data: null });
-                            message.success('Xóa phòng ban thành công!');
                         }}
                     >
                         Xóa
@@ -347,14 +381,14 @@ export const DoiTuongUuTienComponent = () => {
                 ]}
             >
                 <p>
-                    Bạn có chắc chắn muốn xóa phòng ban
+                    Bạn có chắc chắn muốn xóa đối tượng
                     <strong> "{isModalConfirmVisible.data?.name}"</strong> không?
                 </p>
             </Modal>
 
             {/* Modal Form */}
             <Modal
-                title={editingId ? 'Sửa phòng ban' : 'Thêm phòng ban'}
+                title={editingId ? 'Sửa vai trò' : 'Thêm vai trò'}
                 open={isModalVisible}
                 onCancel={handleCancel}
                 footer={null}
@@ -362,36 +396,47 @@ export const DoiTuongUuTienComponent = () => {
             >
                 <Form
                     form={form}
-                    name="phongBanForm"
+                    name="vaiTroForm"
                     onFinish={onFinish}
                     layout="vertical"
                     style={{ marginTop: 16 }}
                 >
                     <Form.Item
-                        name="name"
-                        label="Tên phòng ban"
+                        name="tenPhongBan"
+                        label="Tên phòng ban">                        
+                        <Select
+                            style={{ width: '100%' }}
+                            options={phongBanOptions}
+                            placeholder="Chọn phòng ban"
+                        >
+                        </Select>
+                    </Form.Item>
+
+                    <Form.Item
+                        name="tenVaitro"
+                        label="Tên vai trò"
                         rules={[
-                            { required: true, message: 'Vui lòng nhập tên phòng ban!' },
-                            { min: 2, message: 'Tên phòng ban phải có ít nhất 2 ký tự!' }
+                            { required: true, message: 'Vui lòng nhập tên vai trò!' },
+                            { min: 2, message: 'Tên vai trò phải có ít nhất 2 ký tự!' }
                         ]}
                     >
                         <Input
-                            placeholder="Nhập tên phòng ban"
-                            size="large"
+                            placeholder="Nhập tên vai trò"
+                            size="default"
                         />
                     </Form.Item>
 
                     <Form.Item
-                        name="note"
-                        label="Ghi chú"
+                        name="maVaitro"
+                        label="Mã vai trò"
                         rules={[
-                            { required: true, message: 'Vui lòng nhập ghi chú!' }
+                            { required: true, message: 'Vui lòng nhập Mã vai trò!' },
+                            { min: 2, message: 'Mã vai trò phải có ít nhất 2 ký tự!' }
                         ]}
                     >
-                        <Input.TextArea
-                            placeholder="Nhập ghi chú về phòng ban"
-                            rows={4}
-                            size="large"
+                        <Input
+                            placeholder="Nhập Mã vai trò"
+                            size="default"
                         />
                     </Form.Item>
 
