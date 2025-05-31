@@ -42,9 +42,6 @@ export default function GiaLapChamCong() {
     });
     const [form] = Form.useForm();
 
-
-
-
     useEffect(() => {
         setReload(() => getAllChamCongDetail);
     }, [])
@@ -171,21 +168,6 @@ export default function GiaLapChamCong() {
         });
     };
 
-    const dataSource = Array.isArray(danhSachChamCongChiTiet)
-        ? danhSachChamCongChiTiet.map(dscc => ({
-            ngayChamCong: dscc.ngayChamCong,
-            thoiGianVao: dscc.thoiGianVao,
-            thoiGianRa: dscc.thoiGianRa || 'N/A',
-            soGioThucTe: dscc.soGioThucTe || 'N/A',
-            trangThai: dscc.trangThai || 'N/A',
-            cong: dscc.cong,
-            maNhanVien: dscc.maNhanVien,
-            hoTen: dscc.hoTen,
-            maPhongBan: dscc.maPhongBan,
-            tenPhongBan: dscc.tenPhongBan
-        }))
-        : []
-
     // Cột của bảng cho desktop
     const columns = [
         {
@@ -218,6 +200,7 @@ export default function GiaLapChamCong() {
                 title: 'Sắp xếp theo tên nhân viên ',
             },
             sortDirections: ['ascend', 'descend'],
+            
 
         },
         {

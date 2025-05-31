@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react"
-import { getAllPhongBan } from "../../services/phongbanServices"
+import { getAllPhongBanServices, updatePhongBanServices, createPhongBanServices, deletePhongBanServices } from "../../services/phongbanServices"
 
 export const usePhongBan = () => {  // Bỏ async
     const [danhSachPhongBan, setDanhSachPhongBan] = useState([])
     const [loading, setLoading] = useState(false)
+    const [statusPhongBan, setStatus] = useState(false)
 
     const fetchPhongBan = async () => {
+        setLoading(true)
+
         try {
-            setLoading(true)
-            const response = await getAllPhongBan()
+            const response = await getAllPhongBanServices()
             setDanhSachPhongBan(Array.isArray(response.data) ? response.data : [])
         } catch (error) {
             console.error('Lỗi khi lấy danh sách phòng ban:', error);
@@ -17,14 +19,61 @@ export const usePhongBan = () => {  // Bỏ async
             setLoading(false)
         }
     }
+    const updatePhongBan = async (duLieuPhongBan) => {
+        setLoading(true)
+        try {
+            await updatePhongBanServices(duLieuPhongBan)
+            // Lấy lại dữ liệu mới
+            await fetchPhongBan()
+            setStatus(true)
+        } catch (error) {
+            setStatus(false)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+        const createPhongBan = async (duLieuPhongBan) => {
+        setLoading(true)
+        try {
+            await createPhongBanServices(duLieuPhongBan)
+            // Lấy lại dữ liệu mới
+            await fetchPhongBan()
+            setStatus(true)
+        } catch (error) {
+            setStatus(false)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const deletePhongBan = async (maPhongBan) => {
+        setLoading(true)
+        try {
+            await deletePhongBanServices(maPhongBan)
+            // Lấy lại dữ liệu mới
+            await fetchPhongBan()
+            setStatus(true)
+        } catch (error) {
+            setStatus(false)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+
 
     useEffect(() => {
-        fetchPhongBan(); 
-    }, []); 
+        fetchPhongBan();
+    }, []);
 
     return {
         danhSachPhongBan,
+        statusPhongBan,
         loading,
-        fetchPhongBan
+        fetchPhongBan,
+        updatePhongBan,
+        createPhongBan,
+        deletePhongBan
     }
 }

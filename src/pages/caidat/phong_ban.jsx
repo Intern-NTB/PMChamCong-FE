@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useContext, useEffect } from 'react';
 import {
     Row,
     Col,
@@ -25,6 +25,9 @@ import {
     SearchOutlined,
     CalendarOutlined
 } from '@ant-design/icons';
+import { usePhongBan } from '../../component/hooks/usePhongBan';
+import { useCaLam } from '../../component/hooks/useCaLam';
+import { ReloadContext } from '../../context/reloadContext';
 
 const { Text, Title } = Typography;
 const { Search } = Input;
@@ -43,21 +46,34 @@ export const PhongBanComponent = () => {
     const [statusFilter, setStatusFilter] = useState('all');
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(8);
+    const { danhSachPhongBan, loadingPhongBan, statusPhongBan, fetchPhongBan, updatePhongBan, createPhongBan, deletePhongBan } = usePhongBan()
+    const { danhSachCaLam } = useCaLam()
+    const { setReload } = useContext(ReloadContext)
 
-    // Mock data
-    const [phongBanList, setPhongBanList] = useState([
-        { maPhongBan: 1, tenPhongBan: 'Phòng IT', maCa: '1', tenCa: 'HC' },
-        { maPhongBan: 2, tenPhongBan: 'Phòng HR', maCa: '1', tenCa: 'HC' },
-        { maPhongBan: 3, tenPhongBan: 'Phòng Kế toán', maCa: '1', tenCa: 'HC' },
-        { maPhongBan: 4, tenPhongBan: 'Phòng Marketing', maCa: '1', tenCa: 'HC' },
-        { maPhongBan: 5, tenPhongBan: 'Phòng Kinh doanh', maCa: '1', tenCa: 'HC' },
-        { maPhongBan: 6, tenPhongBan: 'Phòng Sản xuất', maCa: '1', tenCa: 'HC' },
-        { maPhongBan: 7, tenPhongBan: 'Phòng QA/QC', maCa: '1', tenCa: 'HC' },
-        { maPhongBan: 8, tenPhongBan: 'Phòng R&D', maCa: '1', tenCa: 'HC' },
-    ]);
+    const dataSourceCaLam = danhSachCaLam.map(cl => ({
+        maCa: cl.maCa,
+        tenCa: cl.tenCa
+    }))
+
+    const dataSource = danhSachPhongBan.map(pb => {
+        const ca = danhSachCaLam.find(ca => ca.maCa === pb.maCa)
+        return {
+            id: pb.maPhongBan,
+            maPhongBan: pb.maPhongBan,
+            tenPhongBan: pb.tenPhongBan,
+            maCa: pb.maCa,
+            tenCa: ca.tenCa
+        }
+
+    })
+
+    useEffect(() => {
+        setReload(() => fetchPhongBan);
+
+    }, [])
 
     // Filter data
-    const filteredData = phongBanList.filter(item => {
+    const filteredData = dataSource.filter(item => {
         const matchSearch = item.tenPhongBan.toLowerCase().includes(searchTerm.toLowerCase()) ||
             item.note.toLowerCase().includes(searchTerm.toLowerCase());
         const matchStatus = statusFilter === 'all' || item.status === statusFilter;
@@ -69,40 +85,36 @@ export const PhongBanComponent = () => {
     const endIndex = startIndex + pageSize;
     const paginatedData = filteredData.slice(startIndex, endIndex);
 
-    const onFinish = (values) => {
+    const onFinish = async (values) => {
         if (editingId) {
-            setPhongBanList(prev => prev.map(item =>
-                item.id === editingId ? {
-                    ...item,
-                    ...values,
-                    updatedDate: new Date().toISOString().split('T')[0]
-                } : item
-            ));
-            message.success('Cập nhật phòng ban thành công!');
-        } else {
-            const newItem = {
-                id: Date.now(),
-                ...values,
-                status: 'Hoạt động',
-                createdDate: new Date().toISOString().split('T')[0]
+            const updatedData = {
+                maPhongBan: editingId,
+                ...values
             };
-            setPhongBanList(prev => [...prev, newItem]);
-            message.success('Thêm phòng ban thành công!');
+            await updatePhongBan(updatedData)
+        } else {
+            console.log(JSON.stringify(values))
+            await createPhongBan(values)
         }
         handleCancel();
     };
 
-    const handleAdd = () => {
+
+    const handleAdd = async () => {
         setEditingId(null);
         form.resetFields();
         setIsModalVisible(true);
     };
 
     const handleEdit = useCallback((data) => {
-        setEditingId(data.id);
-        form.setFieldsValue(data);
+        setEditingId(data.maPhongBan);
+        form.setFieldsValue({
+            tenPhongBan: data.tenPhongBan,
+            maCa: data.maCa,
+        });
         setIsModalVisible(true);
     }, [form]);
+
 
     const handleDelete = useCallback((data) => {
         setIsModalConfirmVisible({
@@ -115,42 +127,15 @@ export const PhongBanComponent = () => {
         if (selectedRowKeys.length === 0) {
             message.warning('Vui lòng chọn ít nhất một phòng ban để xóa!');
             return;
-        }
+        }else{
 
-        Modal.confirm({
-            title: 'Xác nhận xóa nhiều',
-            content: `Bạn có chắc chắn muốn xóa ${selectedRowKeys.length} phòng ban đã chọn?`,
-            okText: 'Xóa',
-            cancelText: 'Hủy',
-            okType: 'danger',
-            onOk: () => {
-                setPhongBanList(prev => prev.filter(item => !selectedRowKeys.includes(item.id)));
-                setSelectedRowKeys([]);
-                message.success(`Đã xóa ${selectedRowKeys.length} phòng ban thành công!`);
-            }
-        });
+        }
     };
 
     const handleCancel = () => {
         setIsModalVisible(false);
         setEditingId(null);
         form.resetFields();
-    };
-
-    const handleCardSelect = (id, checked) => {
-        if (checked) {
-            setSelectedRowKeys(prev => [...prev, id]);
-        } else {
-            setSelectedRowKeys(prev => prev.filter(key => key !== id));
-        }
-    };
-
-    const handleSelectAll = (checked) => {
-        if (checked) {
-            setSelectedRowKeys(paginatedData.map(item => item.id));
-        } else {
-            setSelectedRowKeys([]);
-        }
     };
 
     const renderPhongBanCard = (item) => (
@@ -226,15 +211,6 @@ export const PhongBanComponent = () => {
                 </Col>
                 <Col>
                     <Space wrap>
-                        {selectedRowKeys.length > 0 && (
-                            <AntButton
-                                danger
-                                icon={<DeleteOutlined />}
-                                onClick={handleBulkDelete}
-                            >
-                                Xóa đã chọn ({selectedRowKeys.length})
-                            </AntButton>
-                        )}
                         <AntButton
                             type="primary"
                             icon={<PlusOutlined />}
@@ -258,18 +234,7 @@ export const PhongBanComponent = () => {
                         onSearch={setSearchTerm}
                     />
                 </Col>
-                <Col xs={24} sm={24} md={10}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
-                        <Checkbox
-                            checked={paginatedData.length > 0 && selectedRowKeys.length === paginatedData.length}
-                            indeterminate={selectedRowKeys.length > 0 && selectedRowKeys.length < paginatedData.length}
-                            onChange={(e) => handleSelectAll(e.target.checked)}
-                        >
-                            Chọn tất cả
-                        </Checkbox>
-
-                    </div>
-                </Col>
+              
             </Row>
 
             <Divider style={{ margin: '16px 0' }} />
@@ -331,10 +296,11 @@ export const PhongBanComponent = () => {
                         key="delete"
                         type="primary"
                         danger
-                        onClick={() => {
-                            setPhongBanList(prev =>
-                                prev.filter(item => item.id !== isModalConfirmVisible.data.id)
-                            );
+                        onClick={async () => {
+                            if (isModalConfirmVisible) {
+                                // Thực hiện việc xoá phòng ban
+                                await deletePhongBan(isModalConfirmVisible.data.maPhongBan)
+                            }
                             setIsModalConfirmVisible({ visible: false, data: null });
                         }}
                     >
@@ -344,7 +310,7 @@ export const PhongBanComponent = () => {
             >
                 <p>
                     Bạn có chắc chắn muốn xóa đối tượng
-                    <strong> "{isModalConfirmVisible.data?.name}"</strong> không?
+                    <strong> "{isModalConfirmVisible.data?.tenPhongBan}"</strong> không?
                 </p>
             </Modal>
 
@@ -383,30 +349,13 @@ export const PhongBanComponent = () => {
                     >
                         <Select
                             style={{ width: '100%' }}
-                            options={[
-                                { value: '1', label: 'HC1' },
-                                { value: '2', label: 'HC2' },
-                                { value: '3', label: 'Hc3' },
-                                { value: '4', label: 'HC4', disabled: true },
-                            ]}
-                        >
-                        </Select>
-                    </Form.Item>
+                            options={dataSourceCaLam.map(pb => ({
+                                value: pb.maCa,
+                                label: pb.tenCa,
+                            }))}
+                        />
 
-                    {editingId && (
-                        <Form.Item
-                            name="status"
-                            label="Trạng thái"
-                            rules={[
-                                { required: true, message: 'Vui lòng chọn trạng thái!' }
-                            ]}
-                        >
-                            <Select size="large" placeholder="Chọn trạng thái">
-                                <Option value="Hoạt động">Hoạt động</Option>
-                                <Option value="Tạm dừng">Tạm dừng</Option>
-                            </Select>
-                        </Form.Item>
-                    )}
+                    </Form.Item>
 
                     <Form.Item style={{ marginBottom: 0, marginTop: 24 }}>
                         <Space style={{ width: '100%', justifyContent: 'flex-end' }}>

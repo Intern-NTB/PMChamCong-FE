@@ -4,7 +4,7 @@ import axiosInstance from "../config/axiosInstance";
  * Lấy tất cả phòng ban
  * @returns {Promise<PhongBan[]>} Danh sách phòng ban
  */
-export const getAllPhongBan = async () => {
+export const getAllPhongBanServices = async () => {
     try {
         const response = await axiosInstance.get('/phongban');
         return response.data;
@@ -34,7 +34,7 @@ export const getPhongBanById = async (maPhongBan) => {
  * @param {Object} phongBanData dữ liệu phòng ban mới
  * @returns {Promise<PhongBan>}
  */
-export const createPhongBan = async (phongBanData) => {
+export const createPhongBanServices = async (phongBanData) => {
     try {
         const response = await axiosInstance.post('/phongban', phongBanData);
         return response.data;
@@ -50,9 +50,9 @@ export const createPhongBan = async (phongBanData) => {
  * @param {Object} phongBanData dữ liệu cập nhật
  * @returns {Promise<PhongBan>}
  */
-export const updatePhongBan = async (maPhongBan, phongBanData) => {
+export const updatePhongBanServices = async (phongBanData) => {
     try {
-        const response = await axiosInstance.put(`/phongban/${maPhongBan}`, phongBanData);
+        const response = await axiosInstance.put(`/phongban/${phongBanData.maPhongBan}`, phongBanData);
         return response.data;
     } catch (error) {
         console.error(`Lỗi khi cập nhật phòng ban với mã ${maPhongBan}:`, error);
@@ -65,7 +65,7 @@ export const updatePhongBan = async (maPhongBan, phongBanData) => {
  * @param {string} maPhongBan 
  * @returns {Promise<void>}
  */
-export const deletePhongBan = async (maPhongBan) => {
+export const deletePhongBanServices = async (maPhongBan) => {
     try {
         await axiosInstance.delete(`/phongban/${maPhongBan}`);
     } catch (error) {
