@@ -44,7 +44,7 @@ export default function GiaLapChamCong() {
 
     useEffect(() => {
         setReload(() => getAllChamCongDetail);
-    }, [createDuLieuQuetVanTay])
+    }, [])
     const showAlert = (type, message, description) => {
         setAlert({ visible: true, type, message, description });
         setTimeout(() => setAlert({ ...alert, visible: false }), 3000);
