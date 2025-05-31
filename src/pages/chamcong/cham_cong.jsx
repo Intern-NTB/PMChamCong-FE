@@ -44,7 +44,7 @@ export default function GiaLapChamCong() {
 
     useEffect(() => {
         setReload(() => getAllChamCongDetail);
-    }, [])
+    }, [createDuLieuQuetVanTay])
     const showAlert = (type, message, description) => {
         setAlert({ visible: true, type, message, description });
         setTimeout(() => setAlert({ ...alert, visible: false }), 3000);
@@ -160,13 +160,24 @@ export default function GiaLapChamCong() {
         }
     };
     // Thêm bản ghi chấm công thủ công
-    const handleAddRecord = () => {
-        form.validateFields().then(values => {
+    const handleAddRecord = async () => {
+        try {
+            const values = await form.validateFields();
+            const thoiGian = `${dayjs(values.ngayChamCong).format('YYYY-MM-DDT')}` + `${values.gioVao}Z`
+            values.thoiGian = thoiGian
+            console.log(JSON.stringify(values), thoiGian)
+            await createDuLieuQuetVanTay(values);
+            // Reload lại data
+            await getAllChamCongDetail();
             setIsModalVisible(false);
             form.resetFields();
             message.success('Thêm bản ghi thành công!');
-        });
+        } catch (error) {
+            console.error(error);
+            message.error('Thêm bản ghi thất bại!');
+        }
     };
+
 
     // Cột của bảng cho desktop
     const columns = [
@@ -200,7 +211,7 @@ export default function GiaLapChamCong() {
                 title: 'Sắp xếp theo tên nhân viên ',
             },
             sortDirections: ['ascend', 'descend'],
-            
+
 
         },
         {
@@ -528,7 +539,7 @@ export default function GiaLapChamCong() {
                     <Col span={16} >
                         <Card style={{
                             height: '100%',
-                            display:'flex',
+                            display: 'flex',
                             flexDirection: 'column',
                             justifyContent: 'space-evenly'
                         }} title="Chấm công" extra={<CalendarOutlined />}>
@@ -681,26 +692,17 @@ export default function GiaLapChamCong() {
                             style={{ width: '100%' }}
                             format="DD/MM/YYYY"
                             size={isMobile ? 'large' : 'middle'}
+                            placeholder='Chọn ngày chấm công'
                         />
                     </Form.Item>
 
                     <Form.Item
                         name="gioVao"
-                        label="Giờ vào"
+                        label="Giờ"
                         rules={[{ required: true, message: 'Vui lòng nhập giờ vào!' }]}
                     >
                         <Input
                             placeholder="VD: 08:00:00"
-                            size={isMobile ? 'large' : 'middle'}
-                        />
-                    </Form.Item>
-
-                    <Form.Item
-                        name="gioRa"
-                        label="Giờ ra"
-                    >
-                        <Input
-                            placeholder="VD: 17:00:00 (có thể để trống)"
                             size={isMobile ? 'large' : 'middle'}
                         />
                     </Form.Item>
