@@ -1,0 +1,77 @@
+.luong-container {
+  padding: 24px;
+  background: #fff;
+  min-height: 100vh;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Title */
+.title-row {
+  margin-bottom: 24px;
+}
+
+.title-text {
+  font-size: 28px !important;
+  font-weight: 600 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.calendar-icon {
+  font-size: 26px !important;
+  margin-left: 10px;
+  color: #1890ff;
+}
+
+/* Toolbar */
+.toolbar-row {
+  margin-bottom: 24px;
+  gap: 16px;
+  flex-wrap: nowrap;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.toolbar-input,
+.toolbar-select,
+.toolbar-date-picker {
+  width: 180px;
+  font-size: 16px !important;
+  height: 40px !important;
+  border-radius: 6px !important;
+}
+
+.toolbar-input .ant-input-affix-wrapper,
+.toolbar-select .ant-select-selector,
+.toolbar-date-picker .ant-picker-input > input {
+  font-size: 16px !important;
+}
+
+.toolbar-button {
+  font-size: 16px !important;
+  height: 40px !important;
+  border-radius: 6px !important;
+  padding: 0 20px;
+}
+
+.icon-style {
+  font-size: 18px;
+  color: #1890ff;
+}
+
+/* Table */
+.custom-table .ant-table-thead > tr > th {
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.custom-table .ant-table-tbody > tr > td {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.custom-table .ant-table-pagination {
+  text-align: center;
+}
