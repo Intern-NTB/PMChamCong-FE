@@ -14,6 +14,7 @@ const MainLayout = () => {
         "/main-layout/chamcong": "Chấm Công",
         "/main-layout/luong": "Lương",
         "/main-layout/caidat": "Cài Đặt",
+        "/main-layout/baocao": "Báo Cáo", 
     };
 
     const location = useLocation();
@@ -22,11 +23,10 @@ const MainLayout = () => {
     const [reloadFn, setReloadFn] = useState(() => () => { });
     const [isMobile, setIsMobile] = useState(false);
     const [drawerVisible, setDrawerVisible] = useState(false);
-
-    // Kiểm tra kích thước màn hình
+    
     useEffect(() => {
         const checkScreenSize = () => {
-            setIsMobile(window.innerWidth < 992); // lg breakpoint của Ant Design
+            setIsMobile(window.innerWidth < 992);
         };
 
         checkScreenSize();
@@ -84,11 +84,9 @@ const MainLayout = () => {
                     <Link to="/main-layout/luong">Lương</Link>
                 </Menu.Item>
 
-                <Menu.SubMenu
-                    key='sub2'
-                    title='Báo cáo'
-                    icon={<BarChartOutlined />}
-                ></Menu.SubMenu>
+                <Menu.Item key="7" icon={<BarChartOutlined />}>
+                    <Link to="/main-layout/baocao">Báo Cáo</Link>
+                </Menu.Item>
                 
                 <Menu.Item key="6" icon={<SettingFilled />}>
                     <Link to="/main-layout/caidat">Cài đặt</Link>
@@ -100,7 +98,6 @@ const MainLayout = () => {
     if (isMobile) {
         return (
             <Layout style={{ height: '100dvh', minHeight: '100dvh' }}>
-                {/* Header cho mobile */}
                 <Layout.Header style={{
                     backgroundColor: 'white',
                     borderBottom: '1px solid grey',
@@ -126,7 +123,6 @@ const MainLayout = () => {
                     />
                 </Layout.Header>
 
-                {/* Drawer full screen cho mobile */}
                 <Drawer
                     title={null}
                     placement="left"
@@ -150,7 +146,7 @@ const MainLayout = () => {
                         background: '#71A5E0',
                         position: 'relative'
                     }}>
-                        {/* Nút đóng */}
+       
                         <div style={{
                             position: 'absolute',
                             top: '16px',
@@ -178,7 +174,6 @@ const MainLayout = () => {
                     </div>
                 </Drawer>
 
-                {/* Content cho mobile */}
                 <Layout.Content style={{
                     margin: '12px',
                     padding: '16px',
@@ -195,7 +190,6 @@ const MainLayout = () => {
         );
     }
 
-    // Desktop layout (giữ nguyên như cũ)
     return (
         <Layout style={{ height: '100dvh', minHeight: '100dvh' }}>
             <Layout.Sider 
