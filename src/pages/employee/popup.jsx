@@ -8,16 +8,14 @@ import { toLocalISOString } from '../../component/utils/format_date_iso';
 
 const Popup = ({ visible, onCancel, onOk, initialValues, maPhongBan, maVaiTro, title }) => {
     const { danhSachPhongBan } = usePhongBan()
-    const { danhSachVaiTroTheoIdPhongBan, loadingVaiTro, fetchAllVaiTroById } = useVaiTro()
-    const [isSelectedPhongBan, setIsSelectedPhongBan] = useState(true)
+    const { danhSachVaiTro, loadingVaiTro, getAllVaiTro } = useVaiTro()
     const { danhSachDoiTuongUuTien, loadingDoiTuongUuTien, fetchAllDoiTuongUuTien } = useDoiTuongUuTien()
     const [form] = Form.useForm();
 
-    useEffect(() => {
-        if (maPhongBan) {
-            fetchAllVaiTroById(maPhongBan)
-        }
-    }, [maPhongBan])
+    const dataSourceVaiTro = danhSachVaiTro.map(vt => ({
+        maVaiTro: vt.maVaiTro,
+        tenVaiTro: vt.tenVaiTro
+    }))
 
     // Reset form khi initialValues thay đổi
     useEffect(() => {
@@ -60,8 +58,9 @@ const Popup = ({ visible, onCancel, onOk, initialValues, maPhongBan, maVaiTro, t
             } else {
                 values.ngaySinh = null;
             }
+            console.log('Ngày sinh ' ,values.ngaySinh)
 
-            values.diaChi =values.diaChi || null;
+            values.diaChi = values.diaChi || null;
             values.soDienThoai = values.soDienThoai || null;
             values.maPhongBan = Number(values.maPhongBan) || null;
             values.maVaiTro = Number(values.maVaiTro) || null;
@@ -85,10 +84,9 @@ const Popup = ({ visible, onCancel, onOk, initialValues, maPhongBan, maVaiTro, t
 
     // Xử lý thay đổi phòng ban
     const handleChange = (value) => {
-        setIsSelectedPhongBan(false)
         console.log('Selected Phòng ban:', value);
         form.setFieldValue('maPhongBan', value);
-        fetchAllVaiTroById(value);
+        getAllVaiTro(value);
         form.setFieldValue('maVaiTro', null);
     };
 
@@ -101,12 +99,10 @@ const Popup = ({ visible, onCancel, onOk, initialValues, maPhongBan, maVaiTro, t
             open={visible}
             onOk={handleOk}
             onCancel={() => {
-                setIsSelectedPhongBan(true);
                 onCancel();
             }}
             footer={[
                 <Button key="back" onClick={() => {
-                    setIsSelectedPhongBan(true);
                     onCancel()
                 }}>
                     Hủy
@@ -173,14 +169,14 @@ const Popup = ({ visible, onCancel, onOk, initialValues, maPhongBan, maVaiTro, t
                             label="Vai Trò"
                         >
                             <Select
-                                disabled={isSelectedPhongBan}
                                 placeholder="Chọn vai trò"
                                 loading={loadingVaiTro}
-                                options={Array.isArray(danhSachVaiTroTheoIdPhongBan) ? danhSachVaiTroTheoIdPhongBan.map(vt => ({
-                                    value: vt.maVaiTro,
-                                    label: vt.tenVaiTro
-                                })) : []}
+                                options={dataSourceVaiTro.map(item => ({
+                                    value: item.maVaiTro,
+                                    label: item.tenVaiTro
+                                }))}
                             />
+
                         </Form.Item>
                         <Form.Item
                             name="maUuTien"

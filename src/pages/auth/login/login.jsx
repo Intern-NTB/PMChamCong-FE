@@ -1,35 +1,69 @@
-import { useState, useEffect } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
-import { login } from '../../../store/slices/authSlice'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './login.css'
 import logo from '../../../assets/images/LogoIcon.png'
+import { useTaiKhoan } from '../../../component/hooks/useTaiKhoan'
+import MyAlert from '../../../component/ui/alert'
 
 const Login = () => {
-  const dispatch = useDispatch()
-  const auth = useSelector(state => state.auth)
   const navigate = useNavigate()
+  const { loadingDangNhap, login } = useTaiKhoan()
 
-  const [username, setTenDangNhap] = useState('')
-  const [password, setPassword] = useState('')
+  const [alert, setAlert] = useState({ show: false, type: '', message: '' })
+  const [tenDangNhap, setTenDangNhap] = useState('')
+  const [matKhau, setPassword] = useState('')
 
-  const handleLogin = (e) => {
+  // Hàm để đóng alert
+  const handleCloseAlert = () => {
+    setAlert({ show: false, type: '', message: '' })
+  }
+
+  const handleLogin = async (e) => {
     e.preventDefault()
-    if (username && password) {
-      dispatch(login({ username }))
-    } else {
-      alert('Vui lòng nhập username và password')
+
+    // Kiểm tra input trước khi gọi API
+    if (!tenDangNhap || !matKhau) {
+      setAlert({ show: true, type: 'error', message: 'Vui lòng nhập tên đăng nhập và mật khẩu' })
+      return
+    }
+
+    try {
+      // Ẩn alert cũ trước khi thực hiện login
+      setAlert({ show: false, type: '', message: '' })
+
+      const result = await login(tenDangNhap, matKhau)
+      
+      console.log('Login result:', result)
+      
+      // Nếu login thành công, chuyển hướng trực tiếp
+      if (result && result.success) {
+        console.log('Login successful, navigating...')
+        navigate('/main-layout')
+      }
+      
+    } catch (error) {
+      console.log('Login error:', error)
+      
+      // Hiển thị thông báo lỗi
+      setAlert({
+        show: true,
+        type: 'error',
+        message: error.response?.data?.message || 'Sai tên đăng nhập hoặc mật khẩu'
+      })
     }
   }
 
-  useEffect(() => {
-    if (auth.isLoggedIn) {
-      navigate('/main-layout')
-    }
-  }, [auth.isLoggedIn, navigate])
-
   return (
     <div className='login-container'>
+      {/* Hiển thị alert nếu có */}
+      {alert.show && (
+        <MyAlert 
+          type={alert.type} 
+          message={alert.message} 
+          onClose={handleCloseAlert}
+        />
+      )}
+
       <form onSubmit={handleLogin} className='login-form'>
         <img src={logo} alt="Logo" />
         <div className='input-container'>
@@ -37,7 +71,7 @@ const Login = () => {
           <input
             type="text"
             placeholder="Tên đăng nhập của bạn"
-            value={username}
+            value={tenDangNhap}
             onChange={e => setTenDangNhap(e.target.value)}
             required
           />
@@ -47,12 +81,14 @@ const Login = () => {
           <input
             type="password"
             placeholder="Mật khẩu của bạn"
-            value={password}
+            value={matKhau}
             onChange={e => setPassword(e.target.value)}
             required
           />
         </div>
-        <button type="submit" disabled={!(username && password)}>Đăng nhập</button>
+        <button type="submit" disabled={loadingDangNhap}>
+          {loadingDangNhap ? 'Đang đăng nhập...' : 'Đăng nhập'}
+        </button>
       </form>
     </div>
   )

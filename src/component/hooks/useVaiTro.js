@@ -1,14 +1,14 @@
-import { useState } from "react"
-import { getAllVaiTroByIdPhongBan} from '../../services/vaitroServices.js'
+import { useEffect, useState } from "react"
+import { getAllVaiTroServices} from '../../services/vaitroServices.js'
 
 export const useVaiTro = () => {
-    const [danhSachVaiTroTheoIdPhongBan, setDanhSachVaiTro] = useState([])
+    const [danhSachVaiTro, setDanhSachVaiTro] = useState([])
     const [loadingVaiTro, setLoading] = useState(false)
 
-    const fetchAllVaiTroById = async (maPhongBan) => {
+    const getAllVaiTro= async () => {
         try {
             setLoading(true)
-            const response = await getAllVaiTroByIdPhongBan(maPhongBan)
+            const response = await getAllVaiTroServices()
             setDanhSachVaiTro(Array.isArray(response.data) ? response.data : [])
         } catch (error) {
             console.error('Lỗi khi lấy danh sách phòng ban:', error);
@@ -18,9 +18,13 @@ export const useVaiTro = () => {
         }
     }
 
+    useEffect(()=>{
+        getAllVaiTro()
+    },[])
+
     return {
-        danhSachVaiTroTheoIdPhongBan,
+        danhSachVaiTro,
         loadingVaiTro,
-        fetchAllVaiTroById
+        getAllVaiTro
     }
 }

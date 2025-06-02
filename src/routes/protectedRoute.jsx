@@ -1,10 +1,15 @@
 import React from 'react';
-import { useSelector } from 'react-redux';
 import { Navigate } from 'react-router-dom';
 
 const ProtectedRoute = ({ children }) => {
-  const isLoggedIn = useSelector(state => state.auth.isLoggedIn);
-  if (!isLoggedIn) return <Navigate to="/login" replace />;
+  // Lấy token từ localStorage
+  const token = localStorage.getItem('token');
+  
+  // Nếu không có token, điều hướng về trang login
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+
   return children;
 };
 
