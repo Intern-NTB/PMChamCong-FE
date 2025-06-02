@@ -5,6 +5,8 @@ import './cai_dat.css'
 import { DoiTuongUuTienComponent } from "./doi_tuong_uu_tien";
 import { CaLamComponent } from './ca_lam.jsx'
 import { useCaLam } from "../../component/hooks/useCaLam.js";
+import { VaiTroComponent } from "./vai_tro.jsx";
+import { NgayLeComponent } from "./ngay_le.jsx";
 
 export default function CaiDat() {
     // State
