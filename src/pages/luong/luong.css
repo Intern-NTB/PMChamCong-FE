@@ -3,9 +3,9 @@
   background: #fff;
   min-height: 100vh;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
 }
 
-/* Title */
 .title-row {
   margin-bottom: 24px;
 }
@@ -16,6 +16,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  color: #333;
 }
 
 .calendar-icon {
@@ -28,7 +29,6 @@
 .toolbar-row {
   margin-bottom: 24px;
   gap: 16px;
-  flex-wrap: nowrap;
   flex-wrap: nowrap;
   justify-content: flex-start;
   align-items: center;
@@ -54,6 +54,8 @@
   height: 40px !important;
   border-radius: 6px !important;
   padding: 0 20px;
+  background-color: #1890ff;
+  color: white;
 }
 
 .icon-style {
@@ -65,13 +67,23 @@
 .custom-table .ant-table-thead > tr > th {
   font-weight: 600;
   font-size: 16px;
+  background-color: #1890ff;
+  color: white;
+  text-align: center;
 }
 
 .custom-table .ant-table-tbody > tr > td {
   font-weight: 500;
   font-size: 14px;
+  text-align: center;
 }
 
 .custom-table .ant-table-pagination {
   text-align: center;
+  margin-top: 20px;
+}
+
+.custom-table .ant-table-tbody > tr:hover > td {
+  background-color: #e6f7ff !important;
+  cursor: pointer;
 }

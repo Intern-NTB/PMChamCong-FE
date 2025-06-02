@@ -1,59 +1,106 @@
-nav {
-    display: flex;
-    flex-direction: column;
-}
-
 .ant-layout-sider {
-    width: 250px !important;
-    height: 100% !important;
+  width: 250px !important;
+  height: 100% !important;
+  background: linear-gradient(135deg, #71A5E0, #71A5E0) !important;
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.1);
+  padding: 20px !important;
 }
 
-/* Hoặc target cụ thể hơn */
 .ant-menu-inline {
-    background: #71A5E0 !important;
-    font-size: 20px !important;
+  background: transparent !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  color: #f0f2f5 !important;
+  border: none !important;
 }
 
+.ant-menu-item,
+.ant-menu-submenu-title {
+  padding: 12px 20px !important;
+  border-radius: 8px !important;
+  color: #000000 !important;
+  border: none !important;
+  box-shadow: none !important;
+  transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease !important;
+  font-weight: 600 !important;
+  margin-bottom: 8px !important;
+}
 
-/* Style cho các item menu */
-.ant-menu-item {
-    padding: 20px !important;
-    font-size: 20px !important;
-    color: black !important;
-    border: 1px solid rgba(255, 255, 255, 0.4) !important; /* viền trắng mờ */
-    border-radius: 10px !important; /* bo tròn viền */
-    margin-bottom: 12px !important;
-    transition: all 0.3s ease !important;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important; /* bóng nhẹ */
+.ant-menu-item:hover,
+.ant-menu-submenu-title:hover {
+  background: #1c5bbf !important;
+  color: #fff !important;
+  box-shadow: 0 4px 12px rgba(28, 91, 191, 0.4) !important;
+  cursor: pointer;
 }
 
 .ant-menu-item-selected {
-    background-color: #004080 !important;  /* màu nền bạn muốn */
-    color: white !important;               /* màu chữ khi active */
-    border-color: #002f5f !important;      /* nếu muốn giữ border */
+  background: linear-gradient(90deg, #0052cc, #003d99) !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  box-shadow: 0 6px 15px rgba(56, 127, 235, 0.6) !important;
 }
 
-.ant-menu-submenu-title {
-    padding: 20px !important;
-    font-size: 20px !important;
-    color: black !important;
-    border: 1px solid rgba(255, 255, 255, 0.4) !important; /* viền trắng mờ */
-    border-radius: 10px !important; /* bo tròn viền */
-    margin-bottom: 12px !important;
-    transition: all 0.3s ease !important;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important; /* bóng nhẹ */
-
-}
-
-.ant-menu-sub .ant-menu-item{
-    border: 0 !important;
-
+.ant-menu-sub .ant-menu-item {
+  border: 0 !important;
+  margin-bottom: 4px !important;
 }
 
 .ant-menu-item-icon {
-  font-size: 20px !important;
+  font-size: 18px !important;
+  color: #000000 !important;
+  transition: color 0.3s ease !important;
+  margin-right: 12px;
 }
 
-.ant-layout-sider-zero-width-trigger{
-    background-color: #71A5E0 !important;
+.ant-menu-item:hover .ant-menu-item-icon,
+.ant-menu-item-selected .ant-menu-item-icon {
+  color: #fff !important;
+}
+
+.ant-layout-sider-zero-width-trigger {
+  background-color: #2a76d2 !important;
+  color: #f0f2f5 !important;
+  font-size: 20px !important;
+  border-radius: 0 8px 8px 0;
+  box-shadow: 2px 0 6px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.3s ease;
+}
+
+.ant-layout-sider-zero-width-trigger:hover {
+  background-color: #1c5bbf !important;
+  color: white !important;
+}
+
+.ant-btn {
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
+  transition: all 0.3s ease !important;
+  font-size: 16px !important;
+}
+
+.ant-btn:hover, .ant-btn:focus {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25) !important;
+  transform: translateY(-2px);
+  color: #003d99 !important;
+  border-color: #003d99 !important;
+  background-color: #e6f0ff !important;
+}
+
+.ant-btn-icon-only {
+  background-color: transparent !important;
+  color: #2a76d2 !important;
+  font-size: 20px !important;
+  border: none !important;
+}
+
+.ant-btn-icon-only:hover {
+  background-color: #e6f0ff !important;
+  color: #003d99 !important;
+}
+
+nav {
+  display: flex;
+  flex-direction: column;
 }

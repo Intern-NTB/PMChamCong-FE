@@ -21,6 +21,9 @@ import dayjs from "dayjs";
 
 import LuongDetailModal from "./LuongDetailModal";
 import LuongEditModal from "./LuongEditModal";
+import { exportToExcel } from "./exportToExcel"; 
+import { generatePDF } from "./generatePDF"; 
+
 import "./luong.css";
 
 const { Title } = Typography;
@@ -34,44 +37,7 @@ export default function Luong() {
   const [selectedPhongBan, setSelectedPhongBan] = useState(null);
 
   const [dataSource, setDataSource] = useState([
-    {
-      key: 1,
-      maNhanVien: "NV001",
-      hoTen: "Nguyễn Văn A",
-      luongCoBan: 8000000,
-      tienPhuCap: 2000000,
-      ngayLe: 2,
-      ngayCong: 22,
-      tienThuong: 1500000,
-      mucPhat: 500000,
-      tangCa: 5,
-      viPham: 1,
-      lanDiMuon: 2,
-      lanVeSom: 1,
-      nghiCoPhep: 1,
-      nghiKhongPhep: 0,
-      thucNhan: 12000000,
-      phongBan: "Phòng IT",
-    },
-    {
-      key: 2,
-      maNhanVien: "NV002",
-      hoTen: "Trần Thị B",
-      luongCoBan: 7500000,
-      tienPhuCap: 1800000,
-      ngayLe: 1,
-      ngayCong: 20,
-      tienThuong: 1200000,
-      mucPhat: 0,
-      tangCa: 4,
-      viPham: 0,
-      lanDiMuon: 0,
-      lanVeSom: 0,
-      nghiCoPhep: 0,
-      nghiKhongPhep: 1,
-      thucNhan: 11000000,
-      phongBan: "Phòng Kinh doanh",
-    },
+    // lấy dữ liệu ở đây
   ]);
 
   const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
@@ -207,6 +173,14 @@ export default function Luong() {
     setIsEditModalVisible(false);
   };
 
+  const exportToExcelHandler = () => {
+    exportToExcel(dataSource);
+  };
+
+  const generatePDFHandler = () => {
+    generatePDF(dataSource);
+  };
+
   return (
     <div className="luong-container">
       <Row justify="center" align="middle" className="title-row">
@@ -216,12 +190,7 @@ export default function Luong() {
         </Title>
       </Row>
 
-      <Row
-        justify="start"
-        align="middle"
-        gutter={16}
-        className="toolbar-row"
-      >
+      <Row justify="start" align="middle" gutter={16} className="toolbar-row">
         <Col>
           <Input
             placeholder="Tìm nhân viên"
@@ -286,6 +255,11 @@ export default function Luong() {
         size="middle"
         className="custom-table"
       />
+
+      <Button onClick={exportToExcelHandler} style={{ marginRight: 10 }}>
+        Xuất Excel
+      </Button>
+      <Button onClick={generatePDFHandler}>Xuất PDF</Button>
 
       <LuongDetailModal
         visible={isDetailModalVisible}
