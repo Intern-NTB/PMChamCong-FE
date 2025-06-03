@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getAllNhanVienChiTietServices, createNhanVienServices, deleteNhanVienServices, updateNhanVienService } from '../../services/nhanvienServices';
+import { getAllNhanVienChiTietServices, createNhanVienServices, deleteNhanVienServices, updateNhanVienService, reloadNhanVienServices } from '../../services/nhanvienServices';
 
 export const useNhanVien = () => {
     const [danhSachNhanVien, setDanhSachNhanVien] = useState([]);
@@ -11,6 +11,7 @@ export const useNhanVien = () => {
     const fetchNhanVien = async () => {
         setLoading(true);
         try {
+            await reloadData();  
             const response = await getAllNhanVienChiTietServices();
             setDanhSachNhanVien(Array.isArray(response.data) ? response.data : []);
         } catch (error) {
@@ -49,20 +50,30 @@ export const useNhanVien = () => {
     const updateNhanVien = async (maNhanVien, nhanVienData) => {
         setLoading(true);
         try {
-            await updateNhanVienService(maNhanVien, nhanVienData)
-            setStatusUpdateNhanVien(true)
+            await updateNhanVienService(maNhanVien, nhanVienData);
+            setStatusUpdateNhanVien(true);
         } catch (error) {
-            console.log(`API Response Error: ${error}`)
-            setStatusUpdateNhanVien(false)
+            console.log(`API Response Error: ${error}`);
+            setStatusUpdateNhanVien(false);
         } finally {
-            setLoading(true);
+            setLoading(false);  // Sửa lại chỉ gọi setLoading(false) ở đây
         }
-
     }
 
+    // Đổi tên hàm này thành reloadData để tránh trùng tên
+    const reloadData = async () => {
+        setLoading(true);
+        try {
+            await reloadNhanVienServices();  // Đây là dịch vụ reload nhân viên
+        } catch (error) {
+            console.log(`API Response Error: ${error}`);
+        } finally {
+            setLoading(false);
+        }
+    }
 
     useEffect(() => {
-        fetchNhanVien();
+        fetchNhanVien();  // Gọi fetchNhanVien khi component mount
     }, []);
 
     return {
@@ -74,6 +85,7 @@ export const useNhanVien = () => {
         fetchNhanVien,
         addNhanVien,
         deleteNhanVien,
-        updateNhanVien
+        updateNhanVien,
+        reloadData  // Trả về reloadData thay vì reloadNhanVien
     };
 };

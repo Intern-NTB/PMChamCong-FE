@@ -11,7 +11,7 @@ const { Option } = Select;
 const { Search } = Input;
 
 export default function NhanVien() {
-    const { danhSachNhanVien, loading, statusCreateNhanVien, statusDeleteNhanVien, statusUpdateNhanVien, fetchNhanVien, addNhanVien, deleteNhanVien, updateNhanVien } = useNhanVien();
+    const { danhSachNhanVien, loading, statusCreateNhanVien, statusDeleteNhanVien, statusUpdateNhanVien,fetchNhanVien, addNhanVien, deleteNhanVien, updateNhanVien } = useNhanVien();
     const { setReload } = useContext(ReloadContext);
 
     // States
@@ -40,7 +40,6 @@ export default function NhanVien() {
 
     useEffect(() => {
         setReload(() => fetchNhanVien);
-
         // Check screen size
         const checkScreenSize = () => {
             setIsMobile(window.innerWidth < 880);
@@ -237,7 +236,7 @@ export default function NhanVien() {
             fixed: 'right',
             render: (text, record) => (
                 <Dropdown
-                    overlay={getActionMenu(record)}
+                    menu={getActionMenu(record)}
                     trigger={['click']}
                     placement="bottomRight"
                 >

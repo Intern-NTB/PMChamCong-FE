@@ -14,7 +14,7 @@ const MainLayout = () => {
         "/main-layout/chamcong": "Chấm Công",
         "/main-layout/luong": "Lương",
         "/main-layout/caidat": "Cài Đặt",
-        "/main-layout/baocao": "Báo Cáo", 
+        "/main-layout/baocao": "Báo Cáo",
     };
 
     const location = useLocation();
@@ -23,7 +23,7 @@ const MainLayout = () => {
     const [reloadFn, setReloadFn] = useState(() => () => { });
     const [isMobile, setIsMobile] = useState(false);
     const [drawerVisible, setDrawerVisible] = useState(false);
-    
+
     useEffect(() => {
         const checkScreenSize = () => {
             setIsMobile(window.innerWidth < 992);
@@ -36,9 +36,9 @@ const MainLayout = () => {
 
     const menuContent = (
         <>
-            <div style={{ 
-                display: 'flex', 
-                justifyContent: 'center', 
+            <div style={{
+                display: 'flex',
+                justifyContent: 'center',
                 alignItems: 'center',
                 padding: isMobile ? '20px 0' : '16px 0'
             }}>
@@ -87,7 +87,7 @@ const MainLayout = () => {
                 <Menu.Item key="7" icon={<BarChartOutlined />}>
                     <Link to="/main-layout/baocao">Báo Cáo</Link>
                 </Menu.Item>
-                
+
                 <Menu.Item key="6" icon={<SettingFilled />}>
                     <Link to="/main-layout/caidat">Cài đặt</Link>
                 </Menu.Item>
@@ -130,23 +130,23 @@ const MainLayout = () => {
                     onClose={() => setDrawerVisible(false)}
                     open={drawerVisible}
                     width="100vw"
-                    height="100vh"
-                    style={{
-                        padding: 0,
+                    styles={{
+                        body: {
+                            padding: 0,
+                            background: '#71A5E0',
+                            height: '100vh',
+                        },
+                        header: {
+                            display: 'none',
+                        },
                     }}
-                    bodyStyle={{
-                        padding: 0,
-                        background: '#71A5E0',
-                        height: '100vh'
-                    }}
-                    headerStyle={{ display: 'none' }}
                 >
-                    <div style={{ 
-                        height: '100vh', 
+                    <div style={{
+                        height: '100vh',
                         background: '#71A5E0',
                         position: 'relative'
                     }}>
-       
+
                         <div style={{
                             position: 'absolute',
                             top: '16px',
@@ -169,7 +169,7 @@ const MainLayout = () => {
                                 ✕
                             </Button>
                         </div>
-                        
+
                         {menuContent}
                     </div>
                 </Drawer>
@@ -192,9 +192,9 @@ const MainLayout = () => {
 
     return (
         <Layout style={{ height: '100dvh', minHeight: '100dvh' }}>
-            <Layout.Sider 
-                width={300} 
-                style={{ background: '#71A5E0', height: '100vh' }} 
+            <Layout.Sider
+                width={300}
+                style={{ background: '#71A5E0', height: '100vh' }}
                 breakpoint="lg"
                 collapsedWidth="0"
             >

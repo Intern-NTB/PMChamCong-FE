@@ -1,0 +1,25 @@
+/* Giới hạn chiều rộng của modal trên màn hình nhỏ */
+@media (max-width: 768px) {
+    .ant-modal {
+        width: 95% !important;
+    }
+    
+    .ant-modal-content {
+        padding: 12px;
+    }
+
+    .ant-table-wrapper {
+        overflow-x: auto; /* Cho phép cuộn bảng nếu quá rộng */
+    }
+}
+
+/* Điều chỉnh bảng khi trên các màn hình nhỏ */
+@media (max-width: 576px) {
+    .ant-table-thead th {
+        font-size: 12px; /* Giảm kích thước chữ trên header */
+    }
+
+    .ant-table-cell {
+        font-size: 12px; /* Giảm kích thước chữ trong các ô */
+    }
+}

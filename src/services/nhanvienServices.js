@@ -79,3 +79,12 @@ export const deleteNhanVienServices = async (maNhanVien) => {
         throw error;
     }
 };
+
+export const reloadNhanVienServices = async (maNhanVien) => {
+    try {
+        await axiosInstance.get(`/nhanvien/reload`);
+    } catch (error) {
+        console.error('Lỗi khi xóa nhân viên:', error);
+        throw error;
+    }
+};
