@@ -3,67 +3,56 @@ import { useNavigate } from 'react-router-dom'
 import './login.css'
 import logo from '../../../assets/images/LogoIcon.png'
 import { useTaiKhoan } from '../../../component/hooks/useTaiKhoan'
-import MyAlert from '../../../component/ui/alert'
+import { notification } from 'antd'
 
 const Login = () => {
   const navigate = useNavigate()
   const { loadingDangNhap, login } = useTaiKhoan()
 
-  const [alert, setAlert] = useState({ show: false, type: '', message: '' })
   const [tenDangNhap, setTenDangNhap] = useState('')
   const [matKhau, setPassword] = useState('')
 
-  // Hàm để đóng alert
-  const handleCloseAlert = () => {
-    setAlert({ show: false, type: '', message: '' })
+  const [api, contextHolder] = notification.useNotification()
+
+  const openNotification = (type, message, description) => {
+    api[type]({
+      message,
+      description,
+      placement: 'topRight',
+      duration: 3
+    })
   }
 
   const handleLogin = async (e) => {
     e.preventDefault()
 
-    // Kiểm tra input trước khi gọi API
     if (!tenDangNhap || !matKhau) {
-      setAlert({ show: true, type: 'error', message: 'Vui lòng nhập tên đăng nhập và mật khẩu' })
+      openNotification('error', 'Thiếu thông tin', 'Vui lòng nhập tên đăng nhập và mật khẩu')
       return
     }
 
     try {
-      // Ẩn alert cũ trước khi thực hiện login
-      setAlert({ show: false, type: '', message: '' })
-
       const result = await login(tenDangNhap, matKhau)
-      
       console.log('Login result:', result)
-      
-      // Nếu login thành công, chuyển hướng trực tiếp
+
       if (result && result.success) {
-        console.log('Login successful, navigating...')
         navigate('/main-layout')
+      } else {
+        openNotification('error', 'Đăng nhập thất bại', 'Tên đăng nhập hoặc mật khẩu không đúng')
       }
-      
     } catch (error) {
       console.log('Login error:', error)
-      
-      // Hiển thị thông báo lỗi
-      setAlert({
-        show: true,
-        type: 'error',
-        message: error.response?.data?.message || 'Sai tên đăng nhập hoặc mật khẩu'
-      })
+      openNotification(
+        'error',
+        'Lỗi đăng nhập',
+        'Sai tên đăng nhập hoặc mật khẩu'
+      )
     }
   }
 
   return (
     <div className='login-container'>
-      {/* Hiển thị alert nếu có */}
-      {alert.show && (
-        <MyAlert 
-          type={alert.type} 
-          message={alert.message} 
-          onClose={handleCloseAlert}
-        />
-      )}
-
+      {contextHolder}
       <form onSubmit={handleLogin} className='login-form'>
         <img src={logo} alt="Logo" />
         <div className='input-container'>
