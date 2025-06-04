@@ -1,4 +1,4 @@
-import { Table, Button, Space, Input, Select, Card, Row, Col, Dropdown, Tag, Statistic, Badge, Menu, AutoComplete, Tooltip } from 'antd';
+import { Table, Button, Space, Input, Select, Card, Row, Col, Dropdown, Tag, Statistic, Badge, Menu, AutoComplete } from 'antd';
 import { useEffect, useState, useContext, useMemo } from 'react';
 import { SearchOutlined, FilterOutlined, MoreOutlined, UserOutlined, TeamOutlined, CheckCircleOutlined, CloseCircleOutlined, BarChartOutlined, HistoryOutlined, StarOutlined, DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
 import Popup from './popup';
@@ -11,7 +11,7 @@ const { Option } = Select;
 const { Search } = Input;
 
 export default function NhanVien() {
-    const { danhSachNhanVien, loading, statusCreateNhanVien, statusDeleteNhanVien, statusUpdateNhanVien,fetchNhanVien, addNhanVien, deleteNhanVien, updateNhanVien } = useNhanVien();
+    const { danhSachNhanVien, loading, statusCreateNhanVien, statusDeleteNhanVien, statusUpdateNhanVien, fetchNhanVien, addNhanVien, deleteNhanVien, updateNhanVien } = useNhanVien();
     const { setReload } = useContext(ReloadContext);
 
     // States
@@ -236,7 +236,7 @@ export default function NhanVien() {
             fixed: 'right',
             render: (text, record) => (
                 <Dropdown
-                    menu={getActionMenu(record)}
+                    overlay={getActionMenu(record)}
                     trigger={['click']}
                     placement="bottomRight"
                 >
