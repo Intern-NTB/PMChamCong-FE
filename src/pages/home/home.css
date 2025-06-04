@@ -193,7 +193,6 @@
   }
 }
 
-/* Bổ sung phần biểu đồ và cảnh báo */
 
 .extra-info-section {
   margin-top: 48px;
@@ -244,7 +243,6 @@
   user-select: none;
 }
 
-/* Responsive */
 
 @media (max-width: 900px) {
   .extra-info-section {

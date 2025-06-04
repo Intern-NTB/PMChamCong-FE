@@ -43,33 +43,33 @@ export default function LuongDetailModal({
           {record.phongBan || "-"}
         </Descriptions.Item>
         <Descriptions.Item label={<><IdcardOutlined /> Mã nhân viên</>}>
-          {record.maNhanVien}
+          {record.maNhanVien || "-"}
         </Descriptions.Item>
         <Descriptions.Item label={<><TeamOutlined /> Họ tên</>}>
-          {record.hoTen}
+          {record.hoTen || "-"}
         </Descriptions.Item>
         <Descriptions.Item label="Lương cơ bản">
-          {record.luongCoBan.toLocaleString("vi-VN", { style: "currency", currency: "VND" })}
+          {record.luongCoBan ? record.luongCoBan.toLocaleString("vi-VN", { style: "currency", currency: "VND" }) : "-"}
         </Descriptions.Item>
         <Descriptions.Item label="Phụ cấp">
-          {record.tienPhuCap.toLocaleString("vi-VN", { style: "currency", currency: "VND" })}
+          {record.tienPhuCap ? record.tienPhuCap.toLocaleString("vi-VN", { style: "currency", currency: "VND" }) : "-"}
         </Descriptions.Item>
         <Descriptions.Item label="Lương thưởng">
-          {record.tienThuong.toLocaleString("vi-VN", { style: "currency", currency: "VND" })}
+          {record.tienThuong ? record.tienThuong.toLocaleString("vi-VN", { style: "currency", currency: "VND" }) : "-"}
         </Descriptions.Item>
         <Descriptions.Item label="Mức phạt">
-          {record.mucPhat.toLocaleString("vi-VN", { style: "currency", currency: "VND" })}
+          {record.mucPhat ? record.mucPhat.toLocaleString("vi-VN", { style: "currency", currency: "VND" }) : "-"}
         </Descriptions.Item>
-        <Descriptions.Item label="Tăng ca">{record.tangCa}</Descriptions.Item>
-        <Descriptions.Item label="Vi phạm">{record.viPham}</Descriptions.Item>
-        <Descriptions.Item label="Số lần đi muộn">{record.lanDiMuon}</Descriptions.Item>
-        <Descriptions.Item label="Số lần về sớm">{record.lanVeSom}</Descriptions.Item>
-        <Descriptions.Item label="Số lần nghỉ có phép">{record.nghiCoPhep}</Descriptions.Item>
-        <Descriptions.Item label="Số lần nghỉ không phép">{record.nghiKhongPhep}</Descriptions.Item>
-        <Descriptions.Item label="Ngày công">{record.ngayCong}</Descriptions.Item>
-        <Descriptions.Item label="Ngày lễ">{record.ngayLe}</Descriptions.Item>
+        <Descriptions.Item label="Tăng ca">{record.tangCa || "-"}</Descriptions.Item>
+        <Descriptions.Item label="Vi phạm">{record.viPham || "-"}</Descriptions.Item>
+        <Descriptions.Item label="Số lần đi muộn">{record.lanDiMuon || "-"}</Descriptions.Item>
+        <Descriptions.Item label="Số lần về sớm">{record.lanVeSom || "-"}</Descriptions.Item>
+        <Descriptions.Item label="Số lần nghỉ có phép">{record.nghiCoPhep || "-"}</Descriptions.Item>
+        <Descriptions.Item label="Số lần nghỉ không phép">{record.nghiKhongPhep || "-"}</Descriptions.Item>
+        <Descriptions.Item label="Ngày công">{record.ngayCong || "-"}</Descriptions.Item>
+        <Descriptions.Item label="Ngày lễ">{record.ngayLe || "-"}</Descriptions.Item>
         <Descriptions.Item label="Thực nhận">
-          {record.thucNhan.toLocaleString("vi-VN", { style: "currency", currency: "VND" })}
+          {record.thucNhan ? record.thucNhan.toLocaleString("vi-VN", { style: "currency", currency: "VND" }) : "-"}
         </Descriptions.Item>
       </Descriptions>
 
