@@ -21,24 +21,81 @@ import dayjs from "dayjs";
 
 import LuongDetailModal from "./LuongDetailModal";
 import LuongEditModal from "./LuongEditModal";
-import { exportToExcel } from "./exportToExcel"; 
-import { generatePDF } from "./generatePDF"; 
+import { exportToExcel } from "./exportToExcel";
+import { generatePDF } from "./generatePDF";
 
 import "./luong.css";
 
 const { Title } = Typography;
 const { Option } = Select;
 
+const sampleData = [
+  {
+    key: 1,
+    maNhanVien: "NV001",
+    hoTen: "Nguyễn Văn A",
+    phongBan: "Phòng IT",
+    luongCoBan: 15000000,
+    tienPhuCap: 2000000,
+    tienThuong: 1000000,
+    thucNhan: 18000000,
+    ngayCong: 22,
+    ngayLe: 2,
+    mucPhat: 500000,
+    tangCa: 5,
+    viPham: 1,
+    lanDiMuon: 2,
+    lanVeSom: 0,
+    nghiCoPhep: 1,
+    nghiKhongPhep: 0,
+  },
+  {
+    key: 2,
+    maNhanVien: "NV002",
+    hoTen: "Trần Thị B",
+    phongBan: "Phòng Kinh doanh",
+    luongCoBan: 13000000,
+    tienPhuCap: 1500000,
+    tienThuong: 1200000,
+    thucNhan: 15700000,
+    ngayCong: 21,
+    ngayLe: 1,
+    mucPhat: 0,
+    tangCa: 3,
+    viPham: 0,
+    lanDiMuon: 0,
+    lanVeSom: 1,
+    nghiCoPhep: 0,
+    nghiKhongPhep: 0,
+  },
+  {
+    key: 3,
+    maNhanVien: "NV003",
+    hoTen: "Lê Văn C",
+    phongBan: "Phòng Nhân sự",
+    luongCoBan: 16000000,
+    tienPhuCap: 1800000,
+    tienThuong: 900000,
+    thucNhan: 17700000,
+    ngayCong: 23,
+    ngayLe: 0,
+    mucPhat: 300000,
+    tangCa: 7,
+    viPham: 2,
+    lanDiMuon: 1,
+    lanVeSom: 0,
+    nghiCoPhep: 2,
+    nghiKhongPhep: 1,
+  },
+];
+
 export default function Luong() {
   const phongBanList = ["Phòng IT", "Phòng Kinh doanh", "Phòng Nhân sự"];
 
+  const [dataSource, setDataSource] = useState(sampleData);
   const [selectedMonthYear, setSelectedMonthYear] = useState(dayjs());
   const [searchValue, setSearchValue] = useState("");
   const [selectedPhongBan, setSelectedPhongBan] = useState(null);
-
-  const [dataSource, setDataSource] = useState([
-    // lấy dữ liệu ở đây
-  ]);
 
   const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
   const [detailRecord, setDetailRecord] = useState(null);
@@ -86,6 +143,15 @@ export default function Luong() {
       render: (text) => <b>{text}</b>,
     },
     {
+      title: "Lương cơ bản",
+      dataIndex: "luongCoBan",
+      key: "luongCoBan",
+      width: 120,
+      align: "right",
+      render: (v) =>
+        v.toLocaleString("vi-VN", { style: "currency", currency: "VND" }),
+    },
+    {
       title: "Phụ cấp",
       dataIndex: "tienPhuCap",
       key: "tienPhuCap",
@@ -93,22 +159,6 @@ export default function Luong() {
       align: "right",
       render: (v) =>
         v.toLocaleString("vi-VN", { style: "currency", currency: "VND" }),
-    },
-    {
-      title: "Ngày lễ",
-      dataIndex: "ngayLe",
-      key: "ngayLe",
-      width: 90,
-      align: "center",
-      render: (text) => <b>{text}</b>,
-    },
-    {
-      title: "Ngày công",
-      dataIndex: "ngayCong",
-      key: "ngayCong",
-      width: 90,
-      align: "center",
-      render: (text) => <b>{text}</b>,
     },
     {
       title: "Thưởng",
@@ -131,7 +181,7 @@ export default function Luong() {
     {
       title: "Thao tác",
       key: "action",
-      width: 100,
+      width: 120,
       fixed: "right",
       align: "center",
       render: (_, record) => (
@@ -174,11 +224,11 @@ export default function Luong() {
   };
 
   const exportToExcelHandler = () => {
-    exportToExcel(dataSource);
+    exportToExcel(filteredData, selectedMonthYear.format("MM/YYYY"), selectedPhongBan, false);
   };
 
   const generatePDFHandler = () => {
-    generatePDF(dataSource);
+    generatePDF(filteredData, selectedMonthYear.format("MM/YYYY"));
   };
 
   return (
@@ -237,7 +287,12 @@ export default function Luong() {
         <Col>
           <Button
             type="primary"
-            icon={<PlusOutlined className="icon-style" style={{ color: "#fff", fontSize: 18 }} />}
+            icon={
+              <PlusOutlined
+                className="icon-style"
+                style={{ color: "#fff", fontSize: 18 }}
+              />
+            }
             size="large"
             className="toolbar-button"
           >
@@ -250,21 +305,24 @@ export default function Luong() {
         columns={columns}
         dataSource={filteredData}
         pagination={{ pageSize: 10, showSizeChanger: true }}
-        scroll={{ x: "max-content" }}
+        scroll={{ x: 1100 }}
         rowKey="key"
         size="middle"
         className="custom-table"
       />
 
-      <Button onClick={exportToExcelHandler} style={{ marginRight: 10 }}>
-        Xuất Excel
-      </Button>
-      <Button onClick={generatePDFHandler}>Xuất PDF</Button>
+      <Space style={{ marginTop: 16 }}>
+        <Button onClick={exportToExcelHandler} style={{ marginRight: 10 }}>
+          Xuất Excel
+        </Button>
+        <Button onClick={generatePDFHandler}>Xuất PDF</Button>
+      </Space>
 
       <LuongDetailModal
         visible={isDetailModalVisible}
         onCancel={() => setIsDetailModalVisible(false)}
         record={detailRecord}
+        selectedMonthYear={selectedMonthYear}
       />
       <LuongEditModal
         visible={isEditModalVisible}
