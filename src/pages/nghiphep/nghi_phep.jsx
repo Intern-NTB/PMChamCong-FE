@@ -1,56 +1,84 @@
-import React, { useState, useMemo } from 'react';
-import {
-  Table,
-  Button,
-  Input,
-  DatePicker,
-  Space,
-  Row,
-  Col,
-  Statistic,
-  Modal,
-  Form,
-  Checkbox,
-  Tooltip,
-  message
-} from 'antd';
-import {
-  PlusOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  UserOutlined,
-  DollarOutlined,
-  CheckCircleOutlined,
-  ExclamationCircleOutlined
-} from '@ant-design/icons';
+// ===== REACT & Thư viện ngoài =====
+import React, { useState, useMemo, useEffect, useContext } from 'react';
 import dayjs from 'dayjs';
+import customParseFormat from 'dayjs/plugin/customParseFormat'; // Thêm plugin này
+
+// Thêm plugin để parse custom format
+dayjs.extend(customParseFormat);
+
+// ===== ANT DESIGN =====
+import { Card, Table, Button, Input, DatePicker, Space, Row, Col, Statistic, Modal, Form, Select, Checkbox, Tooltip, message, notification, Tag } from 'antd';
+import { CloseCircleOutlined, PlusOutlined, EditOutlined, DeleteOutlined, UserOutlined, DollarOutlined, CheckCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+
+// ===== STYLES ======
 import './nghi_phep.css';
 
+// ===== HOOK Tuỳ Chỉnh ======
+import { useNghiPhep } from '../../component/hooks/useNghiPhep';
+import { useNhanVien } from '../../component/hooks/useNhanVien';
+import { useAppNotification } from '../../component/ui/notification';
+
+// ===== CONTEXT =====
+import { ReloadContext } from '../../context/reloadContext';
+
+// ===== UTILITIES =====
+import { NghiPhepPermissions } from '../../config/utils/user_permission';
+
 const { RangePicker } = DatePicker;
-const { confirm } = Modal;
+
+// Hàm helper để parse ngày từ backend
+const parseDate = (dateString) => {
+  if (!dateString) return null;
+  // Nếu là string với format DD/MM/YYYY từ backend
+  if (typeof dateString === 'string' && dateString.includes('/')) {
+    return dayjs(dateString, 'DD/MM/YYYY');
+  }
+  // Nếu đã là dayjs object hoặc format khác
+  return dayjs(dateString);
+};
+
+const formatDateDisplay = (dateString) => {
+  if (!dateString) return '';
+  const parsed = parseDate(dateString);
+  return parsed.isValid() ? parsed.format('DD/MM/YYYY') : dateString;
+};
 
 export default function NghiPhep() {
-  // dữ liệu tạm 
-  const [nghiPhepList, setNghiPhepList] = useState([
-    {
-      id: 1,
-      maNhanVien: 'NV001',
-      ngayBatDau: '2023-05-01',
-      ngayKetThuc: '2023-05-03',
-      lyDo: 'Ốm',
-      tinhLuong: true,
-      coPhep: true,
-    },
-    {
-      id: 2,
-      maNhanVien: 'NV002',
-      ngayBatDau: '2023-05-02',
-      ngayKetThuc: '2023-05-02',
-      lyDo: 'Nghỉ phép',
-      tinhLuong: false,
-      coPhep: false,
-    },
-  ]);
+  // HOOK
+  const { danhSachNghiPhep, loadingNghiPhep, isCreatedNghiPhep,
+    isDeletedNghiPhep, isUpdatedNghiPhep,
+    getAllNghiPhep, updateNghiPhep, deleteNghiPhep, createNghiPhep } = useNghiPhep()
+  const { danhSachNhanVien } = useNhanVien()
+
+  // STATE
+  const api = useAppNotification()
+
+  // CONTEXT
+  const { setReload } = useContext(ReloadContext);
+
+  // PHÂN QUYỀN - Sử dụng utility functions
+  const canEditStatus = NghiPhepPermissions.canEditStatus();
+  const canDelete = NghiPhepPermissions.canDelete();
+
+
+  useEffect(() => {
+    setReload(() => getAllNghiPhep)
+  }, [])
+
+  const dataSourceNghiPhep = danhSachNghiPhep.map(np => {
+    const nhanVien = danhSachNhanVien.find(nv => nv.maNhanVien === np.maNhanVien)
+    return {
+      maNghiPhep: np.maNghiPhep,
+      ngayBatDau: np.ngayBatDau,
+      ngayKetThuc: np.ngayKetThuc,
+      liDo: np.liDo,
+      tinhLuong: np.tinhLuong,
+      tinhPhep: np.tinhPhep,
+      trangThaiPheDuyet: np.trangThaiPheDuyet,
+      maNhanVien: np.maNhanVien,
+      hoTen: nhanVien ? nhanVien.hoTen : 'Không xác định'
+    }
+  })
 
   const [searchValue, setSearchValue] = useState('');
   const [dateRange, setDateRange] = useState([null, null]);
@@ -59,33 +87,44 @@ export default function NghiPhep() {
 
   const [form] = Form.useForm();
 
-  // hàm thống kê
+  // hàm thống kê - Fix date parsing
   const statistics = useMemo(() => {
-    if (!nghiPhepList.length) return { total: 0, tinhLuong: 0, coPhep: 0 };
-    const filtered = nghiPhepList.filter(item => {
+    if (!dataSourceNghiPhep.length) return { total: 0, tinhLuong: 0, tinhPhep: 0 };
+    const filtered = dataSourceNghiPhep.filter(item => {
       if (!dateRange[0] || !dateRange[1]) return true;
-      const start = dayjs(item.ngayBatDau);
-      const end = dayjs(item.ngayKetThuc);
+
+      const start = parseDate(item.ngayBatDau);
+      const end = parseDate(item.ngayKetThuc);
+
+      // Kiểm tra validity trước khi so sánh
+      if (!start.isValid() || !end.isValid()) return false;
+
       return start.isBefore(dateRange[1].endOf('day')) && end.isAfter(dateRange[0].startOf('day'));
     });
     return {
       total: filtered.length,
       tinhLuong: filtered.filter(i => i.tinhLuong).length,
-      coPhep: filtered.filter(i => i.coPhep).length,
+      tinhPhep: filtered.filter(i => i.tinhPhep).length,
     };
-  }, [nghiPhepList, dateRange]);
+  }, [dataSourceNghiPhep, dateRange]);
 
-//
+  // Filter list - Fix date parsing
   const filteredList = useMemo(() => {
-    return nghiPhepList.filter(item => {
-      const matchesSearch = item.maNhanVien.toLowerCase().includes(searchValue.toLowerCase());
+    return dataSourceNghiPhep.filter(item => {
+      const maNhanVien = item.maNhanVien ? String(item.maNhanVien).toLowerCase() : '';
+      const matchesSearch = maNhanVien.includes(searchValue.toLowerCase());
       if (!matchesSearch) return false;
       if (!dateRange[0] || !dateRange[1]) return true;
-      const start = dayjs(item.ngayBatDau);
-      const end = dayjs(item.ngayKetThuc);
+
+      const start = parseDate(item.ngayBatDau);
+      const end = parseDate(item.ngayKetThuc);
+
+      // Kiểm tra validity trước khi so sánh
+      if (!start.isValid() || !end.isValid()) return false;
+
       return start.isBefore(dateRange[1].endOf('day')) && end.isAfter(dateRange[0].startOf('day'));
     });
-  }, [nghiPhepList, searchValue, dateRange]);
+  }, [dataSourceNghiPhep, searchValue, dateRange]);
 
   //thêm/sửa
   const showAddModal = () => {
@@ -98,104 +137,126 @@ export default function NghiPhep() {
     setEditingRecord(record);
     form.setFieldsValue({
       ...record,
-      ngayBatDau: dayjs(record.ngayBatDau),
-      ngayKetThuc: dayjs(record.ngayKetThuc),
+      // Fix date parsing khi set vào form
+      ngayBatDau: parseDate(record.ngayBatDau),
+      ngayKetThuc: parseDate(record.ngayKetThuc),
     });
     setIsModalVisible(true);
   };
 
   // form 
-  const handleOk = () => {
-    form.validateFields().then(values => {
+  const handleOk = async () => {
+    try {
+      await form.validateFields(); // Chờ xác thực các trường
+      const values = form.getFieldsValue(); // Lấy tất cả giá trị từ form
+
       const dataToSave = {
-        ...values,
         ngayBatDau: values.ngayBatDau.format('YYYY-MM-DD'),
         ngayKetThuc: values.ngayKetThuc.format('YYYY-MM-DD'),
+        tinhLuong: values.tinhLuong || false,  
+        tinhPhep: values.tinhPhep || false,
+        liDo: values.liDo,
+        trangThaiPheDuyet: values.trangThaiPheDuyet || 'Chờ duyệt',
+        maNhanVien: values.maNhanVien
       };
 
       if (editingRecord) {
+        // Cập nhật
         confirm({
           title: 'Xác nhận cập nhật',
           icon: <ExclamationCircleOutlined />,
           content: 'Bạn có chắc chắn muốn cập nhật bản ghi nghỉ phép này?',
-          onOk() {
-            setNghiPhepList(prev =>
-              prev.map(item => (item.id === editingRecord.id ? { ...item, ...dataToSave } : item))
-            );
-            message.success('Cập nhật thành công!');
+          onOk: async () => {
+            await updateNghiPhep(editingRecord.id, dataToSave);
+            api.success({
+              message: 'Cập nhật nghỉ phép thành công'
+            });
             setIsModalVisible(false);
           },
-          onCancel() {},
         });
       } else {
-        confirm({
-          title: 'Xác nhận thêm mới',
-          icon: <ExclamationCircleOutlined />,
-          content: 'Bạn có chắc chắn muốn thêm bản ghi nghỉ phép này?',
-          onOk() {
-            setNghiPhepList(prev => [
-              ...prev,
-              { id: Date.now(), ...dataToSave }
-            ]);
-            message.success('Thêm mới thành công!');
-            setIsModalVisible(false);
-          },
-          onCancel() {},
+        // Tạo mới
+        await createNghiPhep(dataToSave);
+        api.success({
+          message: 'Thành công',
+          description: 'Đã thêm thành công đơn nghỉ phép'
         });
+        setIsModalVisible(false);
       }
-    });
+    } catch (error) {
+      api.error({
+        message: 'Có lỗi xảy ra',
+        description: error.message,
+      });
+    }
   };
 
-  // form xacs nhận 
-  const handleDelete = record => {
-    confirm({
-      title: 'Xác nhận xóa',
-      icon: <ExclamationCircleOutlined />,
-      content: `Bạn có chắc chắn muốn xóa bản ghi nghỉ phép của NV ${record.maNhanVien}?`,
-      okText: 'Xóa',
-      okType: 'danger',
-      cancelText: 'Hủy',
-      onOk() {
-        setNghiPhepList(prev => prev.filter(item => item.id !== record.id));
-        message.success('Xóa thành công!');
-      },
-      onCancel() {},
-    });
+
+  // form xác nhận 
+  const handleDelete = async (maNghiPhep) => {
+    try {
+      await deleteNghiPhep(maNghiPhep);
+      api.success({
+        message: 'Xoá dữ liệu thành công',
+        description: 'Đã xoá đơn nghỉ phép',
+      });
+    } catch (error) {
+      api.error({
+        message: 'Xoá dữ liệu không thành công',
+        description: 'Xoá thất bại',
+      });
+    } finally {
+      setOpenModal(false);
+      setSelectedRecord(null);
+    }
   };
 
   const columns = [
-    { title: 'STT', render: (_, __, idx) => idx + 1, width: 60, align: 'center' },
     { title: 'Mã nhân viên', dataIndex: 'maNhanVien', key: 'maNhanVien', width: 120 },
+    { title: 'Tên nhân viên', dataIndex: 'hoTen', key: 'hoTen', width: 120 },
     {
       title: 'Ngày bắt đầu',
       dataIndex: 'ngayBatDau',
       key: 'ngayBatDau',
       width: 120,
-      render: text => dayjs(text).format('DD/MM/YYYY')
+      render: (date) => formatDateDisplay(date) // Format hiển thị
     },
     {
       title: 'Ngày kết thúc',
       dataIndex: 'ngayKetThuc',
       key: 'ngayKetThuc',
       width: 120,
-      render: text => dayjs(text).format('DD/MM/YYYY')
+      render: (date) => formatDateDisplay(date) // Format hiển thị
     },
-    { title: 'Lý do nghỉ', dataIndex: 'lyDo', key: 'lyDo', width: 180 },
+    { title: 'Lý do nghỉ', dataIndex: 'liDo', key: 'liDo', width: 180 },
     {
       title: 'Tính lương',
       dataIndex: 'tinhLuong',
       key: 'tinhLuong',
       width: 100,
       align: 'center',
-      render: value => value ? <CheckCircleOutlined style={{ color: '#52c41a', fontSize: 20 }} /> : null
+      render: value => value ? <CheckCircleOutlined style={{ color: '#52c41a', fontSize: 20 }} /> : <CloseCircleOutlined style={{ color: 'red', fontSize: 20 }} />
     },
     {
       title: 'Có phép',
-      dataIndex: 'coPhep',
-      key: 'coPhep',
+      dataIndex: 'tinhPhep',
+      key: 'tinhPhep',
       width: 100,
       align: 'center',
-      render: value => value ? <CheckCircleOutlined style={{ color: '#1890ff', fontSize: 20 }} /> : null
+      render: value => value ? <CheckCircleOutlined style={{ color: '#1890ff', fontSize: 20 }} /> : <CloseCircleOutlined style={{ color: '#1890ff', fontSize: 20 }} />
+    },
+    {
+      title: 'Trang thái phê duyệt',
+      dataIndex: 'trangThaiPheDuyet',
+      key: 'trangThaiPheDuyet',
+      width: 100,
+      align: 'center',
+      render: (status) => {
+        const color = status === 'Đã duyệt' ? 'green' : status === 'Chờ duyệt' ? 'orange' : 'red'
+        return (
+          <Tag color={color}>{status}</Tag>
+        )
+      }
     },
     {
       title: 'Thao tác',
@@ -207,7 +268,6 @@ export default function NghiPhep() {
         <Space>
           <Tooltip title="Sửa">
             <Button
-              type="primary"
               shape="circle"
               icon={<EditOutlined />}
               onClick={() => showEditModal(record)}
@@ -215,10 +275,11 @@ export default function NghiPhep() {
           </Tooltip>
           <Tooltip title="Xóa">
             <Button
+            disabled = {canDelete ? false : true}
               danger
               shape="circle"
-              icon={<DeleteOutlined />}
-              onClick={() => handleDelete(record)}
+              icon={<DeleteOutlined style={{ color: 'red' }} />}
+              onClick={() => handleDelete(record.maNghiPhep)}
             />
           </Tooltip>
         </Space>
@@ -228,80 +289,96 @@ export default function NghiPhep() {
 
   return (
     <div className="container-column" style={{ padding: 24, background: '#f0f2f5', minHeight: '100vh' }}>
+
       <Row gutter={16} style={{ marginBottom: 20, textAlign: 'center' }}>
+
         <Col xs={24} sm={8}>
-          <Statistic
-            title="Nhân viên nghỉ"
-            value={statistics.total}
-            prefix={<UserOutlined />}
-            valueStyle={{ color: '#3f8600' }}
-          />
+          <Card>
+            <Statistic
+              title="Nhân viên nghỉ"
+              value={statistics.total}
+              prefix={<UserOutlined />}
+              valueStyle={{ color: '#3f8600' }}
+            />
+          </Card>
+
+        </Col>
+
+
+        <Col xs={24} sm={8}>
+          <Card>
+            <Statistic
+              title="Tính lương"
+              value={statistics.tinhLuong}
+              prefix={<DollarOutlined />}
+              valueStyle={{ color: '#cf1322' }}
+            />
+          </Card>
+
         </Col>
         <Col xs={24} sm={8}>
-          <Statistic
-            title="Tính lương"
-            value={statistics.tinhLuong}
-            prefix={<DollarOutlined />}
-            valueStyle={{ color: '#cf1322' }}
-          />
-        </Col>
-        <Col xs={24} sm={8}>
-          <Statistic
+          <Card><Statistic
             title="Có phép"
-            value={statistics.coPhep}
+            value={statistics.tinhPhep}
             prefix={<CheckCircleOutlined />}
             valueStyle={{ color: '#108ee9' }}
-          />
-        </Col>
-      </Row>
+          /></Card>
 
-      <Row gutter={16} style={{ marginBottom: 20, alignItems: 'center' }}>
-        <Col xs={24} sm={12} md={8}>
-          <Input.Search
-            placeholder="Tìm mã nhân viên..."
-            allowClear
-            value={searchValue}
-            onChange={e => setSearchValue(e.target.value)}
-            enterButton
-          />
-        </Col>
-        <Col xs={24} sm={12} md={12}>
-          <RangePicker
-            style={{ width: '320px' }}
-            value={dateRange}
-            onChange={setDateRange}
-            format="DD/MM/YYYY"
-            allowClear
-          />
-        </Col>
-        <Col xs={24} sm={24} md={4}>
-          <Button type="primary" icon={<PlusOutlined />} block onClick={showAddModal}>
-            Tạo đơn xin nghỉ
-          </Button>
         </Col>
       </Row>
+      <Card
+        style={{
+          marginBottom: 12,
+        }}
+      >
+        <Row gutter={16} style={{ marginBottom: 20, alignItems: 'center' }}>
+          <Col xs={24} sm={12} md={8}>
+            <Input.Search
+              placeholder="Tìm mã nhân viên..."
+              allowClear
+              value={searchValue}
+              onChange={e => setSearchValue(e.target.value)}
+              enterButton
+            />
+          </Col>
+          <Col xs={24} sm={12} md={12}>
+            <RangePicker
+              style={{ width: '320px' }}
+              value={dateRange}
+              onChange={setDateRange}
+              format="DD/MM/YYYY"
+              allowClear
+            />
+          </Col>
+          <Col xs={24} sm={24} md={4}>
+            <Button type="primary" icon={<PlusOutlined />} block onClick={showAddModal}>
+              Tạo đơn xin nghỉ
+            </Button>
+          </Col>
+        </Row>
+      </Card>
+
       <Table
         columns={columns}
         dataSource={filteredList}
-        rowKey="id"
+        rowKey={record => record.maNghiPhep}
         scroll={{ x: 900 }}
         pagination={{ pageSize: 10 }}
       />
       <Modal
         title={editingRecord ? 'Sửa đơn nghỉ phép' : 'Tạo đơn xin nghỉ'}
-        visible={isModalVisible}
+        open={isModalVisible}
         onCancel={() => setIsModalVisible(false)}
         onOk={handleOk}
         okText="Lưu"
         cancelText="Hủy"
-        destroyOnClose
       >
         <Form
           form={form}
           layout="vertical"
           initialValues={{
             tinhLuong: false,
-            coPhep: false,
+            tinhPhep: false,
           }}
         >
           <Form.Item
@@ -309,7 +386,11 @@ export default function NghiPhep() {
             label="Mã nhân viên"
             rules={[{ required: true, message: 'Vui lòng nhập mã nhân viên!' }]}
           >
-            <Input />
+            <Select disabled={editingRecord ? true : false} options={danhSachNhanVien.map(nv => ({
+              value: nv.maNhanVien,
+              label: `${nv.hoTen} - ${nv.cmnd}`
+            }))}
+            />
           </Form.Item>
           <Form.Item
             name="ngayBatDau"
@@ -326,16 +407,26 @@ export default function NghiPhep() {
             <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
           </Form.Item>
           <Form.Item
-            name="lyDo"
+            name="liDo"
             label="Lý do nghỉ"
             rules={[{ required: true, message: 'Vui lòng nhập lý do nghỉ!' }]}
           >
             <Input.TextArea rows={3} />
           </Form.Item>
+          {canEditStatus && editingRecord && (
+            <Form.Item name='trangThaiPheDuyet' >
+              <Select placeholder= 'Trạng thái phê duyệt' options={[
+                { value: 'Chờ duyệt', label: 'Chờ duyệt' }, { value: 'Từ chối', label: 'Từ chối' }, { value: 'Đã duyệt', label: 'Đã duyệt' }
+              ]}>
+
+              </Select>
+            </Form.Item>
+          )}
+
           <Form.Item name="tinhLuong" valuePropName="checked">
             <Checkbox>Tính lương</Checkbox>
           </Form.Item>
-          <Form.Item name="coPhep" valuePropName="checked">
+          <Form.Item name="tinhPhep" valuePropName="checked">
             <Checkbox>Có phép</Checkbox>
           </Form.Item>
         </Form>

@@ -36,3 +36,35 @@
     background-color: #f0f9ff !important;
 }
 
+/* Responsive breakpoints cho card */
+@media (max-width: 575px) {
+    .ant-card-body {
+        padding: 8px 12px !important;
+    }
+}
+
+@media (min-width: 576px) and (max-width: 767px) {
+    .ant-card-body {
+        padding: 10px 14px !important;
+    }
+}
+
+@media (min-width: 1200px) {
+    .ant-card-body {
+        padding: 16px 20px !important;
+    }
+}
+
+/* Hover effects */
+.ant-card:hover {
+    transform: translateY(-2px);
+    transition: all 0.3s ease;
+}
+
+/* Button responsive */
+@media (max-width: 575px) {
+    .ant-btn-sm {
+        padding: 2px 6px !important;
+        font-size: 12px !important;
+    }
+}

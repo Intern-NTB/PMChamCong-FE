@@ -216,7 +216,7 @@ export const CaLamComponent = () => {
             type="text"
             icon={<EditOutlined />}
             onClick={() => handleEdit(record)}
-            size="small"
+            size="middle"
           />
           <Popconfirm
             title="Xóa ca làm"
@@ -226,10 +226,9 @@ export const CaLamComponent = () => {
             cancelText="Không"
           >
             <Button
-              type="text"
               danger
-              icon={<DeleteOutlined />}
-              size="small"
+              icon={<DeleteOutlined style={{ color: 'red' }} />}
+              size="middle"
             />
           </Popconfirm>
         </Space>
@@ -251,8 +250,16 @@ export const CaLamComponent = () => {
         <Card style={{ marginBottom: '24px' }}>
           <Row justify="space-between" align="middle">
             <Col>
-              <Title level={2} style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <ClockCircleOutlined style={{ color: '#1890ff' }} />
+              <Title
+                background
+                level={2} 
+                style={{
+                  marginBottom: 8,
+                  background: 'linear-gradient(45deg, #667eea, #764ba2)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  fontWeight: 700
+                }}>
                 Quản Lý Ca Làm Việc
               </Title>
               <Text type="secondary">Quản lý và theo dõi các ca làm việc trong công ty</Text>
@@ -263,6 +270,9 @@ export const CaLamComponent = () => {
                 icon={<PlusOutlined />}
                 size="large"
                 onClick={handleAdd}
+                style={{
+                  background: 'linear-gradient(45deg, #667eea, #764ba2)'
+                }}
               >
                 Thêm Ca Làm
               </Button>
@@ -452,6 +462,6 @@ export const CaLamComponent = () => {
           </Form>
         </Modal>
       </div>
-    </div>
+    </div >
   );
 };

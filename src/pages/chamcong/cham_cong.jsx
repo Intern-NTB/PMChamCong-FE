@@ -24,7 +24,6 @@ import MyAlert from '../../component/ui/alert';
 import ModalTangCa from './tangca/modal_tangcang';
 
 // ===== Styles =====
-import './cham_cong.css';
 
 // ===== Cấu hình Day.js =====
 dayjs.extend(isSameOrAfter);
@@ -136,15 +135,10 @@ export default function GiaLapChamCong() {
             showAlert('error', 'Thiếu thông tin', 'Vui lòng chọn phòng ban!');
             return;
         }
-
         try {
-            //  Sửa format ngày từ YYYY-DD-MM thành YYYY-MM-DD
-            console.log(`Ngày tăng ca ${dayjs(selectedDate.dateValue).format('YYYY-MM-DD')}`)
-            console.log(`Mã Phòng ban ${selectedPhongBan.phongBanValue}`)
             showAlert('success', 'Thành công', 'Thêm ngày tăng ca thành công');
             await getAllChamCongDetail()
         } catch (error) {
-            console.error('Lỗi khi chấm công vào:', error);
             showAlert('error', 'Lỗi', 'Không thể tăng ca ! Vui lòng thử lại !');
         }
     }, [selectedDate, selectedPhongBan, showAlert, getAllChamCongDetail]);

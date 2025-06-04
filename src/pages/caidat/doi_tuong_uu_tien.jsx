@@ -1,36 +1,20 @@
 import React, { useState, useCallback } from 'react';
 import {
-    Row,
-    Col,
-    Form,
-    Input,
-    Space,
-    Divider,
-    Modal,
-    message,
-    Button as AntButton,
-    Card,
-    Tag,
-    Checkbox,
-    Typography,
-    Empty,
-    Pagination,
-    Select
+    Row, Col, Form, Input, Space,
+    Modal, message, Button as AntButton, Card,
+    Tag, Checkbox, Typography, Empty, Pagination, Select,
+    Tooltip, Avatar, Badge
 } from "antd";
 import {
-    PlusOutlined,
-    EditOutlined,
-    DeleteOutlined,
-    EyeOutlined,
-    SearchOutlined,
-    CalendarOutlined
+    PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined,
+
 } from '@ant-design/icons';
 
 const { Text, Title } = Typography;
 const { Search } = Input;
 const { Option } = Select;
 
-export const DoiTuongUuTienComponent = () => {
+export default function DoiTuongUuTienComponent() {
     const [form] = Form.useForm();
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [isModalConfirmVisible, setIsModalConfirmVisible] = useState({
@@ -44,16 +28,50 @@ export const DoiTuongUuTienComponent = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(8);
 
-    // Mock data
+    // Mock data với thêm fields
     const [doiTuongUuTienList, setDoiTuongUuTienList] = useState([
-        { id: 1, name: 'Thai sản' },
-        { id: 2, name: 'Có con' },
+        {
+            maUuTien: 1,
+            tenVaiTro: 'Thai sản',
+            ghiChu: 'Dành cho phụ nữ mang thai và cho con bú',
+            totalMembers: 156
+        },
+        {
+            maUuTien: 2,
+            tenVaiTro: 'Có con nhỏ',
+            ghiChu: 'Dành cho người có con dưới 6 tuổi',
+            totalMembers: 89
+        },
+        {
+            maUuTien: 3,
+            tenVaiTro: 'Người khuyết tật',
+            ghiChu: 'Dành cho người khuyết tật và gia đình',
+            totalMembers: 42
+        },
+        {
+            maUuTien: 4,
+            tenVaiTro: 'Người cao tuổi',
+            ghiChu: 'Dành cho người trên 65 tuổi',
+            totalMembers: 73
+        },
     ]);
+
+
+
+    // Color mapping cho priority
+    const getPriorityColor = (priority) => {
+        const colorMap = {
+            'Cao': '#ff4d4f',
+            'Trung bình': '#faad14',
+            'Thấp': '#52c41a'
+        };
+        return colorMap[priority] || '#d9d9d9';
+    };
 
     // Filter data
     const filteredData = doiTuongUuTienList.filter(item => {
-        const matchSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            item.note.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchSearch = item.tenVaiTro.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (item.ghiChu && item.ghiChu.toLowerCase().includes(searchTerm.toLowerCase()));
         const matchStatus = statusFilter === 'all' || item.status === statusFilter;
         return matchSearch && matchStatus;
     });
@@ -66,22 +84,24 @@ export const DoiTuongUuTienComponent = () => {
     const onFinish = (values) => {
         if (editingId) {
             setDoiTuongUuTienList(prev => prev.map(item =>
-                item.id === editingId ? {
+                item.maUuTien === editingId ? {
                     ...item,
                     ...values,
                     updatedDate: new Date().toISOString().split('T')[0]
                 } : item
             ));
-            message.success('Cập nhật phòng ban thành công!');
+            message.success('Cập nhật đối tượng ưu tiên thành công!');
         } else {
             const newItem = {
-                id: Date.now(),
+                maUuTien: Date.now(),
                 ...values,
                 status: 'Hoạt động',
-                createdDate: new Date().toISOString().split('T')[0]
+                priority: values.priority || 'Trung bình',
+                createdDate: new Date().toISOString().split('T')[0],
+                totalMembers: 0
             };
             setDoiTuongUuTienList(prev => [...prev, newItem]);
-            message.success('Thêm phòng ban thành công!');
+            message.success('Thêm đối tượng ưu tiên thành công!');
         }
         handleCancel();
     };
@@ -93,18 +113,22 @@ export const DoiTuongUuTienComponent = () => {
     };
 
     const handleEdit = useCallback((data) => {
-        setEditingId(data.id);
+        setEditingId(data.maUuTien);
         form.setFieldsValue(data);
         setIsModalVisible(true);
     }, [form]);
 
     const handleView = useCallback((data) => {
         Modal.info({
-            title: 'Thông tin phòng ban',
-            width: 600,
+            title: 'Thông tin đối tượng ưu tiên',
+            wmaUuTienth: 600,
             content: (
                 <div style={{ marginTop: 16 }}>
-                    <p><strong>Tên phòng ban:</strong> {data.name}</p>
+                    <p><strong>Tên:</strong> {data.tenVaiTro}</p>
+                    <p><strong>Ghi chú:</strong> {data.ghiChu}</p>
+                    <p><strong>Độ ưu tiên:</strong> <Tag color={getPriorityColor(data.priority)}>{data.priority}</Tag></p>
+                    <p><strong>Trạng thái:</strong> <Tag color={data.status === 'Hoạt động' ? 'green' : 'red'}>{data.status}</Tag></p>
+                    <p><strong>Tổng số thành viên:</strong> {data.totalMembers}</p>
                 </div>
             )
         });
@@ -130,7 +154,7 @@ export const DoiTuongUuTienComponent = () => {
             cancelText: 'Hủy',
             okType: 'danger',
             onOk: () => {
-                setDoiTuongUuTienList(prev => prev.filter(item => !selectedRowKeys.includes(item.id)));
+                setDoiTuongUuTienList(prev => prev.filter(item => !selectedRowKeys.includes(item.maUuTien)));
                 setSelectedRowKeys([]);
                 message.success(`Đã xóa ${selectedRowKeys.length} đối tượng ưu tiên thành công!`);
             }
@@ -143,154 +167,298 @@ export const DoiTuongUuTienComponent = () => {
         form.resetFields();
     };
 
-    const handleCardSelect = (id, checked) => {
+    const handleCardSelect = (maUuTien, checked) => {
         if (checked) {
-            setSelectedRowKeys(prev => [...prev, id]);
+            setSelectedRowKeys(prev => [...prev, maUuTien]);
         } else {
-            setSelectedRowKeys(prev => prev.filter(key => key !== id));
+            setSelectedRowKeys(prev => prev.filter(key => key !== maUuTien));
         }
     };
 
     const handleSelectAll = (checked) => {
         if (checked) {
-            setSelectedRowKeys(paginatedData.map(item => item.id));
+            setSelectedRowKeys(paginatedData.map(item => item.maUuTien));
         } else {
             setSelectedRowKeys([]);
         }
     };
 
-    const renderPhongBanCard = (item) => (
-        <Col xs={24} sm={12} md={8} lg={6} key={item.id}>
+    const renderDoiTuongUuTienCard = (item) => (
+        <Col xs={24} sm={12} md={8} lg={6} key={item.maUuTien}>
             <Card
                 hoverable
                 style={{
+                    padding: 0,
+                    height: '100%',
+                    position: 'relative',
                     marginBottom: 16,
-                    borderRadius: 8,
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                    border: selectedRowKeys.includes(item.id) ? '2px solid #1890ff' : '1px solid #d9d9d9'
+                    borderRadius: 16,
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    border: selectedRowKeys.includes(item.maUuTien) ? '3px solmaUuTien #1890ff' : 'none',
+                    height: '100%',
+                    overflow: 'hmaUuTienden',
+                    position: 'relative',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    transform: selectedRowKeys.includes(item.maUuTien) ? 'translateY(-8px)' : 'translateY(0)',
+                    boxShadow: selectedRowKeys.includes(item.maUuTien)
+                        ? '0 20px 40px rgba(0,0,0,0.15)'
+                        : '0 10px 30px rgba(0,0,0,0.1)'
                 }}
             >
-                <div style={{ marginBottom: 12 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                {/* Gradient Overlay */}
+                <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'white',
+                    backdropFilter: 'blur(10px)'
+                }} />
+
+                {/* Content */}
+                <div style={{
+                    position: 'relative',
+                    zIndex: 2,
+                    padding: 20,
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column'
+                }}>
+                    {/* Header */}
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start',
+                        marginBottom: 16
+                    }}>
                         <Checkbox
-                            checked={selectedRowKeys.includes(item.id)}
-                            onChange={(e) => handleCardSelect(item.id, e.target.checked)}
+                            checked={selectedRowKeys.includes(item.maUuTien)}
+                            onChange={(e) => handleCardSelect(item.maUuTien, e.target.checked)}
+                            style={{
+                                transform: 'scale(1.2)'
+                            }}
                         />
-                        <Text type="secondary" style={{ fontSize: 12 }}>
-                            ID: {item.id}
+                        <Badge
+                            color="#52c41a"
+                            text={
+                                <Text type="secondary" style={{ fontSize: 11, fontWeight: 500 }}>
+                                    {item.totalMembers} nhân viên
+                                </Text>
+                            }
+                        />
+                    </div>
+
+                    {/* Icon và Status */}
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        marginBottom: 16
+                    }}>
+                        <Avatar
+                            size={48}
+                            style={{
+                                background: `linear-gradient(45deg, ${getPriorityColor(item.priority)}, ${getPriorityColor(item.priority)}90)`,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}
+                        />
+                    </div>
+
+                    {/* Title */}
+                    <div style={{ flex: 1, marginBottom: 16 }}>
+                        <Title
+                            level={4}
+                            style={{
+                                margin: 0,
+                                fontSize: 18,
+                                fontWeight: 600,
+                                color: '#262626',
+                                lineHeight: 1.3,
+                                marginBottom: 8
+                            }}
+                        >
+                            {item.tenVaiTro}
+                        </Title>
+                        <Text
+                            type="secondary"
+                            style={{
+                                fontSize: 13,
+                                lineHeight: 1.4,
+                                display: '-webkit-box',
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: 'vertical',
+                                overflow: 'hmaUuTienden'
+                            }}
+                        >
+                            {item.ghiChu}
                         </Text>
                     </div>
-                </div>
 
-                <div style={{ display: 'flex' }}>
-                    <Space size="small">
-                        <Title level={5} style={{ margin: 0, marginBottom: 8 }}>
-                            {item.name}
-                        </Title>
-                        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    {/* Action Buttons */}
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        gap: 8,
+                        marginTop: 'auto'
+                    }}>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                            <Tooltip title="Chỉnh sửa">
+                                <AntButton
+                                    icon={<EditOutlined />}
+                                    onClick={() => handleEdit(item)}
+                                    size="mmaUuTiendle"
 
-                            <AntButton
-                                type="text"
-                                icon={<EditOutlined />}
-                                onClick={() => handleEdit(item)}
-                                size="small"
-                                title="Sửa"
-                                style={{
-                                    marginRight: 12
-                                }}
-                            />
+                                />
+                            </Tooltip>
+                            <Tooltip title="Xóa">
+                                <AntButton
+                                    danger
+                                    icon={<DeleteOutlined style={{ color: 'red' }} />}
+                                    onClick={() => handleDelete(item)}
+                                    size="mmaUuTiendle"
 
-                            <AntButton
-                                type="text"
-                                danger
-                                icon={<DeleteOutlined />}
-                                onClick={() => handleDelete(item)}
-                                size="small"
-                                title="Xóa"
-                                style={{ color: 'white' }}
-                            />
+                                />
+                            </Tooltip>
                         </div>
-
-                    </Space>
+                    </div>
                 </div>
             </Card>
         </Col>
     );
 
     return (
-        <div style={{ padding: '0 16px' }}>
+        <div style={{
+            padding: '24px',
+            background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+            minHeight: '100vh'
+        }}>
             {/* Header Section */}
-            <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
-                <Col>
-                    <Title level={3} style={{ marginBottom: 12 }}>
-                        Quản lý đối tượng ưu tiên
-                    </Title>
-                </Col>
-                <Col>
-                    <Space wrap>
-                        {selectedRowKeys.length > 0 && (
-                            <AntButton
-                                danger
-                                icon={<DeleteOutlined />}
-                                onClick={handleBulkDelete}
-                            >
-                                Xóa đã chọn ({selectedRowKeys.length})
-                            </AntButton>
-                        )}
+            <div style={{
+                background: 'white',
+                borderRadius: 16,
+                padding: 24,
+                marginBottom: 24,
+                boxShadow: '0 10px 30px rgba(0,0,0,0.1)'
+            }}>
+                <Row justify="space-between" align="mmaUuTiendle">
+                    <Col>
+                        <Title level={2} style={{
 
-                    </Space>
-                </Col>
-            </Row>
+                            marginBottom: 8,
+                            background: 'linear-gradient(45deg, #667eea, #764ba2)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            fontWeight: 700
+                        }}>
+                            Quản lý đối tượng ưu tiên
+                        </Title>
+                        <Text type="secondary" style={{ fontSize: 16 }}>
+                            Quản lý và phân loại các đối tượng được ưu tiên trong hệ thống
+                        </Text>
+                    </Col>
+                    <Col>
+                        <Space wrap>
+                            {selectedRowKeys.length > 0 && (
+                                <AntButton
+                                    danger
+                                    icon={<DeleteOutlined />}
+                                    onClick={handleBulkDelete}
+                                >
+                                    Xóa đã chọn ({selectedRowKeys.length})
+                                </AntButton>
+                            )}
+                            <AntButton
+                                type="primary"
+                                icon={<PlusOutlined />}
+                                onClick={handleAdd}
+                                size="large"
+                                style={{
+                                    borderRadius: 8,
+                                    background: 'linear-gradient(45deg, #667eea, #764ba2)',
+                                    border: 'none',
+                                    height: 40,
+                                    fontWeight: 500
+                                }}
+                            >
+                                Thêm đối tượng ưu tiên
+                            </AntButton>
+                        </Space>
+                    </Col>
+                </Row>
+            </div>
 
             {/* Filter Section */}
-            <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
-                <Col xs={24} sm={12} md={8}>
-                    <Search
-                        placeholder="Tìm kiếm đối tượng ưu tiên..."
-                        allowClear
-                        enterButton={<SearchOutlined />}
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        onSearch={setSearchTerm}
-                    />
-                </Col>
-                <Col xs={24} sm={24} md={10}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
-                        <Checkbox
-                            checked={paginatedData.length > 0 && selectedRowKeys.length === paginatedData.length}
-                            indeterminate={selectedRowKeys.length > 0 && selectedRowKeys.length < paginatedData.length}
-                            onChange={(e) => handleSelectAll(e.target.checked)}
-                        >
-                            Chọn tất cả
-                        </Checkbox>
-                        <AntButton
-                            type="primary"
-                            icon={<PlusOutlined />}
-                            onClick={handleAdd}
-                        >
-                            Thêm đối tượng ưu tiên
-                        </AntButton>
-                    </div>
-                </Col>
-            </Row>
+            <div style={{
+                background: 'white',
+                borderRadius: 16,
+                padding: 20,
+                marginBottom: 24,
+                boxShadow: '0 4px 20px rgba(0,0,0,0.06)'
+            }}>
+                <Row gutter={[16, 16]}>
+                    <Col xs={24} sm={12} md={8}>
+                        <Search
+                            placeholder="Tìm kiếm đối tượng ưu tiên..."
+                            allowClear
+                            enterButton={<SearchOutlined />}
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onSearch={setSearchTerm}
+                            size="large"
 
-            <Divider style={{ margin: '16px 0' }} />
+                        />
+                    </Col>
+                    <Col xs={24} sm={24} md={8}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 16, height: 40 }}>
+                            <Checkbox
+                                checked={paginatedData.length > 0 && selectedRowKeys.length === paginatedData.length}
+                                indeterminate={selectedRowKeys.length > 0 && selectedRowKeys.length < paginatedData.length}
+                                onChange={(e) => handleSelectAll(e.target.checked)}
+                                style={{ fontWeight: 500 }}
+                            >
+                                Chọn tất cả
+                            </Checkbox>
+                            <Text type="secondary">
+                                Tổng: <strong>{filteredData.length}</strong> đối tượng
+                            </Text>
+                        </div>
+                    </Col>
+                </Row>
+            </div>
 
             {/* Cards Section */}
             {paginatedData.length > 0 ? (
-                <Row gutter={[16, 16]}>
-                    {paginatedData.map(renderPhongBanCard)}
+                <Row gutter={[20, 20]}>
+                    {paginatedData.map(renderDoiTuongUuTienCard)}
                 </Row>
             ) : (
-                <Empty
-                    description="Không tìm thấy phòng ban nào"
-                    style={{ margin: '40px 0' }}
-                />
+                <div style={{
+                    background: 'white',
+                    borderRadius: 16,
+                    padding: 60,
+                    textAlign: 'center',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.06)'
+                }}>
+                    <Empty
+                        description="Không tìm thấy đối tượng ưu tiên nào"
+                        image={Empty.PRESENTED_IMAGE_SIMPLE}
+                    />
+                </div>
             )}
 
             {/* Pagination */}
             {filteredData.length > pageSize && (
-                <Row justify="center" style={{ marginTop: 24 }}>
+                <div style={{
+                    background: 'white',
+                    borderRadius: 16,
+                    padding: 20,
+                    marginTop: 24,
+                    textAlign: 'center',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.06)'
+                }}>
                     <Pagination
                         current={currentPage}
                         pageSize={pageSize}
@@ -310,23 +478,21 @@ export const DoiTuongUuTienComponent = () => {
                             setPageSize(size);
                         }}
                     />
-                </Row>
+                </div>
             )}
-            <Text type="secondary">
-                Tổng: {filteredData.length} đối tượng ưu tiên
-            </Text>
 
             {/* Modal Confirm Delete */}
             <Modal
                 title="Xác nhận xóa"
                 open={isModalConfirmVisible.visible}
                 centered
-                width={400}
+                wmaUuTienth={400}
                 onCancel={() => setIsModalConfirmVisible({ visible: false, data: null })}
                 footer={[
                     <AntButton
                         key="cancel"
                         onClick={() => setIsModalConfirmVisible({ visible: false, data: null })}
+                        style={{ borderRadius: 8 }}
                     >
                         Hủy
                     </AntButton>,
@@ -336,86 +502,82 @@ export const DoiTuongUuTienComponent = () => {
                         danger
                         onClick={() => {
                             setDoiTuongUuTienList(prev =>
-                                prev.filter(item => item.id !== isModalConfirmVisible.data.id)
+                                prev.filter(item => item.maUuTien !== isModalConfirmVisible.data.maUuTien)
                             );
                             setIsModalConfirmVisible({ visible: false, data: null });
-                            message.success('Xóa phòng ban thành công!');
+                            message.success('Xóa đối tượng ưu tiên thành công!');
                         }}
+                        style={{ borderRadius: 8 }}
                     >
                         Xóa
                     </AntButton>
                 ]}
             >
                 <p>
-                    Bạn có chắc chắn muốn xóa phòng ban
-                    <strong> "{isModalConfirmVisible.data?.name}"</strong> không?
+                    Bạn có chắc chắn muốn xóa đối tượng ưu tiên
+                    <strong> "{isModalConfirmVisible.data?.tenVaiTro}"</strong> không?
                 </p>
             </Modal>
 
             {/* Modal Form */}
             <Modal
-                title={editingId ? 'Sửa phòng ban' : 'Thêm phòng ban'}
+                title={editingId ? 'Sửa đối tượng ưu tiên' : 'Thêm đối tượng ưu tiên'}
                 open={isModalVisible}
                 onCancel={handleCancel}
                 footer={null}
-                width={600}
+                wmaUuTienth={600}
+                style={{ borderRadius: 16 }}
             >
                 <Form
                     form={form}
-                    name="phongBanForm"
+                    tenVaiTro="doiTuongUuTienForm"
                     onFinish={onFinish}
                     layout="vertical"
                     style={{ marginTop: 16 }}
                 >
                     <Form.Item
-                        name="name"
-                        label="Tên phòng ban"
+                        tenVaiTro="tenVaiTro"
+                        label="Tên đối tượng ưu tiên"
                         rules={[
-                            { required: true, message: 'Vui lòng nhập tên phòng ban!' },
-                            { min: 2, message: 'Tên phòng ban phải có ít nhất 2 ký tự!' }
+                            { required: true, message: 'Vui lòng nhập tên đối tượng ưu tiên!' },
+                            { min: 2, message: 'Tên phải có ít nhất 2 ký tự!' }
                         ]}
                     >
                         <Input
-                            placeholder="Nhập tên phòng ban"
+                            placeholder="Nhập tên đối tượng ưu tiên"
                             size="large"
+                            style={{ borderRadius: 8 }}
                         />
                     </Form.Item>
 
                     <Form.Item
-                        name="note"
+                        tenVaiTro="ghiChu"
                         label="Ghi chú"
                         rules={[
                             { required: true, message: 'Vui lòng nhập ghi chú!' }
                         ]}
                     >
                         <Input.TextArea
-                            placeholder="Nhập ghi chú về phòng ban"
+                            placeholder="Nhập ghi chú về đối tượng ưu tiên"
                             rows={4}
                             size="large"
+                            style={{ borderRadius: 8 }}
                         />
                     </Form.Item>
-
-                    {editingId && (
-                        <Form.Item
-                            name="status"
-                            label="Trạng thái"
-                            rules={[
-                                { required: true, message: 'Vui lòng chọn trạng thái!' }
-                            ]}
-                        >
-                            <Select size="large" placeholder="Chọn trạng thái">
-                                <Option value="Hoạt động">Hoạt động</Option>
-                                <Option value="Tạm dừng">Tạm dừng</Option>
-                            </Select>
-                        </Form.Item>
-                    )}
-
                     <Form.Item style={{ marginBottom: 0, marginTop: 24 }}>
-                        <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-                            <AntButton onClick={handleCancel}>
+                        <Space style={{ wmaUuTienth: '100%', justifyContent: 'flex-end' }}>
+                            <AntButton onClick={handleCancel} style={{ borderRadius: 8 }}>
                                 Hủy
                             </AntButton>
-                            <AntButton type="primary" htmlType="submit">
+                            <AntButton
+                                type="primary"
+                                htmlType="submit"
+                                style={{
+                                    borderRadius: 8,
+                                    background: 'linear-gradient(45deg, #667eea, #764ba2)',
+                                    border: 'none'
+                                }}
+                            >
                                 {editingId ? 'Cập nhật' : 'Thêm mới'}
                             </AntButton>
                         </Space>
@@ -424,4 +586,4 @@ export const DoiTuongUuTienComponent = () => {
             </Modal>
         </div>
     );
-};
+}

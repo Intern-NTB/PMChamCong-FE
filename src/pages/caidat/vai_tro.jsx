@@ -1,39 +1,20 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
-    Row,
-    Col,
-    Form,
-    Input,
-    Space,
-    Divider,
-    Modal,
-    message,
-    Button as AntButton,
-    Card,
-    Tag,
-    Checkbox,
-    Typography,
-    Empty,
-    Pagination,
-    Select,
-    Collapse
+    Row, Col, Form, Input, Space, Divider, Modal, message,
+    Button as AntButton, Card, Checkbox, Typography, Empty, Pagination, Badge
 } from "antd";
 import {
-    PlusOutlined,
-    EditOutlined,
-    DeleteOutlined,
-    EyeOutlined,
-    SearchOutlined,
-    CalendarOutlined
+    PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, UserOutlined
 } from '@ant-design/icons';
-
+import { useNhanVien } from '../../component/hooks/useNhanVien';
+import { useVaiTro } from '../../component/hooks/useVaiTro';
 const { Text, Title } = Typography;
 const { Search } = Input;
-const { Option } = Select;
-const { Panel } = Collapse;
 
 export const VaiTroComponent = () => {
 
+    const { danhSachVaiTro } = useVaiTro()
+    const { danhSachNhanVien } = useNhanVien()
     const [form] = Form.useForm();
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [isModalConfirmVisible, setIsModalConfirmVisible] = useState({
@@ -43,37 +24,34 @@ export const VaiTroComponent = () => {
     const [editingId, setEditingId] = useState(null);
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
-    const [statusFilter, setStatusFilter] = useState('all');
     const [currentPage, setCurrentPage] = useState(1);
-    const [pageSize, setPageSize] = useState(8);
+    const [pageSize, setPageSize] = useState(12);
 
-    // Mock data
-    const [vaiTroList, setVaiTroList] = useState([
-        { maVaiTro: 'IT-MGR', tenPhongBan: 'Phòng IT', tenVaiTro: 'Trưởng phòng IT' },
-        { maVaiTro: 'IT-STAFF', tenPhongBan: 'Phòng IT', tenVaiTro: 'Nhân viên IT' },
-        { maVaiTro: 'HR-MGR', tenPhongBan: 'Phòng HR', tenVaiTro: 'Trưởng phòng nhân sự' },
-        { maVaiTro: 'HR-STAFF', tenPhongBan: 'Phòng HR', tenVaiTro: 'Nhân viên nhân sự' },
-        { maVaiTro: 'ACC_MGR', tenPhongBan: 'Phòng Kế toán', tenVaiTro: 'Trưởng phòng kế toán' },
-        { maVaiTro: 'ACC_STAFF', tenPhongBan: 'Phòng Kế toán', tenVaiTro: 'Nhân viên kế toán' },
-        { maVaiTro: 'MKT_MGR', tenPhongBan: 'Phòng Marketing', tenVaiTro: 'Trưởng phòng Marketing' },
-        { maVaiTro: 'MKT_STAFF', tenPhongBan: 'Phòng Marketing', tenVaiTro: 'Nhân viên Marketing' },
-        { maVaiTro: 'SALE_MGR', tenPhongBan: 'Phòng Kinh doanh', tenVaiTro: 'Trưởng phòng Kinh doanh' },
-        { maVaiTro: 'SALE_STAFF', tenPhongBan: 'Phòng Kinh doanh', tenVaiTro: 'Nhân viên Kinh doanh' },
-        { maVaiTro: 'PROD_MGR', tenPhongBan: 'Phòng Sản xuất', tenVaiTro: 'Trưởng phòng Sản xuất' },
-        { maVaiTro: 'PROD_STAFF', tenPhongBan: 'Phòng Sản xuất', tenVaiTro: 'Nhân viên Sản xuất' },
-        { maVaiTro: 'QAQC_MGR', tenPhongBan: 'Phòng QA/QC', tenVaiTro: 'Trưởng phòng QA/QC' },
-        { maVaiTro: 'QAQC_STAFF', tenPhongBan: 'Phòng QA/QC', tenVaiTro: 'Nhân viên QA/QC' },
-        { maVaiTro: 'RND_MGR', tenPhongBan: 'Phòng R&D', tenVaiTro: 'Trưởng phòng R&D' },
-        { maVaiTro: 'RND_STAFF', tenPhongBan: 'Phòng R&D', tenVaiTro: 'Nhân viên R&D' },
-    ]);
+    // Lấy dữ liệu từ API
+    const dataSource = Array.isArray(danhSachVaiTro) ? danhSachVaiTro.map(vt => {
+        const tongNguoiDangDuocGan = Array.isArray(danhSachNhanVien)
+            ? danhSachNhanVien.filter(nv => nv.maVaiTro === vt.maVaiTro).length
+            : 0;
+
+        return {
+            maVaiTro: vt.maVaiTro,
+            tenVaiTro: vt.tenVaiTro || '',
+            tongNguoiDangDuocGan,
+        };
+    }) : [];
 
     // Filter data
-    const filteredData = vaiTroList.filter(item => {
-        const matchSearch = item.tenPhongBan.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            item.note.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchStatus = statusFilter === 'all' || item.status === statusFilter;
-        return matchSearch && matchStatus;
-    });
+    const filteredData = useMemo(() => {
+        return dataSource.filter(item => {
+            const searchText = searchTerm.toLowerCase();
+            const matchSearch =
+                (item.tenVaiTro ? item.tenVaiTro.toLowerCase() : '').includes(searchText) ||
+                (item.note ? item.note.toLowerCase() : '').includes(searchText) ||
+                // Thêm các thuộc tính khác nếu cần
+                false; // Giá trị mặc định nếu không có thuộc tính nào khớp
+            return matchSearch;
+        });
+    }, [dataSource, searchTerm]);
 
     // Pagination
     const startIndex = (currentPage - 1) * pageSize;
@@ -85,17 +63,14 @@ export const VaiTroComponent = () => {
             setVaiTroList(prev => prev.map(item =>
                 item.id === editingId ? {
                     ...item,
-                    ...values,
-                    updatedDate: new Date().toISOString().split('T')[0]
+                    ...values
                 } : item
             ));
             message.success('Cập nhật vai trò thành công!');
         } else {
             const newItem = {
                 id: Date.now(),
-                ...values,
-                status: 'Hoạt động',
-                createdDate: new Date().toISOString().split('T')[0]
+                ...values
             };
             setVaiTroList(prev => [...prev, newItem]);
             message.success('Thêm vai trò thành công!');
@@ -135,7 +110,7 @@ export const VaiTroComponent = () => {
             cancelText: 'Hủy',
             okType: 'danger',
             onOk: () => {
-                setPhongBanList(prev => prev.filter(item => !selectedRowKeys.includes(item.id)));
+                setVaiTroList(prev => prev.filter(item => !selectedRowKeys.includes(item.id)));
                 setSelectedRowKeys([]);
                 message.success(`Đã xóa ${selectedRowKeys.length} vai trò thành công!`);
             }
@@ -164,168 +139,233 @@ export const VaiTroComponent = () => {
         }
     };
 
-    const groupedByPhongBan = paginatedData.reduce((acc, item) => {
-        const { tenPhongBan } = item;
-        if (!acc[tenPhongBan]) {
-            acc[tenPhongBan] = [];
-        }
-        acc[tenPhongBan].push(item);
-        return acc;
-    }, {});
-
-    //Danh sách phòng ban không trùng lặp
-    const phongBanOptions = Array.from(
-        new Set(vaiTroList.map(item => item.tenPhongBan))
-    ).map((tenPhongBan, index) => ({
-        value: tenPhongBan,
-        label: tenPhongBan
-    }));
-
-    //Danh sách mã Vai trò không trùng lặp
-    const maVaitroOptions = Array.from(
-        new Set(vaiTroList.map(item => item.maVaiTro))
-    ).map((maVaiTro, index) => ({
-        value: maVaiTro,
-        label: maVaiTro
-    }));
-
     const renderVaiTroCard = (item) => (
         <Col xs={24} sm={12} md={8} lg={6} key={item.id}>
             <Card
                 hoverable
                 style={{
                     marginBottom: 16,
-                    borderRadius: 8,
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                    border: selectedRowKeys.includes(item.id) ? '2px solid #1890ff' : '1px solid #d9d9d9'
+                    borderRadius: 12,
+                    boxShadow: selectedRowKeys.includes(item.id)
+                        ? '0 4px 20px rgba(24, 144, 255, 0.3)'
+                        : '0 2px 12px rgba(0, 0, 0, 0.08)',
+                    border: selectedRowKeys.includes(item.id)
+                        ? '2px solid #1890ff'
+                        : '1px solid #f0f0f0',
+                    transition: 'all 0.3s ease',
+                    background: selectedRowKeys.includes(item.id)
+                        ? 'linear-gradient(145deg, #f6fcff, #ffffff)'
+                        : '#ffffff'
                 }}
             >
-                <div style={{ marginBottom: 12 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <Checkbox
-                            checked={selectedRowKeys.includes(item.id)}
-                            onChange={(e) => handleCardSelect(item.id, e.target.checked)}
-                        />
-                        <Text type="secondary" style={{ fontSize: 12 }}>
-                            Mã vai trò: {item.maVaiTro}
-                        </Text>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                    <Checkbox
+                        checked={selectedRowKeys.includes(item.id)}
+                        onChange={(e) => handleCardSelect(item.id, e.target.checked)}
+                    />
+                    <Badge
+                        color="#52c41a"
+                        text={
+                            <Text type="secondary" style={{ fontSize: 11, fontWeight: 500 }}>
+                                {item.tongNguoiDangDuocGan} nhân viên
+                            </Text>
+                        }
+                    />
+                </div>
+
+                <div style={{ textAlign: 'center', marginBottom: 16 }}>
+                    <div style={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: '50%',
+                        background: 'linear-gradient(135deg, #667eea 40%, #764ba2 100%)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        margin: '0 auto 12px auto'
+                    }}>
+                        <UserOutlined style={{ color: 'white', fontSize: 20 }} />
                     </div>
+
+                    <Title level={5} style={{
+                        margin: 0,
+                        marginBottom: 4,
+                        color: '#1a1a1a',
+                        fontSize: 14,
+                        fontWeight: 600
+                    }}>
+                        {item.tenVaiTro}
+                    </Title>
+
+                    <Text style={{
+                        color: '#8c8c8c',
+                        fontSize: 12,
+                        background: '#f5f5f5',
+                        padding: '2px 8px',
+                        borderRadius: 4,
+                        fontFamily: 'monospace',
+                        fontWeight: 500
+                    }}>
+                        {item.maVaiTro}
+                    </Text>
                 </div>
 
-                <div style={{ display: 'flex' }}>
-                    <Space size="small">
-                        <Title level={5} style={{ margin: 0, marginBottom: 8 }}>
-                            Chức vụ: {item.tenVaiTro}
-                        </Title>
+                <div style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    gap: 8,
+                    paddingTop: 12,
+                    borderTop: '1px solid #f0f0f0'
+                }}>
+                    <AntButton
+                        icon={<EditOutlined />}
+                        onClick={() => handleEdit(item)}
+                        size="middle"
+                        title="Chỉnh sửa"
+                    />
 
-                        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-
-                            <AntButton
-                                type="text"
-                                icon={<EditOutlined />}
-                                onClick={() => handleEdit(item)}
-                                size="small"
-                                title="Sửa"
-                                style={{
-                                    marginRight: 12
-                                }}
-                            />
-
-                            <AntButton
-                                type="text"
-                                danger
-                                icon={<DeleteOutlined />}
-                                onClick={() => handleDelete(item)}
-                                size="small"
-                                title="Xóa"
-                                style={{ color: 'white' }}
-                            />
-                        </div>
-
-                    </Space>
+                    <AntButton
+y                        danger
+                        icon={<DeleteOutlined style={{color:'red'}}/>}
+                        onClick={() => handleDelete(item)}
+                        size="middle"
+                        title="Xóa"
+                       
+                    />
                 </div>
-                
             </Card>
         </Col>
     );
+
     return (
-        <div style={{ padding: '0 16px' }}>
+        <div style={{
+            padding: '24px',
+            background: '#f5f7fa',
+            minHeight: '100vh'
+        }}>
             {/* Header Section */}
-            <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
-                <Col>
-                    <Title level={3} style={{ marginBottom: 12 }}>
-                        Quản lý Vai trò
-                    </Title>
-                </Col>
-                <Col>
-                    <Space wrap>
-                        {selectedRowKeys.length > 0 && (
+            <div style={{
+                background: 'white',
+                borderRadius: 16,
+                padding: '24px 32px',
+                marginBottom: 24,
+                color: 'white'
+            }}>
+                <Row justify="space-between" align="middle">
+                    <Col>
+                        <Title level={2} style={{
+
+                            marginBottom: 8,
+                            background: 'linear-gradient(45deg, #667eea, #764ba2)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            fontWeight: 700
+                        }}>
+                            Quản lý Vai trò
+                        </Title>
+                        <Text style={{ color: 'grey', fontSize: 14 }}>
+                            Tổng cộng {filteredData.length} vai trò
+                        </Text>
+                    </Col>
+                    <Col>
+                        <Space wrap>
+                            {selectedRowKeys.length > 0 && (
+                                <AntButton
+                                    danger
+                                    icon={<DeleteOutlined />}
+                                    onClick={handleBulkDelete}
+                                    style={{
+                                        color: 'white',
+                                        background: '#ff4d4f',
+                                        border: 'none',
+                                        borderRadius: 8,
+                                        fontWeight: 500
+                                    }}
+                                >
+                                    Xóa đã chọn ({selectedRowKeys.length})
+                                </AntButton>
+                            )}
                             <AntButton
-                                danger
-                                icon={<DeleteOutlined />}
-                                onClick={handleBulkDelete}
+                                type="primary"
+                                icon={<PlusOutlined />}
+                                onClick={handleAdd}
+                                size="large"
+                                style={{
+                                    background: 'white',
+                                    color: '#667eea',
+                                    border: 'none',
+                                    borderRadius: 8,
+                                    fontWeight: 600,
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                }}
                             >
-                                Xóa đã chọn ({selectedRowKeys.length})
+                                Thêm vai trò mới
                             </AntButton>
-                        )}
-                        <AntButton
-                            type="primary"
-                            icon={<PlusOutlined />}
-                            onClick={handleAdd}
-                        >
-                            Thêm vai trò
-                        </AntButton>
-                    </Space>
-                </Col>
-            </Row>
+                        </Space>
+                    </Col>
+                </Row>
+            </div>
 
             {/* Filter Section */}
-            <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
-                <Col xs={24} sm={12} md={8}>
-                    <Search
-                        placeholder="Tìm kiếm vai trò..."
-                        allowClear
-                        enterButton={<SearchOutlined />}
-                        value={searchTerm}
-                    //onChange={(e) => setSearchTerm(e.target.value)}
-                    //onSearch={setSearchTerm}
-                    />
-                </Col>
-                <Col xs={24} sm={24} md={10}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+            <Card style={{
+                marginBottom: 24,
+                borderRadius: 12,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+            }}>
+                <Row gutter={[16, 16]} align="middle">
+                    <Col xs={24} sm={12} md={10}>
+                        <Search
+                            placeholder="Tìm kiếm theo mã hoặc tên vai trò..."
+                            allowClear
+                            enterButton={<SearchOutlined />}
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onSearch={setSearchTerm}
+                            size="large"
+                            style={{
+                                borderRadius: 8
+                            }}
+                        />
+                    </Col>
+                    <Col xs={24} sm={12} md={6}>
                         <Checkbox
                             checked={paginatedData.length > 0 && selectedRowKeys.length === paginatedData.length}
                             indeterminate={selectedRowKeys.length > 0 && selectedRowKeys.length < paginatedData.length}
                             onChange={(e) => handleSelectAll(e.target.checked)}
+                            style={{ fontWeight: 500 }}
                         >
-                            Chọn tất cả
+                            Chọn tất cả trang này
                         </Checkbox>
-                    </div>
-                </Col>
-            </Row>
-
-            <Divider style={{ margin: '16px 0' }} />
+                    </Col>
+                    <Col xs={24} sm={24} md={8} style={{ textAlign: 'right' }}>
+                        <Text type="secondary">
+                            Hiển thị {paginatedData.length} / {filteredData.length} vai trò
+                        </Text>
+                    </Col>
+                </Row>
+            </Card>
 
             {/* Cards Section */}
             {paginatedData.length > 0 ? (
-                <Collapse accordion>
-                    {Object.entries(groupedByPhongBan).map(([tenPhongBan, vaiTro]) => (
-                        <Panel header={tenPhongBan} key={tenPhongBan}>
-                            <Row gutter={[16, 16]}>
-                                {vaiTro.map(renderVaiTroCard)}
-                            </Row>
-                        </Panel>
-                    ))}
-                </Collapse>
+                <Row gutter={[16, 16]}>
+                    {paginatedData.map(renderVaiTroCard)}
+                </Row>
             ) : (
-                <Empty
-                    description="Không tìm thấy phòng ban nào"
-                    style={{ margin: '40px 0' }}
-                />
+                <Card style={{ textAlign: 'center', borderRadius: 12 }}>
+                    <Empty
+                        description={
+                            <Text type="secondary" style={{ fontSize: 16 }}>
+                                {searchTerm ? 'Không tìm thấy vai trò phù hợp' : 'Chưa có vai trò nào'}
+                            </Text>
+                        }
+                        style={{ margin: '40px 0' }}
+                    />
+                </Card>
             )}
+
             {/* Pagination */}
             {filteredData.length > pageSize && (
-                <Row justify="center" style={{ marginTop: 24 }}>
+                <Row justify="center" style={{ marginTop: 32 }}>
                     <Pagination
                         current={currentPage}
                         pageSize={pageSize}
@@ -333,9 +373,9 @@ export const VaiTroComponent = () => {
                         showSizeChanger
                         showQuickJumper
                         showTotal={(total, range) =>
-                            `${range[0]}-${range[1]} của ${total} mục`
+                            `${range[0]}-${range[1]} của ${total} vai trò`
                         }
-                        pageSizeOptions={['2', '4', '6', '8']}
+                        pageSizeOptions={['8', '12', '16', '24']}
                         onChange={(page, size) => {
                             setCurrentPage(page);
                             setPageSize(size);
@@ -344,55 +384,93 @@ export const VaiTroComponent = () => {
                             setCurrentPage(1);
                             setPageSize(size);
                         }}
+                        style={{
+                            padding: '16px',
+                            background: 'white',
+                            borderRadius: 12,
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+                        }}
                     />
                 </Row>
             )}
-            <Text type="secondary">
-                Tổng: {filteredData.length} vai trò
-            </Text>
 
             {/* Modal Confirm Delete */}
             <Modal
-                title="Xác nhận xóa"
+                title={
+                    <div style={{ textAlign: 'center' }}>
+                        <DeleteOutlined style={{ color: '#ff4d4f', fontSize: 24, marginBottom: 8 }} />
+                        <div>Xác nhận xóa vai trò</div>
+                    </div>
+                }
                 open={isModalConfirmVisible.visible}
                 centered
-                width={400}
+                width={420}
                 onCancel={() => setIsModalConfirmVisible({ visible: false, data: null })}
                 footer={[
                     <AntButton
                         key="cancel"
                         onClick={() => setIsModalConfirmVisible({ visible: false, data: null })}
+                        style={{ borderRadius: 6 }}
                     >
-                        Hủy
+                        Hủy bỏ
                     </AntButton>,
                     <AntButton
                         key="delete"
                         type="primary"
                         danger
                         onClick={() => {
-                            setPhongBanList(prev =>
+                            setVaiTroList(prev =>
                                 prev.filter(item => item.id !== isModalConfirmVisible.data.id)
                             );
                             setIsModalConfirmVisible({ visible: false, data: null });
+                            message.success('Đã xóa vai trò thành công!');
                         }}
+                        style={{ borderRadius: 6 }}
                     >
-                        Xóa
+                        Xóa vai trò
                     </AntButton>
                 ]}
+                bodyStyle={{ textAlign: 'center', padding: '24px' }}
             >
-                <p>
-                    Bạn có chắc chắn muốn xóa đối tượng
-                    <strong> "{isModalConfirmVisible.data?.name}"</strong> không?
+                <p style={{ fontSize: 16, margin: '16px 0' }}>
+                    Bạn có chắc chắn muốn xóa vai trò
                 </p>
+                <div style={{
+                    background: '#f5f5f5',
+                    padding: '12px',
+                    borderRadius: 8,
+                    margin: '16px 0'
+                }}>
+                    <Text strong style={{ color: '#1890ff' }}>
+                        {isModalConfirmVisible.data?.maVaiTro}
+                    </Text>
+                    <div>
+                        <Text>{isModalConfirmVisible.data?.tenVaiTro}</Text>
+                    </div>
+                </div>
+                <Text type="danger">Hành động này không thể hoàn tác!</Text>
             </Modal>
 
             {/* Modal Form */}
             <Modal
-                title={editingId ? 'Sửa vai trò' : 'Thêm vai trò'}
+                title={
+                    <div style={{ textAlign: 'center', padding: '8px 0' }}>
+                        <UserOutlined style={{
+                            fontSize: 24,
+                            color: '#1890ff',
+                            marginBottom: 8
+                        }} />
+                        <div style={{ fontSize: 18, fontWeight: 600 }}>
+                            {editingId ? 'Chỉnh sửa vai trò' : 'Thêm vai trò mới'}
+                        </div>
+                    </div>
+                }
                 open={isModalVisible}
                 onCancel={handleCancel}
                 footer={null}
-                width={600}
+                width={500}
+                centered
+                bodyStyle={{ padding: '24px 32px' }}
             >
                 <Form
                     form={form}
@@ -402,65 +480,58 @@ export const VaiTroComponent = () => {
                     style={{ marginTop: 16 }}
                 >
                     <Form.Item
-                        name="tenPhongBan"
-                        label="Tên phòng ban">                        
-                        <Select
-                            style={{ width: '100%' }}
-                            options={phongBanOptions}
-                            placeholder="Chọn phòng ban"
-                        >
-                        </Select>
+                        name="maVaiTro"
+                        label={<Text strong>Mã vai trò</Text>}
+                        rules={[
+                            { required: true, message: 'Vui lòng nhập mã vai trò!' },
+                            { min: 2, message: 'Mã vai trò phải có ít nhất 2 ký tự!' }
+                        ]}
+                    >
+                        <Input
+                            placeholder="Ví dụ: IT-MGR, HR-STAFF..."
+                            size="large"
+                            style={{ borderRadius: 8 }}
+                        />
                     </Form.Item>
 
                     <Form.Item
-                        name="tenVaitro"
-                        label="Tên vai trò"
+                        name="tenVaiTro"
+                        label={<Text strong>Tên vai trò</Text>}
                         rules={[
                             { required: true, message: 'Vui lòng nhập tên vai trò!' },
                             { min: 2, message: 'Tên vai trò phải có ít nhất 2 ký tự!' }
                         ]}
                     >
                         <Input
-                            placeholder="Nhập tên vai trò"
-                            size="default"
+                            placeholder="Ví dụ: Trưởng phòng IT, Nhân viên HR..."
+                            size="large"
+                            style={{ borderRadius: 8 }}
                         />
                     </Form.Item>
 
-                    <Form.Item
-                        name="maVaitro"
-                        label="Mã vai trò"
-                        rules={[
-                            { required: true, message: 'Vui lòng nhập Mã vai trò!' },
-                            { min: 2, message: 'Mã vai trò phải có ít nhất 2 ký tự!' }
-                        ]}
-                    >
-                        <Input
-                            placeholder="Nhập Mã vai trò"
-                            size="default"
-                        />
-                    </Form.Item>
-
-                    {editingId && (
-                        <Form.Item
-                            name="status"
-                            label="Trạng thái"
-                            rules={[
-                                { required: true, message: 'Vui lòng chọn trạng thái!' }
-                            ]}
-                        >
-                            <Select size="large" placeholder="Chọn trạng thái">
-                                <Option value="Hoạt động">Hoạt động</Option>
-                                <Option value="Tạm dừng">Tạm dừng</Option>
-                            </Select>
-                        </Form.Item>
-                    )}
-
-                    <Form.Item style={{ marginBottom: 0, marginTop: 24 }}>
-                        <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-                            <AntButton onClick={handleCancel}>
-                                Hủy
+                    <Form.Item style={{ marginBottom: 0, marginTop: 32 }}>
+                        <Space style={{ width: '100%', justifyContent: 'center', gap: 16 }}>
+                            <AntButton
+                                onClick={handleCancel}
+                                size="large"
+                                style={{
+                                    borderRadius: 8,
+                                    minWidth: 100
+                                }}
+                            >
+                                Hủy bỏ
                             </AntButton>
-                            <AntButton type="primary" htmlType="submit">
+                            <AntButton
+                                type="primary"
+                                htmlType="submit"
+                                size="large"
+                                style={{
+                                    borderRadius: 8,
+                                    minWidth: 100,
+                                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                    border: 'none'
+                                }}
+                            >
                                 {editingId ? 'Cập nhật' : 'Thêm mới'}
                             </AntButton>
                         </Space>
