@@ -9,6 +9,7 @@ import {
   Col,
   DatePicker,
   Select,
+  Checkbox,
 } from "antd";
 import {
   SearchOutlined,
@@ -16,6 +17,8 @@ import {
   EditOutlined,
   EyeOutlined,
   CalendarOutlined,
+  FileExcelOutlined,
+  FilePdfOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 
@@ -103,6 +106,9 @@ export default function Luong() {
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [editRecord, setEditRecord] = useState(null);
 
+  const [selectedRows, setSelectedRows] = useState([]);
+  const [selectAll, setSelectAll] = useState(false);
+
   const filteredData = useMemo(() => {
     return dataSource.filter((item) => {
       const matchesSearch =
@@ -119,12 +125,34 @@ export default function Luong() {
 
   const columns = [
     {
-      title: "STT",
-      dataIndex: "key",
-      key: "key",
+      title: (
+        <Checkbox
+          checked={selectAll}
+          onChange={(e) => {
+            setSelectAll(e.target.checked);
+            if (e.target.checked) {
+              setSelectedRows(filteredData.map((item) => item.key));
+            } else {
+              setSelectedRows([]);
+            }
+          }}
+        />
+      ),
+      key: "select",
       width: 60,
       align: "center",
-      render: (text) => <b>{text}</b>,
+      render: (_, record) => (
+        <Checkbox
+          checked={selectedRows.includes(record.key)}
+          onChange={(e) => {
+            if (e.target.checked) {
+              setSelectedRows([...selectedRows, record.key]);
+            } else {
+              setSelectedRows(selectedRows.filter((key) => key !== record.key));
+            }
+          }}
+        />
+      ),
     },
     {
       title: "Mã NV",
@@ -224,23 +252,35 @@ export default function Luong() {
   };
 
   const exportToExcelHandler = () => {
-    exportToExcel(filteredData, selectedMonthYear.format("MM/YYYY"), selectedPhongBan, false);
+    const selectedData = filteredData.filter((record) =>
+      selectedRows.includes(record.key)
+    );
+    exportToExcel(selectedData, selectedMonthYear.format("MM/YYYY"), selectedPhongBan, false);
   };
 
   const generatePDFHandler = () => {
-    generatePDF(filteredData, selectedMonthYear.format("MM/YYYY"));
+    const selectedData = filteredData.filter((record) =>
+      selectedRows.includes(record.key)
+    );
+    if (selectedData.length > 0) {
+      generatePDF(selectedData, selectedMonthYear.format("MM/YYYY"));
+    } else {
+      alert("Vui lòng chọn ít nhất một nhân viên để in.");
+    }
   };
 
   return (
     <div className="luong-container">
       <Row justify="center" align="middle" className="title-row">
-        <Title level={3} className="title-text">
-          Bảng lương tháng {selectedMonthYear.format("M/YYYY")}
-          <CalendarOutlined className="calendar-icon" />
-        </Title>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+          <Title level={2} className="title-text">
+            BẢNG LƯƠNG THÁNG {selectedMonthYear.format("M/YYYY")}
+            <CalendarOutlined className="calendar-icon" />
+          </Title>
+        </div>
       </Row>
 
-      <Row justify="start" align="middle" gutter={16} className="toolbar-row">
+      <Row justify="start" align="middle" className="toolbar-row">
         <Col>
           <Input
             placeholder="Tìm nhân viên"
@@ -287,12 +327,7 @@ export default function Luong() {
         <Col>
           <Button
             type="primary"
-            icon={
-              <PlusOutlined
-                className="icon-style"
-                style={{ color: "#fff", fontSize: 18 }}
-              />
-            }
+            icon={<PlusOutlined className="icon-style" />}
             size="large"
             className="toolbar-button"
           >
@@ -312,10 +347,16 @@ export default function Luong() {
       />
 
       <Space style={{ marginTop: 16 }}>
-        <Button onClick={exportToExcelHandler} style={{ marginRight: 10 }}>
+        <Button
+          onClick={exportToExcelHandler}
+          style={{ marginRight: 10 }}
+          icon={<FileExcelOutlined />}
+        >
           Xuất Excel
         </Button>
-        <Button onClick={generatePDFHandler}>Xuất PDF</Button>
+        <Button onClick={generatePDFHandler} icon={<FilePdfOutlined />}>
+          Xuất PDF
+        </Button>
       </Space>
 
       <LuongDetailModal
