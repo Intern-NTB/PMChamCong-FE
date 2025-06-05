@@ -7,7 +7,7 @@ import { useCaLam } from '../../component/hooks/useCaLam';
 const { Title, Text } = Typography;
 const { Search } = Input;
 
-export const CaLamComponent = () => {
+export default function CaLamComponent  (){
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [isMobile, setIsMobile] = useState(false);
@@ -244,7 +244,7 @@ export const CaLamComponent = () => {
   const totalHours = dataSource.reduce((acc, shift) => acc + (shift.soGioLamViec || 0), 0);
 
   return (
-    <div style={{ padding: '24px', background: '#f5f5f5', minHeight: '100vh' }}>
+    <div style={{ padding: '24px', background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)', minHeight: '100vh' }}>
       <div style={{ margin: '0 auto' }}>
         {/* Header */}
         <Card style={{ marginBottom: '24px' }}>

@@ -1,7 +1,9 @@
 import React, { useState, useCallback } from 'react';
-import { Typography, Input, Select, DatePicker, Form, Row, Col, Space, 
-    Button as AntButton, Checkbox, Divider, Card,Tag,Modal } from 'antd';
-import { CalendarOutlined, PlusOutlined, SearchOutlined,ClockCircleOutlined,EditOutlined,DeleteOutlined } from '@ant-design/icons'
+import {
+    Typography, Input, Select, DatePicker, Form, Row, Col, Space,
+    Button as AntButton, Checkbox, Card, Tag, Modal, Empty
+} from 'antd';
+import { CalendarOutlined, PlusOutlined, SearchOutlined, ClockCircleOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs';
 
 const { Text, Title } = Typography;
@@ -22,74 +24,53 @@ export default function NgayLeComponent() {
     // Mock data with proper structure
     const [ngayLeList, setNgayLeList] = useState([
         {
-            id: 1,
-            maNgayLe: 'TDL001',
+            maNgayLe: 1,
             tenNgayLe: 'Tết Dương lịch',
             ngayBatDau: '2025-01-01',
             ngayKetThuc: '2025-01-01',
             soNgayNghi: 1,
-            status: 'Hoạt động',
-            note: 'Ngày đầu năm mới'
         },
         {
-            id: 2,
-            maNgayLe: 'TND002',
+            maNgayLe: 2,
             tenNgayLe: 'Tết Nguyên đán',
             ngayBatDau: '2025-01-29',
             ngayKetThuc: '2025-02-02',
             soNgayNghi: 5,
-            status: 'Hoạt động',
-            note: 'Tết âm lịch truyền thống'
         },
         {
-            id: 3,
-            maNgayLe: 'GHV003',
+            maNgayLe: 3,
             tenNgayLe: 'Giỗ Tổ Hùng Vương',
             ngayBatDau: '2025-04-10',
             ngayKetThuc: '2025-04-10',
             soNgayNghi: 1,
-            status: 'Hoạt động',
-            note: 'Tưởng nhớ các vua Hùng'
         },
         {
-            id: 4,
-            maNgayLe: 'GPM004',
+            maNgayLe: 4,
             tenNgayLe: 'Ngày Giải phóng miền Nam',
             ngayBatDau: '2025-04-30',
             ngayKetThuc: '2025-04-30',
             soNgayNghi: 1,
-            status: 'Hoạt động',
-            note: 'Ngày thống nhất đất nước'
         },
         {
-            id: 5,
-            maNgayLe: 'QLD005',
+            maNgayLe: 5,
             tenNgayLe: 'Ngày Quốc tế Lao động',
             ngayBatDau: '2025-05-01',
             ngayKetThuc: '2025-05-01',
             soNgayNghi: 1,
-            status: 'Hoạt động',
-            note: 'Ngày của người lao động'
         },
         {
-            id: 6,
-            maNgayLe: 'QK006',
+            maNgayLe: 6,
             tenNgayLe: 'Quốc khánh 2/9',
             ngayBatDau: '2025-09-02',
             ngayKetThuc: '2025-09-03',
             soNgayNghi: 2,
-            status: 'Hoạt động',
-            note: 'Ngày Quốc khánh Việt Nam'
         },
     ]);
 
     // Filter data
     const filteredData = ngayLeList.filter(item => {
-        const matchSearch = item.tenNgayLe.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            item.maNgayLe.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (item.note && item.note.toLowerCase().includes(searchTerm.toLowerCase()));
-        const matchStatus = statusFilter === 'all' || item.status === statusFilter;
-        return matchSearch && matchStatus;
+        const matchSearch = item.tenNgayLe.toLowerCase().includes(searchTerm.toLowerCase())
+        return matchSearch;
     });
 
     // Pagination
@@ -107,7 +88,7 @@ export default function NgayLeComponent() {
 
         if (editingId) {
             setNgayLeList(prev => prev.map(item =>
-                item.id === editingId ? {
+                item.maNgayLe === editingId ? {
                     ...item,
                     ...formData,
                     updatedDate: new Date().toISOString().split('T')[0]
@@ -116,7 +97,7 @@ export default function NgayLeComponent() {
             message.success('Cập nhật ngày lễ thành công!');
         } else {
             const newItem = {
-                id: Date.now(),
+                maNgayLe: Date.now(),
                 ...formData,
                 status: 'Hoạt động',
                 createdDate: new Date().toISOString().split('T')[0]
@@ -134,7 +115,7 @@ export default function NgayLeComponent() {
     };
 
     const handleEdit = useCallback((data) => {
-        setEditingId(data.id);
+        setEditingId(data.maNgayLe);
         form.setFieldsValue({
             ...data,
             dateRange: data.ngayBatDau && data.ngayKetThuc ?
@@ -151,7 +132,7 @@ export default function NgayLeComponent() {
             cancelText: 'Hủy',
             okType: 'danger',
             onOk: () => {
-                setNgayLeList(prev => prev.filter(item => item.id !== data.id));
+                setNgayLeList(prev => prev.filter(item => item.maNgayLe !== data.maNgayLe));
                 message.success('Xóa ngày lễ thành công!');
             }
         });
@@ -170,7 +151,7 @@ export default function NgayLeComponent() {
             cancelText: 'Hủy',
             okType: 'danger',
             onOk: () => {
-                setNgayLeList(prev => prev.filter(item => !selectedRowKeys.includes(item.id)));
+                setNgayLeList(prev => prev.filter(item => !selectedRowKeys.includes(item.maNgayLe)));
                 setSelectedRowKeys([]);
                 message.success(`Đã xóa ${selectedRowKeys.length} ngày lễ thành công!`);
             }
@@ -183,17 +164,17 @@ export default function NgayLeComponent() {
         form.resetFields();
     };
 
-    const handleCardSelect = (id, checked) => {
+    const handleCardSelect = (maNgayLe, checked) => {
         if (checked) {
-            setSelectedRowKeys(prev => [...prev, id]);
+            setSelectedRowKeys(prev => [...prev, maNgayLe]);
         } else {
-            setSelectedRowKeys(prev => prev.filter(key => key !== id));
+            setSelectedRowKeys(prev => prev.filter(key => key !== maNgayLe));
         }
     };
 
     const handleSelectAll = (checked) => {
         if (checked) {
-            setSelectedRowKeys(paginatedData.map(item => item.id));
+            setSelectedRowKeys(paginatedData.map(item => item.maNgayLe));
         } else {
             setSelectedRowKeys([]);
         }
@@ -210,7 +191,7 @@ export default function NgayLeComponent() {
     };
 
     const renderNgayLeCard = (item) => (
-        <Col xs={24} sm={12} md={8} lg={6} key={item.id}>
+        <Col xs={24} sm={12} md={8} lg={6} key={item.maNgayLe}>
             <Card
                 hoverable
                 style={{
@@ -218,10 +199,10 @@ export default function NgayLeComponent() {
                     borderRadius: 12,
                     height: 'auto',
                     minHeight: '280px',
-                    boxShadow: selectedRowKeys.includes(item.id)
+                    boxShadow: selectedRowKeys.includes(item.maNgayLe)
                         ? '0 4px 20px rgba(24, 144, 255, 0.3)'
                         : '0 2px 12px rgba(0,0,0,0.08)',
-                    border: selectedRowKeys.includes(item.id) ? '2px solid #1890ff' : '1px solid #f0f0f0',
+                    border: selectedRowKeys.includes(item.maNgayLe) ? '2px solmaNgayLe #1890ff' : '1px solmaNgayLe #f0f0f0',
                     background: 'linear-gradient(135deg, #ffffff 0%, #fafafa 100%)',
                     transition: 'all 0.3s ease'
                 }}
@@ -235,8 +216,8 @@ export default function NgayLeComponent() {
                     marginBottom: 16
                 }}>
                     <Checkbox
-                        checked={selectedRowKeys.includes(item.id)}
-                        onChange={(e) => handleCardSelect(item.id, e.target.checked)}
+                        checked={selectedRowKeys.includes(item.maNgayLe)}
+                        onChange={(e) => handleCardSelect(item.maNgayLe, e.target.checked)}
                         style={{ transform: 'scale(1.1)' }}
                     />
                     <Tag color={getStatusColor(item.status)} style={{
@@ -285,12 +266,11 @@ export default function NgayLeComponent() {
                         </Tag>
                     </div>
 
-                    <div style={{ fontSize: '12px', color: '#666' }}>
-                        <div style={{ marginBottom: 4 }}>
-                            <Text>Từ: {formatDate(item.ngayBatDau)}</Text>
-                        </div>
-                        <div>
-                            <Text>Đến: {formatDate(item.ngayKetThuc)}</Text>
+                    <div style={{ fontSize: '12px', color: '#666', }}>
+                        <div style={{ marginBottom: 4, display: 'flex', justifyContent: 'space-between' }}>
+                            <Text>Từ: {formatDate(item.ngayBatDau)} </Text>
+                            -
+                            <Text> Đến: {formatDate(item.ngayKetThuc)}</Text>
                         </div>
                     </div>
 
@@ -314,33 +294,24 @@ export default function NgayLeComponent() {
                     display: 'flex',
                     justifyContent: 'center',
                     gap: 8,
-                    borderTop: '1px solid #f0f0f0',
+                    borderTop: '1px solmaNgayLe #f0f0f0',
                     paddingTop: 12,
                     marginTop: 12
                 }}>
                     <AntButton
-                        type="text"
+                        type='primary'
                         icon={<EditOutlined />}
                         onClick={() => handleEdit(item)}
-                        size="small"
-                        style={{
-                            color: '#1890ff',
-                            borderRadius: 6,
-                            padding: '4px 8px'
-                        }}
+                        size="middle"
                     >
                         Sửa
                     </AntButton>
                     <AntButton
-                        type="text"
                         danger
                         icon={<DeleteOutlined />}
                         onClick={() => handleDelete(item)}
-                        size="small"
-                        style={{
-                            borderRadius: 6,
-                            padding: '4px 8px'
-                        }}
+                        size="middle"
+
                     >
                         Xóa
                     </AntButton>
@@ -362,22 +333,17 @@ export default function NgayLeComponent() {
                 boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
             }}>
                 {/* Header Section */}
-                <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
+                <Row justify="space-between" align="mmaNgayLedle" style={{ marginBottom: 24 }}>
                     <Col>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                            <div style={{
-                                width: 48,
-                                height: 48,
-                                background: 'linear-gradient(135deg, #1890ff, #36cfc9)',
-                                borderRadius: 12,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                            }}>
-                                <CalendarOutlined style={{ fontSize: 24, color: 'white' }} />
-                            </div>
                             <div>
-                                <Title level={2} style={{ margin: 0, color: '#262626' }}>
+                                <Title level={2} style={{
+                                    marginBottom: 8,
+                                    background: 'linear-gradient(45deg, #667eea, #764ba2)',
+                                    WebkitBackgroundClip: 'text',
+                                    WebkitTextFillColor: 'transparent',
+                                    fontWeight: 700
+                                }}>
                                     Quản lý Ngày lễ
                                 </Title>
                                 <Text type="secondary">Quản lý các ngày nghỉ lễ trong năm</Text>
@@ -402,10 +368,7 @@ export default function NgayLeComponent() {
                                 onClick={handleAdd}
                                 size="large"
                                 style={{
-                                    borderRadius: 8,
-                                    background: 'linear-gradient(135deg, #1890ff, #36cfc9)',
-                                    border: 'none',
-                                    boxShadow: '0 4px 12px rgba(24, 144, 255, 0.3)'
+                                    background: 'linear-gradient(45deg, #667eea, #764ba2)'
                                 }}
                             >
                                 Thêm ngày lễ
@@ -428,19 +391,7 @@ export default function NgayLeComponent() {
                             style={{ borderRadius: 8 }}
                         />
                     </Col>
-                    <Col xs={24} sm={8} md={6}>
-                        <Select
-                            placeholder="Trạng thái"
-                            value={statusFilter}
-                            onChange={setStatusFilter}
-                            size="large"
-                            style={{ width: '100%', borderRadius: 8 }}
-                        >
-                            <Option value="all">Tất cả trạng thái</Option>
-                            <Option value="Hoạt động">Hoạt động</Option>
-                            <Option value="Tạm dừng">Tạm dừng</Option>
-                        </Select>
-                    </Col>
+
                     <Col xs={24} sm={4} md={10}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 16 }}>
                             <Checkbox
@@ -455,7 +406,6 @@ export default function NgayLeComponent() {
                     </Col>
                 </Row>
 
-                <Divider style={{ margin: '24px 0' }} />
 
                 {/* Cards Section */}
                 {paginatedData.length > 0 ? (
@@ -508,7 +458,7 @@ export default function NgayLeComponent() {
                     open={isModalVisible}
                     onCancel={handleCancel}
                     footer={null}
-                    width={600}
+                    wmaNgayLeth={600}
                     style={{ borderRadius: 16 }}
                 >
                     <Form
@@ -576,7 +526,7 @@ export default function NgayLeComponent() {
                             ]}
                         >
                             <RangePicker
-                                style={{ width: '100%', borderRadius: 8 }}
+                                style={{ wmaNgayLeth: '100%', borderRadius: 8 }}
                                 size="large"
                                 format="DD/MM/YYYY"
                                 placeholder={['Ngày bắt đầu', 'Ngày kết thúc']}
@@ -610,7 +560,7 @@ export default function NgayLeComponent() {
                         )}
 
                         <Form.Item style={{ marginBottom: 0, marginTop: 32 }}>
-                            <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
+                            <Space style={{ wmaNgayLeth: '100%', justifyContent: 'flex-end' }}>
                                 <AntButton
                                     onClick={handleCancel}
                                     size="large"

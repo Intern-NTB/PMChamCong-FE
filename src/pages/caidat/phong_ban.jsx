@@ -5,7 +5,6 @@ import {
     Form,
     Input,
     Space,
-    Divider,
     Modal,
     message,
     Button as AntButton,
@@ -35,7 +34,7 @@ const { Text, Title } = Typography;
 const { Search } = Input;
 const { Option } = Select;
 
-export const PhongBanComponent = () => {
+export default function PhongBanComponent  ()  {
     const [form] = Form.useForm();
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [isModalConfirmVisible, setIsModalConfirmVisible] = useState({
@@ -348,7 +347,7 @@ export const PhongBanComponent = () => {
     return (
         <div style={{
             padding: '24px',
-            background: '#f5f7fa',
+            background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
             minHeight: '100vh'
         }}>
             {/* Header Section - Fixed to full width */}
@@ -371,10 +370,10 @@ export const PhongBanComponent = () => {
                             WebkitTextFillColor: 'transparent',
                             fontWeight: 700
                         }}>
-                            Quản lý đối tượng ưu tiên
+                            Quản lý phòng ban
                         </Title>
                         <Text type="secondary" style={{ fontSize: 16 }}>
-                            Quản lý và phân loại các đối tượng được ưu tiên trong hệ thống
+                            Quản lý phòng ban trong hệ thống
                         </Text>
                     </Col>
                     <Col flex="none">

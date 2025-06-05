@@ -11,15 +11,41 @@ export default function AppRoutes() {
       ))}
 
       {privateRoutes.map(({ path, element, children }, idx) => (
-        <Route key={idx} path={path} element={<ProtectedRoute>{element}</ProtectedRoute>}>
-          {children && children.map((child, cIdx) => (
-            <Route
-              key={cIdx}
-              index={child.index}
-              path={child.path}
-              element={child.element}
-            />
-          ))}
+        <Route 
+          key={idx} 
+          path={path} 
+          element={<ProtectedRoute>{element}</ProtectedRoute>}
+        >
+          {children && children.map((child, cIdx) => {
+            // Handle nested routes properly
+            if (child.children) {
+              return (
+                <Route
+                  key={cIdx}
+                  path={child.path}
+                  element={child.element}
+                >
+                  {child.children.map((nestedChild, nIdx) => (
+                    <Route
+                      key={nIdx}
+                      index={nestedChild.index}
+                      path={nestedChild.path}
+                      element={nestedChild.element}
+                    />
+                  ))}
+                </Route>
+              );
+            }
+            
+            return (
+              <Route
+                key={cIdx}
+                index={child.index}
+                path={child.path}
+                element={child.element}
+              />
+            );
+          })}
         </Route>
       ))}
     </Routes>

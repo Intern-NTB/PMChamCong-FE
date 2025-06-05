@@ -11,7 +11,7 @@ import { useVaiTro } from '../../component/hooks/useVaiTro';
 const { Text, Title } = Typography;
 const { Search } = Input;
 
-export const VaiTroComponent = () => {
+export default function VaiTroComponent (){
 
     const { danhSachVaiTro } = useVaiTro()
     const { danhSachNhanVien } = useNhanVien()
@@ -225,12 +225,12 @@ export const VaiTroComponent = () => {
                     />
 
                     <AntButton
-y                        danger
-                        icon={<DeleteOutlined style={{color:'red'}}/>}
+                        y danger
+                        icon={<DeleteOutlined style={{ color: 'red' }} />}
                         onClick={() => handleDelete(item)}
                         size="middle"
                         title="Xóa"
-                       
+
                     />
                 </div>
             </Card>
@@ -240,7 +240,7 @@ y                        danger
     return (
         <div style={{
             padding: '24px',
-            background: '#f5f7fa',
+            background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
             minHeight: '100vh'
         }}>
             {/* Header Section */}
@@ -291,12 +291,7 @@ y                        danger
                                 onClick={handleAdd}
                                 size="large"
                                 style={{
-                                    background: 'white',
-                                    color: '#667eea',
-                                    border: 'none',
-                                    borderRadius: 8,
-                                    fontWeight: 600,
-                                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                    background: 'linear-gradient(45deg, #667eea, #764ba2)'
                                 }}
                             >
                                 Thêm vai trò mới

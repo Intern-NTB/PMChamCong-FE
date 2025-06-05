@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import './login.css'
 import logo from '../../../assets/images/LogoIcon.png'
 import { useTaiKhoan } from '../../../component/hooks/useTaiKhoan'
-import { notification } from 'antd'
+import { notification, Input } from 'antd'
 
 const Login = () => {
   const navigate = useNavigate()
@@ -11,6 +11,8 @@ const Login = () => {
 
   const [tenDangNhap, setTenDangNhap] = useState('')
   const [matKhau, setPassword] = useState('')
+  const [hienMatKhau, setHienMatKhau] = useState(false)
+
 
   const [api, contextHolder] = notification.useNotification()
 
@@ -57,22 +59,31 @@ const Login = () => {
         <img src={logo} alt="Logo" />
         <div className='input-container'>
           <label>Tên đăng nhập</label>
-          <input
+          <Input
             type="text"
             placeholder="Tên đăng nhập của bạn"
             value={tenDangNhap}
             onChange={e => setTenDangNhap(e.target.value)}
             required
+            style={
+              {
+                border: '2px solid gray'
+              }
+            }
           />
         </div>
         <div className='input-container'>
           <label>Mật khẩu</label>
-          <input
-            type="password"
-            placeholder="Mật khẩu của bạn"
+          <Input.Password
             value={matKhau}
             onChange={e => setPassword(e.target.value)}
             required
+            placeholder="Mật khẩu của bạn"
+            style={
+              {
+                border: '2px solid gray'
+              }
+            }
           />
         </div>
         <button type="submit" disabled={loadingDangNhap}>

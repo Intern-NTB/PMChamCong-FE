@@ -1,70 +1,50 @@
-import { Tabs, Space, Row, Col } from "antd"
-import { PhongBanComponent } from "./phong_ban";
-import { useEffect, useState } from "react";
-import './cai_dat.css'
-import  DoiTuongUuTienComponent  from "./doi_tuong_uu_tien";
-import { CaLamComponent } from './ca_lam.jsx'
-import { VaiTroComponent } from './vai_tro.jsx'
-import NgayLeComponent  from "./ngay_le.jsx";
+import { Tabs } from 'antd'
+import { useEffect, useState } from 'react'
+import { useNavigate, useLocation, Outlet } from 'react-router-dom'
 
 export default function CaiDat() {
-    // State
     const [isMobile, setIsMobile] = useState(false)
-  
+    const navigate = useNavigate()
+    const location = useLocation()
 
     useEffect(() => {
-        // Check screen size
         const checkScreenSize = () => {
-            setIsMobile(window.innerWidth < 880);
-        };
+            setIsMobile(window.innerWidth < 880)
+        }
+        checkScreenSize()
+        window.addEventListener('resize', checkScreenSize)
+        return () => window.removeEventListener('resize', checkScreenSize)
+    }, [])
 
-        checkScreenSize();
-        window.addEventListener('resize', checkScreenSize);
-        return () => window.removeEventListener('resize', checkScreenSize);
-    }, []);
-
-    const itemProps = [
-        {
-            key: '1',
-            label: 'Phòng ban',
-            children: <PhongBanComponent />
-        },
-        {
-            key: '2',
-            label: 'Ca làm',
-            children: <CaLamComponent />
-        },
-        {
-            key: '3',
-            label: 'Đối tượng ưu tiên',
-            children: DoiTuongUuTienComponent()
-        },
-        {
-            key: '4',
-            label: 'Vai trò',
-            children: <VaiTroComponent />
-        },
-        {
-            key: '5',
-            label: 'Nghỉ lễ',
-            children: NgayLeComponent()
-        },
+    // map tab key to route path
+    const tabItems = [
+        { key: 'phong-ban', label: 'Phòng ban' },
+        { key: 'ca-lam', label: 'Ca làm' },
+        { key: 'doi-tuong-uu-tien', label: 'Đối tượng ưu tiên' },
+        { key: 'vai-tro', label: 'Vai trò' },
+        { key: 'nghi-le', label: 'Nghỉ lễ' },
+        { key: 'thuong', label: 'Thưởng' },
+        { key: 'phat', label: 'Phạt' },
     ]
 
-    return (
-        <div className='container-column'>
-            <Row>
-                <Col span={24}>
-                    <Tabs
-                        style={{ width: '100%' }}
-                        defaultActiveKey="1"
-                        items={itemProps}
-                        tabPosition={isMobile ? 'top' : 'top'}
-                        size={isMobile ? 'small' : 'middle'}
-                    />
-                </Col>
-            </Row>
+    // Chọn tab hiện tại từ URL
+    const currentTab = location.pathname.split('/').pop()
 
-        </div>
+    const onChange = (key) => {
+        navigate(`/main-layout/caidat/${key}`)
+    }
+
+    return (
+        <>
+            <Tabs
+                activeKey={currentTab}
+                items={tabItems}
+                onChange={onChange}
+                tabPosition='top'
+                size={isMobile ? 'small' : 'middle'}
+            />
+            <Outlet />
+        </>
+
     )
 }
