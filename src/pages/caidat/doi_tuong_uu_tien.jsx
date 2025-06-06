@@ -1,375 +1,860 @@
-import React, { useState, useCallback } from 'react';
+/* eslint-disable no-unused-vars */
+import React, { useState, useCallback } from "react";
 import {
-    Table, Button, Modal, Form, Input, Space, Card, Statistic, Row, Col, Typography, Tag, Popconfirm, message, Divider, Select
+  Table,
+  Button,
+  Modal,
+  Form,
+  Input,
+  Space,
+  Card,
+  Statistic,
+  Row,
+  Col,
+  Typography,
+  Tag,
+  Popconfirm,
+  Divider,
+  Select,
+  Tabs,
+  DatePicker,
+  TimePicker,
 } from "antd";
 import {
-    PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, TeamOutlined, UserOutlined
-} from '@ant-design/icons';
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  SearchOutlined,
+  TeamOutlined,
+  UserOutlined,
+  HistoryOutlined,
+  CalendarOutlined,
+} from "@ant-design/icons";
+import dayjs from "dayjs";
+import { useAppNotification } from "../../component/ui/notification";
+import { useDoiTuongUuTien } from "../../component/hooks/useDoiTuongUuTien";
+import { useLichSuUuTien } from "../../component/hooks/useLichSuUuTien";
+import { useNhanVien } from "../../component/hooks/useNhanVien";
+import { useWatch } from "antd/es/form/Form";
 
-const { Text, Title } = Typography;
-const { Search } = Input;
+const { Title } = Typography;
+const { Search, TextArea } = Input;
+const { TabPane } = Tabs;
 
-export default function DoiTuongUuTienComponent  ()  {
-    const [form] = Form.useForm();
-    const [isModalVisible, setIsModalVisible] = useState(false);
-    const [editingId, setEditingId] = useState(null);
-    const [searchText, setSearchText] = useState('');
+export default function DoiTuongUuTienComponent() {
+  const [form] = Form.useForm();
+  const [historyForm] = Form.useForm();
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isHistoryModalVisible, setIsHistoryModalVisible] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [editingHistoryId, setEditingHistoryId] = useState(null);
+  const [searchText, setSearchText] = useState("");
+  const [searchHistoryText, setSearchHistoryText] = useState("");
+  const [selectedHistoryKeys, setSelectedHistoryKeys] = useState([]);
+  const [selectedKeys, setSelectedKeys] = useState([]);
+  const {
+    danhSachDoiTuongUuTien,
+    createDoiTuongUuTien,
+    updateDoiTuongUuTien,
+    deleteDoiTuongUuTien,
+  } = useDoiTuongUuTien();
+  const thoiGianHieuLuc = useWatch("thoiGianHieuLuc", form); // theo dõi giá trị
+  const soThang = thoiGianHieuLuc ? (thoiGianHieuLuc / 30).toFixed(1) : null;
 
-    // Mock data
-    const [doiTuongUuTienList, setDoiTuongUuTienList] = useState([
-        {
-            maUuTien: 1,
-            tenVaiTro: 'Thai sản',
-            ghiChu: 'Dành cho phụ nữ mang thai và cho con bú',
-            totalMembers: 156,
-        },
-        {
-            maUuTien: 2,
-            tenVaiTro: 'Có con nhỏ',
-            ghiChu: 'Dành cho người có con dưới 6 tuổi',
-            totalMembers: 89,
-        },
-        {
-            maUuTien: 3,
-            tenVaiTro: 'Người khuyết tật',
-            ghiChu: 'Dành cho người khuyết tật và gia đình',
-            totalMembers: 42,
-        },
-        {
-            maUuTien: 4,
-            tenVaiTro: 'Người cao tuổi',
-            ghiChu: 'Dành cho người trên 65 tuổi',
-            totalMembers: 73,
-        },
-        {
-            maUuTien: 5,
-            tenVaiTro: 'Cựu chiến binh',
-            ghiChu: 'Dành cho cựu chiến binh và gia đình liệt sĩ',
-            totalMembers: 25,
-        },
-    ]);
-
-    // Color mapping cho priority
-    const getPriorityColor = (priority) => {
-        const colorMap = {
-            'Cao': 'red',
-            'Trung bình': 'orange',
-            'Thấp': 'green'
-        };
-        return colorMap[priority] || 'default';
-    };
-
-    // Data source mapping
-    const dataSource = doiTuongUuTienList.map(item => ({
-        key: item.maUuTien,
-        maUuTien: item.maUuTien,
-        tenVaiTro: item.tenVaiTro,
-        ghiChu: item.ghiChu,
-        totalMembers: item.totalMembers,
-        status: item.status,
-        priority: item.priority,
-        createdDate: item.createdDate
-    }));
-
-    const onFinish = (values) => {
-        if (editingId) {
-            setDoiTuongUuTienList(prev => prev.map(item =>
-                item.maUuTien === editingId ? {
-                    ...item,
-                    ...values,
-                    updatedDate: new Date().toISOString().split('T')[0]
-                } : item
-            ));
-            message.success('Cập nhật đối tượng ưu tiên thành công!');
-        } else {
-            const newItem = {
-                maUuTien: Date.now(),
-                ...values,
-                status: 'Hoạt động',
-                priority: values.priority || 'Trung bình',
-                createdDate: new Date().toISOString().split('T')[0],
-                totalMembers: 0
-            };
-            setDoiTuongUuTienList(prev => [...prev, newItem]);
-            message.success('Thêm đối tượng ưu tiên thành công!');
-        }
-        handleCancel();
-    };
-
-    const handleAdd = () => {
-        setEditingId(null);
-        form.resetFields();
-        setIsModalVisible(true);
-    };
-
-    const handleEdit = useCallback((record) => {
-        setEditingId(record.maUuTien);
-        form.setFieldsValue({
-            tenVaiTro: record.tenVaiTro,
-            ghiChu: record.ghiChu,
-            priority: record.priority
-        });
-        setIsModalVisible(true);
-    }, [form]);
-
-    const handleDelete = async (maUuTien) => {
-        try {
-            setDoiTuongUuTienList(prev => prev.filter(item => item.maUuTien !== maUuTien));
-            message.success('Xóa đối tượng ưu tiên thành công!');
-        } catch (error) {
-            message.error('Đã xảy ra lỗi khi xóa đối tượng ưu tiên');
-        }
-    };
-
-    const handleCancel = () => {
-        setIsModalVisible(false);
-        setEditingId(null);
-        form.resetFields();
-    };
-
-    const columns = [
-        {
-            title: 'Mã ưu tiên',
-            dataIndex: 'maUuTien',
-            key: 'maUuTien',
-            width: 120,
-            render: (text) => <Tag color="blue">UT{text}</Tag>,
-            filteredValue: searchText ? [searchText] : null,
-            onFilter: (value, record) =>
-                record.maUuTien?.toString().toLowerCase().includes(value.toLowerCase()) ||
-                record.tenVaiTro?.toLowerCase().includes(value.toLowerCase()) ||
-                record.ghiChu?.toLowerCase().includes(value.toLowerCase()),
-        },
-        {
-            title: 'Tên đối tượng',
-            dataIndex: 'tenVaiTro',
-            key: 'tenVaiTro',
-            width: 200,
-            render: (text) => <Text strong>{text}</Text>,
-        },
-        {
-            title: 'Ghi chú',
-            dataIndex: 'ghiChu',
-            key: 'ghiChu',
-            width: 300,
-            render: (text) => (
-                <Text
-                    type="secondary"
-                    ellipsis={{ tooltip: text }}
-                    style={{ maxWidth: 280 }}
-                >
-                    {text}
-                </Text>
-            ),
-        },
-      
-        {
-            title: 'Số thành viên',
-            dataIndex: 'totalMembers',
-            key: 'totalMembers',
-            width: 120,
-            render: (count) => (
-                <Space>
-                    <TeamOutlined />
-                    <Tag color="green">{count}</Tag>
-                </Space>
-            ),
-            sorter: (a, b) => a.totalMembers - b.totalMembers,
-        },
-        {
-            title: 'Thao tác',
-            key: 'action',
-            width: 120,
-            fixed: 'right',
-            render: (_, record) => (
-                <Space>
-                    <Button
-                        type="text"
-                        icon={<EditOutlined />}
-                        onClick={() => handleEdit(record)}
-                        size="middle"
-                    />
-                    <Popconfirm
-                        title="Xóa đối tượng ưu tiên"
-                        description="Bạn có chắc chắn muốn xóa đối tượng ưu tiên này?"
-                        onConfirm={() => handleDelete(record.maUuTien)}
-                        okText="Có"
-                        cancelText="Không"
-                    >
-                        <Button
-                            danger
-                            icon={<DeleteOutlined style={{ color: 'red' }} />}
-                            size="middle"
-                        />
-                    </Popconfirm>
-                </Space>
-            ),
-        },
-    ];
-
-    // Tính toán thống kê
-    const totalObjects = dataSource.length;
-    const activeObjects = dataSource.filter(item => item.status === 'Hoạt động').length;
-    const totalMembers = dataSource.reduce((acc, item) => acc + (item.totalMembers || 0), 0);
-    const highPriorityCount = dataSource.filter(item => item.priority === 'Cao').length;
-
-    return (
-        <div style={{ padding: '24px', background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)', minHeight: '100vh' }}>
-            <div style={{ margin: '0 auto' }}>
-                {/* Header */}
-                <Card style={{ marginBottom: '24px' }}>
-                    <Row justify="space-between" align="middle">
-                        <Col>
-                            <Title
-                                level={2}
-                                style={{
-                                    marginBottom: 8,
-                                    background: 'linear-gradient(45deg, #667eea, #764ba2)',
-                                    WebkitBackgroundClip: 'text',
-                                    WebkitTextFillColor: 'transparent',
-                                    fontWeight: 700
-                                }}
-                            >
-                                Quản Lý Đối Tượng Ưu Tiên
-                            </Title>
-                            <Text type="secondary">Quản lý và phân loại các đối tượng được ưu tiên trong hệ thống</Text>
-                        </Col>
-                        <Col>
-                            <Button
-                                type="primary"
-                                icon={<PlusOutlined />}
-                                size="large"
-                                onClick={handleAdd}
-                                style={{
-                                    background: 'linear-gradient(45deg, #667eea, #764ba2)'
-                                }}
-                            >
-                                Thêm Đối Tượng Ưu Tiên
-                            </Button>
-                        </Col>
-                    </Row>
-                </Card>
-
-                {/* Statistics */}
-                <Row gutter={[16, 16]} justify={'center'} style={{ marginBottom: '24px' }}>
-                    <Col xs={24} sm={6}>
-                        <Card>
-                            <Statistic
-                                title="Tổng Đối Tượng"
-                                value={totalObjects}
-                                prefix={<UserOutlined style={{ color: '#1890ff' }} />}
-                                valueStyle={{ color: '#1890ff' }}
-                            />
-                        </Card>
-                    </Col>
-                    <Col xs={24} sm={6}>
-                        <Card>
-                            <Statistic
-                                title="Đang Hoạt Động"
-                                value={activeObjects}
-                                prefix={<UserOutlined style={{ color: '#52c41a' }} />}
-                                valueStyle={{ color: '#52c41a' }}
-                            />
-                        </Card>
-                    </Col>
-                </Row>
-
-                {/* Search and Table */}
-                <Card>
-                    <Row style={{ marginBottom: '16px' }}>
-                        <Col xs={24} sm={12} md={8}>
-                            <Search
-                                placeholder="Tìm kiếm theo mã, tên hoặc ghi chú..."
-                                allowClear
-                                enterButton={<SearchOutlined />}
-                                size="large"
-                                onSearch={setSearchText}
-                                onChange={(e) => !e.target.value && setSearchText('')}
-                            />
-                        </Col>
-                    </Row>
-
-                    <Table
-                        columns={columns}
-                        dataSource={dataSource}
-                        rowKey="maUuTien"
-                        pagination={{
-                            pageSize: 10,
-                            showSizeChanger: true,
-                            showQuickJumper: true,
-                            showTotal: (total, range) =>
-                                `${range[0]}-${range[1]} của ${total} đối tượng ưu tiên`,
-                        }}
-                        scroll={{ x: 1200 }}
-                        size="middle"
-                    />
-                </Card>
-
-                {/* Modal Form */}
-                <Modal
-                    centered
-                    title={
-                        <Space>
-                            <UserOutlined />
-                            {editingId ? 'Chỉnh Sửa Đối Tượng Ưu Tiên' : 'Thêm Đối Tượng Ưu Tiên'}
-                        </Space>
-                    }
-                    open={isModalVisible}
-                    onCancel={handleCancel}
-                    footer={null}
-                    width={700}
-                >
-                    <Form
-                        form={form}
-                        layout="vertical"
-                        onFinish={onFinish}
-                    >
-                        <Row gutter={16}>
-                            <Col xs={24} sm={12}>
-                                <Form.Item
-                                    label="Tên đối tượng ưu tiên"
-                                    name="tenVaiTro"
-                                    rules={[
-                                        { required: true, message: 'Vui lòng nhập tên đối tượng ưu tiên!' },
-                                        { min: 2, message: 'Tên phải có ít nhất 2 ký tự!' }
-                                    ]}
-                                >
-                                    <Input placeholder="Nhập tên đối tượng ưu tiên" />
-                                </Form.Item>
-                            </Col>
-                           
-                        </Row>
-
-                        <Form.Item
-                            label="Ghi chú"
-                            name="ghiChu"
-                            rules={[
-                                { required: true, message: 'Vui lòng nhập ghi chú!' }
-                            ]}
-                        >
-                            <Input.TextArea
-                                placeholder="Nhập ghi chú về đối tượng ưu tiên"
-                                rows={4}
-                            />
-                        </Form.Item>
-
-                        <Divider />
-
-                        <Row justify="end" gutter={8}>
-                            <Col>
-                                <Button onClick={handleCancel}>
-                                    Hủy
-                                </Button>
-                            </Col>
-                            <Col>
-                                <Button type="primary" htmlType="submit">
-                                    {editingId ? 'Cập Nhật' : 'Thêm Mới'}
-                                </Button>
-                            </Col>
-                        </Row>
-                    </Form>
-                </Modal>
-            </div>
-        </div>
+  const api = useAppNotification();
+  const { danhSachNhanVien } = useNhanVien();
+  const { danhSachLichSuUuTien } = useLichSuUuTien();
+  const dataSourceLichSuUuTien = danhSachLichSuUuTien.map(  (lsut) =>  {
+    const dataNhanVienFind =  danhSachNhanVien.find(
+      (nv) => nv.maNhanVien === lsut.maNhanVien
     );
+    const dataDoiTuongUuTienFilter = danhSachDoiTuongUuTien.find(
+      (dtut) => dtut.maUuTien === lsut.maUuTien
+    );
+    return {
+      maNhanVien: lsut.maNhanVien,
+      maUuTien: lsut.maUuTien,
+      thoiGianHieuLucBatDau: lsut.thoiGianHieuLucBatDau,
+      thoiGianHieuLucKetThuc: lsut.thoiGianHieuLucKetThuc,
+      hoTen: dataNhanVienFind?.hoTen || "N/A",
+      tenUuTien: dataDoiTuongUuTienFilter?.tenUuTien || "N/A",
+    };
+  });
+
+  // Data source mapping cho đối tượng ưu tiên
+  const dataSource = danhSachDoiTuongUuTien.map((item) => ({
+    maUuTien: item.maUuTien,
+    tenUuTien: item.tenUuTien,
+    thoiGianVaoMuon: item.thoiGianVaoMuon,
+    thoiGianVeSom: item.thoiGianVeSom,
+    thoiGianHieuLuc: item.thoiGianHieuLuc,
+  }));
+
+  // Hàm lọc dữ liệu cho tìm kiếm lịch sử
+  const getFilteredLichSu = () => {
+    if (!searchHistoryText) return dataSourceLichSuUuTien;
+    return dataSourceLichSuUuTien.filter(
+      (item) =>
+        item.maNhanVien
+          .toLowerCase()
+          .includes(searchHistoryText.toLowerCase()) ||
+        item.hoTen.toLowerCase().includes(searchHistoryText.toLowerCase()) ||
+        item.tenUuTien.toLowerCase().includes(searchHistoryText.toLowerCase())
+    );
+  };
+
+  // Xử lý select nhiều dòng cho lịch sử
+  const historyRowSelection = {
+    selectedRowKeys: selectedHistoryKeys,
+    onChange: (selectedRowKeys) => {
+      setSelectedHistoryKeys(selectedRowKeys);
+    },
+  };
+
+  const rowSelection = {
+    selectedRowKeys: selectedKeys,
+    onChange: (selectedRowKeys) => {
+      setSelectedKeys(selectedRowKeys);
+    },
+  };
+
+  const onFinish = async (values) => {
+    if (editingId) {
+      const formatedValues = {
+        ...values,
+        maUuTien: editingId,
+        thoiGianVaoMuon: values.thoiGianVaoMuon?.format("HH:mm:ss"),
+        thoiGianVeSom: values.thoiGianVeSom?.format("HH:mm:ss"),
+        thoiGianHieuLuc: Number(values.thoiGianHieuLuc),
+      };
+      await updateDoiTuongUuTien(formatedValues);
+      api.success({ message: "Cập nhật đối tượng ưu tiên thành công!" });
+    } else {
+      const formatedValues = {
+        ...values,
+        thoiGianVaoMuon: values.thoiGianVaoMuon?.format("HH:mm:ss"),
+        thoiGianVeSom: values.thoiGianVeSom?.format("HH:mm:ss"),
+      };
+      await createDoiTuongUuTien(formatedValues);
+      api.success({ message: "Thêm đối tượng ưu tiên thành công!" });
+    }
+    handleCancel();
+  };
+
+  const onHistoryFinish = (values) => {
+    const formattedValues = {
+      ...values,
+      thoiGianHieuLucBatDau: values.thoiGianHieuLucBatDau.format("YYYY-MM-DD"),
+      thoiGianHieuLucKetThuc: values.thoiGianHieuLucKetThuc
+        ? values.thoiGianHieuLucKetThuc.format("YYYY-MM-DD")
+        : null,
+    };
+
+    if (editingHistoryId) {
+      api.success("Cập nhật lịch sử ưu tiên thành công!");
+    } else {
+      const newHistoryItem = {
+        id: Date.now(),
+        ...formattedValues,
+        trangThai: "Đang áp dụng",
+        nguoiPheDuyet: "Admin",
+        ngayTao: new Date().toISOString().split("T")[0],
+      };
+      api.success("Thêm lịch sử ưu tiên thành công!");
+    }
+    handleHistoryCancel();
+  };
+
+  const handleAdd = () => {
+    setEditingId(null);
+    form.resetFields();
+    setIsModalVisible(true);
+  };
+
+  const handleAddHistory = () => {
+    setEditingHistoryId(null);
+    historyForm.resetFields();
+    setIsHistoryModalVisible(true);
+  };
+
+  const handleEdit = useCallback(
+    (record) => {
+      setEditingId(record.maUuTien);
+      form.setFieldsValue({
+        tenUuTien: record.tenUuTien,
+        thoiGianVaoMuon: record.thoiGianVaoMuon
+          ? dayjs(record.thoiGianVaoMuon, "HH:mm:ss")
+          : null,
+        thoiGianVeSom: record.thoiGianVeSom
+          ? dayjs(record.thoiGianVeSom, "HH:mm:ss")
+          : null,
+        thoiGianHieuLuc: record.thoiGianHieuLuc,
+      });
+      setIsModalVisible(true);
+    },
+    [form]
+  );
+
+  const handleEditHistory = useCallback(
+    (record) => {
+      setEditingHistoryId(record.id);
+      historyForm.setFieldsValue({
+        maNhanVien: record.maNhanVien,
+        hoTen: record.hoTen,
+        maUuTien: record.maUuTien,
+        thoiGianHieuLucBatDau: dayjs(record.thoiGianHieuLucBatDau),
+        thoiGianHieuLucKetThuc: record.thoiGianHieuLucKetThuc
+          ? dayjs(record.thoiGianHieuLucKetThuc)
+          : null,
+        lyDo: record.lyDo,
+        trangThai: record.trangThai,
+      });
+      setIsHistoryModalVisible(true);
+    },
+    [historyForm]
+  );
+
+  const handleDelete = async (maUuTien) => {
+    try {
+      await deleteDoiTuongUuTien(maUuTien);
+      api.success({ message: `Xóa đối tượng ưu tiên ${maUuTien} thành công!` });
+    } catch (error) {
+      api.error({
+        message: `Đã xảy ra lỗi khi xóa đối tượng ưu tiên có mã ${maUuTien}`,
+        description: error,
+      });
+    }
+  };
+
+  const handleDeleteMultiple = () => {
+    selectedKeys.map((key) => {
+      handleDelete(key);
+    });
+
+    setSelectedKeys([]);
+  };
+
+  const handleDeleteHistory = async (id) => {
+    try {
+      api.success({ message: "Xóa lịch sử ưu tiên thành công!" });
+    } catch (error) {
+      api.error({
+        api: "Đã xảy ra lỗi khi xóa lịch sử ưu tiên",
+        description: error,
+      });
+    }
+  };
+
+  const handleDeleteMultipleHistory = () => {};
+
+  const handleCancel = () => {
+    setIsModalVisible(false);
+    setEditingId(null);
+    form.resetFields();
+  };
+
+  const handleHistoryCancel = () => {
+    setIsHistoryModalVisible(false);
+    setEditingHistoryId(null);
+    historyForm.resetFields();
+  };
+
+  const { Text } = Typography;
+
+  const columns = [
+    {
+      title: "Tên đối tượng",
+      dataIndex: "tenUuTien",
+      key: "tenUuTien",
+      width: 150,
+      render: (text) => (text ? <Text strong>{text}</Text> : "N/A"),
+    },
+    {
+      title: "Thời gian vào muộn",
+      dataIndex: "thoiGianVaoMuon",
+      key: "thoiGianVaoMuon",
+      width: 150,
+      render: (text) => {
+        const time = dayjs(text, "HH:mm:ss", true);
+        return time.isValid() ? time.format("HH:mm:ss") : "Không hợp lệ";
+      },
+    },
+    {
+      title: "Thời gian về sớm",
+      dataIndex: "thoiGianVeSom",
+      key: "thoiGianVeSom",
+      width: 150,
+      render: (text) => {
+        const time = dayjs(text, "HH:mm:ss", true);
+        return time.isValid() ? time.format("HH:mm:ss") : "Không hợp lệ";
+      },
+      sorter: (a, b) => {
+        const timeA = dayjs(a.thoiGianVeSom, "HH:mm:ss", true);
+        const timeB = dayjs(b.thoiGianVeSom, "HH:mm:ss", true);
+        return timeA.isValid() && timeB.isValid()
+          ? timeA.unix() - timeB.unix()
+          : 0;
+      },
+    },
+
+    {
+      title: "Thời gian hiệu lực (ngày)",
+      dataIndex: "thoiGianHieuLuc",
+      key: "thoiGianHieuLuc",
+      width: 150,
+      sorter: (a, b) => a.thoiGianHieuLuc - b.thoiGianHieuLuc,
+    },
+    {
+      title: "Thao tác",
+      key: "action",
+      width: 120,
+      fixed: "right",
+      render: (_, record) => (
+        <Space>
+          <Button
+            type="text"
+            icon={<EditOutlined />}
+            onClick={() => handleEdit(record)}
+            size="middle"
+          />
+          <Popconfirm
+            title="Xóa đối tượng ưu tiên"
+            description="Bạn có chắc chắn muốn xóa đối tượng ưu tiên này?"
+            onConfirm={() => handleDelete(record.maUuTien)}
+            okText="Có"
+            cancelText="Không"
+          >
+            <Button
+              danger
+              icon={<DeleteOutlined style={{ color: "red" }} />}
+              size="middle"
+            />
+          </Popconfirm>
+        </Space>
+      ),
+    },
+  ];
+
+  // Columns cho bảng lịch sử ưu tiên
+  const historyColumns = [
+    {
+      title: "Tên nhân viên",
+      dataIndex: "hoTen",
+      key: "hoTen",
+      width: 150,
+      render: (text) => (text ? <Text strong>{text}</Text> : "N/A"),
+    },
+    {
+      title: "Đối tượng ưu tiên",
+      dataIndex: "tenUuTien",
+      key: "tenUuTien",
+      width: 150,
+      render: (text) => (text ? <Text strong>{text}</Text> : "N/A"),
+    },
+    {
+      title: "Ngày bắt đầu",
+      dataIndex: "thoiGianHieuLucBatDau",
+      key: "thoiGianHieuLucBatDau",
+      width: 120,
+      render: (date) => dayjs(date, "DD/MM/YYYY").format("DD/MM/YYYY"),
+    },
+    {
+      title: "Ngày kết thúc",
+      dataIndex: "thoiGianHieuLucKetThuc",
+      key: "thoiGianHieuLucKetThuc",
+      width: 120,
+      render: (date) => dayjs(date, "DD/MM/YYYY").format("DD/MM/YYYY"),
+    },
+
+    {
+      title: "Thao tác",
+      key: "action",
+      width: 120,
+      fixed: "right",
+      render: (_, record) => (
+        <Space>
+          <Button
+            type="text"
+            icon={<EditOutlined />}
+            onClick={() => handleEditHistory(record)}
+            size="middle"
+          />
+          <Popconfirm
+            title="Xóa lịch sử ưu tiên"
+            description="Bạn có chắc chắn muốn xóa bản ghi này?"
+            onConfirm={() => handleDeleteHistory(record.id)}
+            okText="Có"
+            cancelText="Không"
+          >
+            <Button
+              danger
+              icon={<DeleteOutlined style={{ color: "red" }} />}
+              size="middle"
+            />
+          </Popconfirm>
+        </Space>
+      ),
+    },
+  ];
+
+  // Tính toán thống kê
+  const totalObjects = dataSource.length;
+  const activeObjects = dataSource.filter(
+    (item) => item.status === "Hoạt động"
+  ).length;
+
+  const activeHistoryCount = dataSourceLichSuUuTien.filter(
+    (item) => item.trangThai === "Đang áp dụng"
+  ).length;
+  const totalHistoryCount = dataSourceLichSuUuTien.length;
+
+  return (
+    <div
+      style={{
+        padding: "24px",
+        background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
+        minHeight: "100vh",
+      }}
+    >
+      <div style={{ margin: "0 auto" }}>
+        {/* Header */}
+        <Card style={{ marginBottom: "24px" }}>
+          <Title
+            level={2}
+            style={{
+              marginBottom: 8,
+              background: "linear-gradient(45deg, #667eea, #764ba2)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              fontWeight: 700,
+            }}
+          >
+            Quản Lý Đối Tượng Ưu Tiên
+          </Title>
+          <Text type="secondary">
+            Quản lý và phân loại các đối tượng được ưu tiên trong hệ thống
+          </Text>
+        </Card>
+
+        {/* Statistics */}
+        <Row gutter={[16, 16]} style={{ marginBottom: "24px" }}>
+          <Col xs={24} sm={6}>
+            <Card>
+              <Statistic
+                title="Tổng Đối Tượng"
+                value={totalObjects}
+                prefix={<UserOutlined style={{ color: "#1890ff" }} />}
+                valueStyle={{ color: "#1890ff" }}
+              />
+            </Card>
+          </Col>
+          <Col xs={24} sm={6}>
+            <Card>
+              <Statistic
+                title="Đang Hoạt Động"
+                value={activeObjects}
+                prefix={<UserOutlined style={{ color: "#52c41a" }} />}
+                valueStyle={{ color: "#52c41a" }}
+              />
+            </Card>
+          </Col>
+          <Col xs={24} sm={6}>
+            <Card>
+              <Statistic
+                title="Lịch Sử Đang Áp Dụng"
+                value={activeHistoryCount}
+                prefix={<HistoryOutlined style={{ color: "#722ed1" }} />}
+                valueStyle={{ color: "#722ed1" }}
+              />
+            </Card>
+          </Col>
+          <Col xs={24} sm={6}>
+            <Card>
+              <Statistic
+                title="Tổng Lịch Sử"
+                value={totalHistoryCount}
+                prefix={<CalendarOutlined style={{ color: "#fa8c16" }} />}
+                valueStyle={{ color: "#fa8c16" }}
+              />
+            </Card>
+          </Col>
+        </Row>
+
+        {/* Main Content with Tabs */}
+        <Card>
+          <Tabs defaultActiveKey="lich-su">
+            <TabPane
+              tab={
+                <span>
+                  <HistoryOutlined style={{ marginRight: 8 }} />
+                  Lịch sử ưu tiên
+                </span>
+              }
+              key="lich-su"
+            >
+              <div
+                style={{
+                  marginBottom: "16px",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  gap: "16px",
+                  flexWrap: "wrap",
+                }}
+              >
+                <Space>
+                  <Button
+                    type="primary"
+                    icon={<PlusOutlined />}
+                    onClick={handleAddHistory}
+                  >
+                    Thêm lịch sử ưu tiên
+                  </Button>
+                  {selectedHistoryKeys.length > 0 && (
+                    <Button
+                      type="primary"
+                      danger
+                      icon={<DeleteOutlined />}
+                      onClick={handleDeleteMultipleHistory}
+                    >
+                      Xóa {selectedHistoryKeys.length} mục đã chọn
+                    </Button>
+                  )}
+                </Space>
+                <Search
+                  placeholder="Tìm kiếm theo mã NV, tên, đối tượng ưu tiên..."
+                  allowClear
+                  style={{ width: 350 }}
+                  onChange={(e) => setSearchHistoryText(e.target.value)}
+                  prefix={<SearchOutlined />}
+                />
+              </div>
+
+              <Table
+                columns={historyColumns}
+                dataSource={getFilteredLichSu()}
+                rowKey={(record) => `${record.maNhanVien}-${record.maUuTien}`}
+                rowSelection={historyRowSelection}
+                pagination={{
+                  pageSize: 10,
+                  showSizeChanger: true,
+                  showQuickJumper: true,
+                  showTotal: (total, range) =>
+                    `${range[0]}-${range[1]} của ${total} bản ghi`,
+                }}
+                scroll={{ x: 1200 }}
+              />
+            </TabPane>
+            <TabPane
+              tab={
+                <span>
+                  <UserOutlined style={{ marginRight: 8 }} />
+                  Đối tượng ưu tiên
+                </span>
+              }
+              key="doi-tuong"
+            >
+              <Row style={{ marginBottom: "16px" }} justify="space-between">
+                <Col>
+                  <div
+                    style={{
+                      marginBottom: "16px",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      gap: "16px",
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <Space>
+                      <Button
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        onClick={handleAdd}
+                      >
+                        Thêm Đối Tượng Ưu Tiên
+                      </Button>
+                      {selectedKeys.length > 0 && (
+                        <Button
+                          type="primary"
+                          danger
+                          icon={<DeleteOutlined />}
+                          onClick={handleDeleteMultiple}
+                        >
+                          Xóa {selectedKeys.length} mục đã chọn
+                        </Button>
+                      )}
+                    </Space>
+                    <Search
+                      placeholder="Tìm kiếm theo mã, tên hoặc ghi chú..."
+                      allowClear
+                      style={{ width: 350 }}
+                      onChange={(e) => setSearchText(e.target.value)}
+                      prefix={<SearchOutlined />}
+                    />
+                  </div>
+                </Col>
+              </Row>
+
+              <Table
+                columns={columns}
+                dataSource={dataSource}
+                rowKey="maUuTien"
+                rowSelection={rowSelection}
+                pagination={{
+                  pageSize: 10,
+                  showSizeChanger: true,
+                  showQuickJumper: true,
+                  showTotal: (total, range) =>
+                    `${range[0]}-${range[1]} của ${total} đối tượng ưu tiên`,
+                }}
+                scroll={{ x: 1200 }}
+                size="middle"
+              />
+            </TabPane>
+          </Tabs>
+        </Card>
+
+        {/* Modal Form cho Đối tượng ưu tiên */}
+        <Modal
+          centered
+          title={
+            <Space>
+              <UserOutlined />
+              {editingId
+                ? "Chỉnh Sửa Đối Tượng Ưu Tiên"
+                : "Thêm Đối Tượng Ưu Tiên"}
+            </Space>
+          }
+          open={isModalVisible}
+          onCancel={handleCancel}
+          footer={null}
+          width={700}
+        >
+          <Form
+            form={form}
+            layout="vertical"
+            onFinish={onFinish}
+            initialValues={{ thoiGianHieuLuc: 30 }}
+          >
+            <Row gutter={16}>
+              <Col xs={24} sm={12}>
+                <Form.Item
+                  label="Tên đối tượng ưu tiên"
+                  name="tenUuTien"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Vui lòng nhập tên đối tượng ưu tiên!",
+                    },
+                    { min: 2, message: "Tên phải có ít nhất 2 ký tự!" },
+                  ]}
+                >
+                  <Input placeholder="Nhập tên đối tượng ưu tiên" />
+                </Form.Item>
+              </Col>
+              <Col xs={24} sm={12}>
+                <Form.Item
+                  label={
+                    <Space>
+                      <span>Thời gian hiệu lực (Ngày)</span>
+                      {soThang && (
+                        <Text type="secondary" style={{ fontWeight: "normal" }}>
+                          (~ {soThang} tháng)
+                        </Text>
+                      )}
+                    </Space>
+                  }
+                  rules={[
+                    {
+                      required: true,
+                      message: "Vui lòng nhập thời gian hiệu lực ",
+                    },
+                  ]}
+                  name="thoiGianHieuLuc"
+                >
+                  <Input type="number" />
+                </Form.Item>
+              </Col>
+              <Col xs={24} sm={12}>
+                <Form.Item
+                  label="Thời gian vào muộn"
+                  name="thoiGianVaoMuon"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Vui lòng nhập thời gian vào muộn",
+                    },
+                  ]}
+                >
+                  <TimePicker
+                    placeholder="Chọn thời gian vào muộn"
+                    format={"HH:mm:ss"}
+                    style={{ width: "100%" }}
+                  />
+                </Form.Item>
+              </Col>
+              <Col xs={24} sm={12}>
+                <Form.Item
+                  label="Thời gian về sớm"
+                  name="thoiGianVeSom"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Vui lòng nhập thời gian về sớm ",
+                    },
+                  ]}
+                >
+                  <TimePicker
+                    placeholder="Chọn thời gian về sớm"
+                    format={"HH:mm:ss"}
+                    style={{ width: "100%" }}
+                  />
+                </Form.Item>
+              </Col>
+            </Row>
+
+            <Divider />
+
+            <Form.Item style={{ marginBottom: 0, textAlign: "right" }}>
+              <Space>
+                <Button onClick={handleCancel}>Hủy</Button>
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  style={{
+                    background: "linear-gradient(45deg, #667eea, #764ba2)",
+                  }}
+                >
+                  {editingId ? "Cập Nhật" : "Thêm Mới"}
+                </Button>
+              </Space>
+            </Form.Item>
+          </Form>
+        </Modal>
+
+        {/* Modal Form cho Lịch sử ưu tiên */}
+        <Modal
+          centered
+          title={
+            <Space>
+              <HistoryOutlined />
+              {editingHistoryId
+                ? "Chỉnh Sửa Lịch Sử Ưu Tiên"
+                : "Thêm Lịch Sử Ưu Tiên"}
+            </Space>
+          }
+          open={isHistoryModalVisible}
+          onCancel={handleHistoryCancel}
+          footer={null}
+          width={800}
+        >
+          <Form form={historyForm} layout="vertical" onFinish={onHistoryFinish}>
+            <Row gutter={16}>
+              <Col xs={24} sm={12}>
+                <Form.Item
+                  label="Mã nhân viên"
+                  name="maNhanVien"
+                  rules={[
+                    { required: true, message: "Vui lòng nhập mã nhân viên!" },
+                    {
+                      pattern: /^[A-Z]{2}\d{3}$/,
+                      message: "Mã nhân viên phải có định dạng như NV001!",
+                    },
+                  ]}
+                >
+                  <Input
+                    placeholder="Ví dụ: NV001"
+                    style={{ textTransform: "uppercase" }}
+                  />
+                </Form.Item>
+              </Col>
+              <Col xs={24} sm={12}>
+                <Form.Item
+                  label="Họ tên nhân viên"
+                  name="hoTen"
+                  rules={[
+                    {
+                      required: true,
+                      api: "Vui lòng nhập họ tên nhân viên!",
+                    },
+                    { min: 2, api: "Họ tên phải có ít nhất 2 ký tự!" },
+                  ]}
+                >
+                  <Input placeholder="Nhập họ tên đầy đủ" />
+                </Form.Item>
+              </Col>
+            </Row>
+
+            <Row gutter={16}>
+              <Col xs={24} sm={12}>
+                <Form.Item
+                  label="Đối tượng ưu tiên"
+                  name="maUuTien"
+                  rules={[
+                    {
+                      required: true,
+                      api: "Vui lòng chọn đối tượng ưu tiên!",
+                    },
+                  ]}
+                >
+                  <Select placeholder="Chọn đối tượng ưu tiên" showSearch>
+                    {danhSachDoiTuongUuTien.map((item) => (
+                      <Select.Option key={item.maUuTien} value={item.maUuTien}>
+                        {item.tenUuTien}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+            </Row>
+
+            <Row gutter={16}>
+              <Col xs={24} sm={12}>
+                <Form.Item
+                  label="Ngày bắt đầu"
+                  name="thoiGianHieuLucBatDau."
+                  rules={[
+                    { required: true, api: "Vui lòng chọn ngày bắt đầu!" },
+                  ]}
+                >
+                  <DatePicker
+                    style={{ width: "100%" }}
+                    format="DD/MM/YYYY"
+                    placeholder="Chọn ngày bắt đầu"
+                  />
+                </Form.Item>
+              </Col>
+              <Col xs={24} sm={12}>
+                <Form.Item label="Ngày kết thúc" name="thoiGianHieuLucKetThuc.">
+                  <DatePicker
+                    style={{ width: "100%" }}
+                    format="DD/MM/YYYY"
+                    placeholder="Chọn ngày kết thúc (không bắt buộc)"
+                  />
+                </Form.Item>
+              </Col>
+            </Row>
+
+            <Divider />
+
+            <Form.Item style={{ marginBottom: 0, textAlign: "right" }}>
+              <Space>
+                <Button onClick={handleHistoryCancel}>Hủy</Button>
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  style={{
+                    background: "linear-gradient(45deg, #667eea, #764ba2)",
+                  }}
+                >
+                  {editingHistoryId ? "Cập Nhật" : "Thêm Mới"}
+                </Button>
+              </Space>
+            </Form.Item>
+          </Form>
+        </Modal>
+      </div>
+    </div>
+  );
 }

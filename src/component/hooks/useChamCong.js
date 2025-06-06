@@ -10,8 +10,7 @@ export const useChamCong = () => {
         try {
             const res = await getAllChamCongServices()
             setDanhSachChamCong(Array.isArray(res.data) ? res.data : [])
-        } catch (error) {
-            console.log("hooks error Get All ")
+        } catch  {
             setDanhSachChamCong([])
         } finally {
             setLoadingChamCong(false)
@@ -23,8 +22,7 @@ export const useChamCong = () => {
         try {
             const res = await getAllChamCongDetailServices()
             setSachChamCongChiTiet(Array.isArray(res.data) ? res.data : [])
-        } catch (error) {
-            console.log("hooks error Get All ")
+        } catch {
             setSachChamCongChiTiet([])
         } finally {
             setLoadingChamCong(false)

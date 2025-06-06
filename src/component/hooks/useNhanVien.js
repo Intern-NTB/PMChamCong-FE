@@ -73,7 +73,7 @@ export const useNhanVien = () => {
     }
 
     useEffect(() => {
-        fetchNhanVien();  // Gọi fetchNhanVien khi component mount
+        fetchNhanVien();
     }, []);
 
     return {
@@ -86,6 +86,6 @@ export const useNhanVien = () => {
         addNhanVien,
         deleteNhanVien,
         updateNhanVien,
-        reloadData  // Trả về reloadData thay vì reloadNhanVien
+        reloadData 
     };
 };

@@ -11,7 +11,7 @@ const { Option } = Select;
 const { Search } = Input;
 
 export default function NhanVien() {
-    const { danhSachNhanVien, loading, statusCreateNhanVien, statusDeleteNhanVien, statusUpdateNhanVien, fetchNhanVien, addNhanVien, deleteNhanVien, updateNhanVien } = useNhanVien();
+    const { danhSachNhanVien, loading, fetchNhanVien, addNhanVien, deleteNhanVien, updateNhanVien } = useNhanVien();
     const { setReload } = useContext(ReloadContext);
 
     // States
@@ -53,14 +53,10 @@ export default function NhanVien() {
     // Load saved data from localStorage
     useEffect(() => {
         const savedSearchHistory = localStorage.getItem('employeeSearchHistory');
-        const savedFiltersData = localStorage.getItem('employeeSavedFilters');
-
         if (savedSearchHistory) {
             setSearchHistory(JSON.parse(savedSearchHistory));
         }
-        if (savedFiltersData) {
-            setSavedFilters(JSON.parse(savedFiltersData));
-        }
+       
     }, []);
 
     // Transform data with filtering and searching
@@ -314,6 +310,10 @@ export default function NhanVien() {
         }
     };
 
+    const getRowClassName = (record) => {
+    return record.maUuTien && record.maUuTien !== 'N/A' ? 'priority-row' : '';
+};
+
     const handleFilterChange = (filterType, value) => {
         setCurrentFilter(prev => ({
             ...prev,
@@ -547,6 +547,7 @@ export default function NhanVien() {
 
                     <Card title="Danh sách nhân viên" size="small">
                         <Table
+                        rowClassName={getRowClassName}
                             dataSource={processedData}
                             rowSelection={rowSelection}
                             columns={mobileColumns}

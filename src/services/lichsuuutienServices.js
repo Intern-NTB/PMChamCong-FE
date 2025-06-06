@@ -1,0 +1,39 @@
+import axiosInstance from "../config/axiosInstance";
+
+export const getAllLichSuUuTienServices = async () => {
+    try {
+        const res = await axiosInstance.get('/lichsuuutien')
+        return res.data
+    } catch (error) {
+        console.log(error)
+    }
+};
+
+// export const createLichSuUuTienServices = async (duLieuUuTien) => {
+//     try {
+//         const res = await axiosInstance.post('/lichsuuutien',duLieuUuTien)
+//         return res.data
+//     } catch (error) {
+//         console.log(error)
+//     }
+// };
+
+
+export const updateLichSuUuTienServices = async (maNhanVien,maUuTien) => {
+    try {
+        const res = await axiosInstance.put(`/lichsuuutien/${maNhanVien}/${maUuTien}`)
+        return res.data
+    } catch (error) {
+        console.log(error)
+    }
+};
+
+
+export const deleteLichSuUuTienServices = async (maNhanVien,maUuTien) => {
+    try {
+        const res = await axiosInstance.delete(`/lichsuuutien/${maNhanVien}/${maUuTien}`)
+        return res.data
+    } catch (error) {
+        console.log(error)
+    }
+};

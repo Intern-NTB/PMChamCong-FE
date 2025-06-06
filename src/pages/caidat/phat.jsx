@@ -1,17 +1,43 @@
-import React, { useEffect, useState, useContext } from 'react';
-import { Table, Button, Modal, Form, Input, Select, DatePicker, InputNumber, Card, Statistic, Tabs, Space, Popconfirm, message, Row, Col, Typography } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, UserOutlined, DollarOutlined, HistoryOutlined, SearchOutlined } from '@ant-design/icons';
+import React, { useEffect, useState, useContext } from "react";
+import {
+  Table,
+  Button,
+  Modal,
+  Form,
+  Input,
+  Select,
+  DatePicker,
+  InputNumber,
+  Card,
+  Statistic,
+  Tabs,
+  Space,
+  Popconfirm,
+  message,
+  Row,
+  Col,
+  Typography,
+} from "antd";
+import {
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  UserOutlined,
+  DollarOutlined,
+  HistoryOutlined,
+  SearchOutlined,
+} from "@ant-design/icons";
 
 // ==== HOOKS TUỲ CHỈNH ====
-import { useLoaiTienTru } from '../../component/hooks/useLoaiTienTru';
-import { useLichSuTru } from '../../component/hooks/useLichSuTienTru';
-import { useNhanVien } from '../../component/hooks/useNhanVien';
-import { useAppNotification } from '../../component/ui/notification';
+import { useLoaiTienTru } from "../../component/hooks/useLoaiTienTru";
+import { useLichSuTru } from "../../component/hooks/useLichSuTienTru";
+import { useNhanVien } from "../../component/hooks/useNhanVien";
+import { useAppNotification } from "../../component/ui/notification";
 
 // ==== CONTEXT ====
-import { ReloadContext } from '../../context/reloadContext';
+import { ReloadContext } from "../../context/reloadContext";
 
-import dayjs from 'dayjs';
+import dayjs from "dayjs";
 
 const { TabPane } = Tabs;
 const { TextArea } = Input;
@@ -19,701 +45,827 @@ const { Title, Text } = Typography;
 const { Search } = Input;
 
 export default function TruComponent() {
-    // Hooks
-    const { danhSachLoaiTienTru, updateLoaiTienTru, deleteLoaiTienTru, createLoaiTienTru, getAllLoaiTienTru } = useLoaiTienTru()
-    const { danhSachLichSuTru, updateLichSuTru, createLichSuTru, deleteLichSuTru } = useLichSuTru()
-    const { danhSachNhanVien } = useNhanVien()
-    // state
-    const api = useAppNotification()
-    const { setReload } = useContext(ReloadContext);
+  // Hooks
+  const {
+    danhSachLoaiTienTru,
+    updateLoaiTienTru,
+    deleteLoaiTienTru,
+    createLoaiTienTru,
+    getAllLoaiTienTru,
+  } = useLoaiTienTru();
+  const {
+    danhSachLichSuTru,
+    updateLichSuTru,
+    createLichSuTru,
+    deleteLichSuTru,
+  } = useLichSuTru();
+  const { danhSachNhanVien } = useNhanVien();
+  // state
+  const api = useAppNotification();
+  const { setReload } = useContext(ReloadContext);
 
-    // Data Source
-    const dataSourceDanhSachLichSuTru = danhSachLichSuTru.map(dsltt => {
-        const danhSachNhanVienFind = danhSachNhanVien.find(nv => nv.maNhanVien === dsltt.maNhanVien);
-        const danhSachLoaiTienTruFind = danhSachLoaiTienTru.find(ltt => ltt.maLoaiTienTru === dsltt.maLoaiTienTru)
-        return {
-            ...dsltt,
-            hoTen: danhSachNhanVienFind?.hoTen || "N/A",
-            tenLoaiTienTru: danhSachLoaiTienTruFind?.tenLoaiTienTru || "N/A",
-            soTienTru: danhSachLoaiTienTruFind?.soTienTru || 0,
-            donVi: danhSachLoaiTienTruFind?.donVi || 'N/A'
-        };
+  // Data Source
+  const dataSourceDanhSachLichSuTru = danhSachLichSuTru.map((dsltt) => {
+    const danhSachNhanVienFind = danhSachNhanVien.find(
+      (nv) => nv.maNhanVien === dsltt.maNhanVien
+    );
+    const danhSachLoaiTienTruFind = danhSachLoaiTienTru.find(
+      (ltt) => ltt.maLoaiTienTru === dsltt.maLoaiTienTru
+    );
+
+    let quyDoi = 0;
+    if (dsltt.soTienTruKhac && dsltt.soTienTruKhac > 0) {
+      quyDoi = dsltt.soTienTruKhac;
+    } else if (danhSachLoaiTienTruFind && danhSachLoaiTienTruFind.donVi) {
+      // Dùng đúng biến danhSachLoaiTienTruFind thay vì loaiTienTru
+      if (danhSachLoaiTienTruFind.donVi === "%") {
+        // Cần lấy luongCoBan của nhân viên, phòng trường hợp undefined thì 0
+        const luongCoBan = danhSachNhanVienFind?.luongCoBan || 0;
+        quyDoi = (luongCoBan * danhSachLoaiTienTruFind.soTienTru) / 100;
+      } else {
+        quyDoi = danhSachLoaiTienTruFind.soTienTru;
+      }
+    }
+    return {
+      ...dsltt,
+      hoTen: danhSachNhanVienFind?.hoTen || "N/A",
+      tenLoaiTienTru: danhSachLoaiTienTruFind?.tenLoaiTienTru || "N/A",
+      soTienTru: danhSachLoaiTienTruFind?.soTienTru || 0,
+      donVi: danhSachLoaiTienTruFind?.donVi || "N/A",
+      luongCoBan: danhSachNhanVienFind?.luongCoBan || 0,
+      quyDoi,
+    };
+  });
+
+  useEffect(() => {
+    setReload(() => getAllLoaiTienTru);
+  }, []);
+
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isHistoryModalVisible, setIsHistoryModalVisible] = useState(false);
+  const [editingItem, setEditingItem] = useState(null);
+  const [modalType, setModalType] = useState(""); // 'lichsu' hoặc 'loaiphat'
+  const [form] = Form.useForm();
+
+  // State cho tìm kiếm
+  const [searchTextLichSu, setSearchTextLichSu] = useState("");
+  const [searchTextLoaiTru, setSearchTextLoaiTru] = useState("");
+
+  // State cho select nhiều dòng
+  const [selectedLichSuKeys, setSelectedLichSuKeys] = useState([]);
+  const [selectedLoaiTruKeys, setSelectedLoaiTruKeys] = useState([]);
+
+  // Tính toán thống kê
+  const tongSoNhanVienBiTru = new Set(
+    danhSachLichSuTru.map((item) => item.maNhanVien)
+  ).size;
+
+  // Hàm lọc dữ liệu cho tìm kiếm
+  const getFilteredLichSu = () => {
+    if (!searchTextLichSu) return dataSourceDanhSachLichSuTru;
+
+    return dataSourceDanhSachLichSuTru.filter((item) => {
+      const maNhanVienStr = item.maNhanVien?.toString().toLowerCase() || "";
+      const hoTenStr = item.hoTen?.toLowerCase() || "";
+      const lyDoStr = item.lyDo?.toLowerCase() || "";
+      const loaiTruNameStr =
+        getLoaiTruName(item.maLoaiTienTru)?.toLowerCase() || "";
+
+      const searchLower = searchTextLichSu.toLowerCase();
+
+      return (
+        maNhanVienStr.includes(searchLower) ||
+        hoTenStr.includes(searchLower) ||
+        loaiTruNameStr.includes(searchLower) ||
+        lyDoStr.includes(searchLower)
+      );
     });
+  };
 
-    useEffect(() => {
-        setReload(() => getAllLoaiTienTru);
-    }, [])
+  // Hàm tính tổng số lần trừ dựa trên danh sách đã lọc
+  const getTotalLanTruFromFiltered = () => {
+    const filteredList = getFilteredLichSu();
+    return filteredList.length;
+  };
 
+  // Hàm tính tổng dựa trên danh sách đã lọc
+  const getTotalFromFiltered = () => {
+    const filteredList = getFilteredLichSu();
 
-    const [isModalVisible, setIsModalVisible] = useState(false);
-    const [isHistoryModalVisible, setIsHistoryModalVisible] = useState(false);
-    const [editingItem, setEditingItem] = useState(null);
-    const [modalType, setModalType] = useState(''); // 'lichsu' hoặc 'loaiphat'
-    const [form] = Form.useForm();
-
-    // State cho tìm kiếm
-    const [searchTextLichSu, setSearchTextLichSu] = useState('');
-    const [searchTextLoaiTru, setSearchTextLoaiTru] = useState('');
-
-    // State cho select nhiều dòng
-    const [selectedLichSuKeys, setSelectedLichSuKeys] = useState([]);
-    const [selectedLoaiTruKeys, setSelectedLoaiTruKeys] = useState([]);
-
-    // Tính toán thống kê
-    const tongSoNhanVienBiTru = new Set(danhSachLichSuTru.map(item => item.maNhanVien)).size;
-     const tongSoTienTru = dataSourceDanhSachLichSuTru.reduce((sum, item) => {
-        // Nếu soTienTruKhac có giá trị thì dùng nó
-        if (item.soTienTruKhac && item.soTienTruKhac > 0) {
-            return sum + item.soTienTruKhac;
-        } else {
-            // Nếu không, lấy soTienTru từ loại tiền thưởng
-            const loaiTienTru = danhSachLoaiTienTru.find(ltt => ltt.maLoaiTienTru === item.maLoaiTienTru);
-            return sum + (loaiTienTru?.soTienTru || 0);
-        }
+    // Giả sử muốn tính tổng trường soTienTru (cập nhật theo dữ liệu bạn có)
+    return filteredList.reduce((total, item) => {
+      // item.soTienTru có thể là số hoặc chuỗi, convert sang số
+      const value = Number(item.quyDoi) || 0;
+      return total + value;
     }, 0);
-    const tongSoLanTru = danhSachLichSuTru.length;
+  };
 
-    // Hàm lọc dữ liệu cho tìm kiếm
-    const getFilteredLichSu = () => {
-        if (!searchTextLichSu) return dataSourceDanhSachLichSuTru;
-        return dataSourceDanhSachLichSuTru.filter(item =>
-            item.maNhanVien.toLowerCase().includes(searchTextLichSu.toLowerCase()) ||
-            item.hoTen.toLowerCase().includes(searchTextLichSu.toLowerCase()) ||
-            getLoaiTruName(item.maLoaiTienTru).toLowerCase().includes(searchTextLichSu.toLowerCase()) ||
-            item.lyDo.toLowerCase().includes(searchTextLichSu.toLowerCase())
-        );
-    };
+  const getFilteredLoaiTru = () => {
+    if (!searchTextLoaiTru) return danhSachLoaiTienTru;
+    return danhSachLoaiTienTru.filter(
+      (item) =>
+        item.tenLoaiTru
+          .toLowerCase()
+          .includes(searchTextLoaiTru.toLowerCase()) ||
+        item.maLoaiTienTru.toString().includes(searchTextLoaiTru)
+    );
+  };
 
-    const getFilteredLoaiTru = () => {
-        if (!searchTextLoaiTru) return danhSachLoaiTienTru;
-        return danhSachLoaiTienTru.filter(item =>
-            item.tenLoaiTru.toLowerCase().includes(searchTextLoaiTru.toLowerCase()) ||
-            item.maLoaiTienTru.toString().includes(searchTextLoaiTru)
-        );
-    };
+  // Hàm xử lý select nhiều dòng
+  const lichSuRowSelection = {
+    selectedRowKeys: selectedLichSuKeys,
+    onChange: (selectedRowKeys) => {
+      setSelectedLichSuKeys(selectedRowKeys);
+    },
+    onSelectAll: (selected, selectedRows, changeRows) => {
+      console.log("Select all:", selected, selectedRows, changeRows);
+    },
+    onSelect: (record, selected, selectedRows) => {
+      console.log("Select:", record, selected, selectedRows);
+    },
+  };
 
-    // Hàm xử lý select nhiều dòng
-    const lichSuRowSelection = {
-        selectedRowKeys: selectedLichSuKeys,
-        onChange: (selectedRowKeys) => {
-            setSelectedLichSuKeys(selectedRowKeys);
-        },
-        onSelectAll: (selected, selectedRows, changeRows) => {
-            console.log('Select all:', selected, selectedRows, changeRows);
-        },
-        onSelect: (record, selected, selectedRows) => {
-            console.log('Select:', record, selected, selectedRows);
-        },
-    };
+  const loaiTruRowSelection = {
+    selectedRowKeys: selectedLoaiTruKeys,
+    onChange: (selectedRowKeys) => {
+      setSelectedLoaiTruKeys(selectedRowKeys);
+    },
+    onSelectAll: (selected, selectedRows, changeRows) => {
+      console.log("Select all:", selected, selectedRows, changeRows);
+    },
+    onSelect: (record, selected, selectedRows) => {
+      console.log("Select:", record, selected, selectedRows);
+    },
+  };
 
-    const loaiTruRowSelection = {
-        selectedRowKeys: selectedLoaiTruKeys,
-        onChange: (selectedRowKeys) => {
-            setSelectedLoaiTruKeys(selectedRowKeys);
-        },
-        onSelectAll: (selected, selectedRows, changeRows) => {
-            console.log('Select all:', selected, selectedRows, changeRows);
-        },
-        onSelect: (record, selected, selectedRows) => {
-            console.log('Select:', record, selected, selectedRows);
-        },
-    };
+  // Hàm xử lý xóa nhiều dòng
+  const handleDeleteMultipleLichSu = () => {};
 
-    // Hàm xử lý xóa nhiều dòng
-    const handleDeleteMultipleLichSu = () => {
-
-    };
-
-    const handleDeleteMultipleLoaiTru = () => {
-        Modal.confirm({
-            title: `Bạn có chắc chắn muốn xóa ${selectedLoaiTruKeys.length} loại phạt đã chọn?`,
-            content: 'Hành động này không thể hoàn tác.',
-            okText: 'Xóa',
-            okType: 'danger',
-            cancelText: 'Hủy',
-            onOk() {
-                // Gọi API xóa nhiều loại phạt
-                selectedLoaiTruKeys.forEach(async (maLoaiTienTru) => {
-                    try {
-                        await deleteLoaiTienTru(maLoaiTienTru);
-                    } catch (error) {
-                        console.error('Error deleting:', error);
-                    }
-                });
-                setSelectedLoaiTruKeys([]);
-                message.success(`Đã xóa ${selectedLoaiTruKeys.length} loại phạt!`);
-            },
+  const handleDeleteMultipleLoaiTru = () => {
+    Modal.confirm({
+      title: `Bạn có chắc chắn muốn xóa ${selectedLoaiTruKeys.length} loại phạt đã chọn?`,
+      content: "Hành động này không thể hoàn tác.",
+      okText: "Xóa",
+      okType: "danger",
+      cancelText: "Hủy",
+      onOk() {
+        // Gọi API xóa nhiều loại phạt
+        selectedLoaiTruKeys.forEach(async (maLoaiTienTru) => {
+          try {
+            await deleteLoaiTienTru(maLoaiTienTru);
+          } catch (error) {
+            console.error("Error deleting:", error);
+          }
         });
-    };
+        setSelectedLoaiTruKeys([]);
+        message.success(`Đã xóa ${selectedLoaiTruKeys.length} loại phạt!`);
+      },
+    });
+  };
 
-    // Hàm xử lý CRUD cho Lịch sử phạt
-    const handleAddLichSu = () => {
-        setEditingItem(null);
-        setModalType('lichsu');
-        setIsModalVisible(true);
-        form.resetFields();
-    };
+  // Hàm xử lý CRUD cho Lịch sử phạt
+  const handleAddLichSu = () => {
+    setEditingItem(null);
+    setModalType("lichsu");
+    setIsModalVisible(true);
+    form.resetFields();
+  };
 
-    const handleEditLichSu = (record) => {
-        setEditingItem(record);
-        setModalType('lichsu');
-        setIsModalVisible(true);
-        form.setFieldsValue({
-            ...record,
-            ngayTru: dayjs(record.ngayTru)
-        });
-    };
+  const handleEditLichSu = (record) => {
+    setEditingItem(record);
+    setModalType("lichsu");
+    setIsModalVisible(true);
+    form.setFieldsValue({
+      ...record,
+      ngayTru: dayjs(record.ngayTru),
+    });
+  };
 
-    const handleDeleteLichSuTru = async (maNhanVien, maLoaiTienTru) => {
-        try {
-            await deleteLichSuTru(maNhanVien, maLoaiTienTru)
-            api.success({ message: 'Xoá thành công' })
-        } catch (error) {
-            api.error({ message: 'Xoá thất bại' })
+  const handleDeleteLichSuTru = async (maNhanVien, maLoaiTienTru) => {
+    try {
+      await deleteLichSuTru(maNhanVien, maLoaiTienTru);
+      api.success({ message: "Xoá thành công" });
+    } catch {
+      api.error({ message: "Xoá thất bại" });
+    }
+  };
+
+  // Hàm xử lý CRUD cho Loại phạt
+  const handleAddLoaiTru = () => {
+    setEditingItem(null);
+    setModalType("loaiphat");
+    setIsModalVisible(true);
+    form.resetFields();
+  };
+
+  const handleEditLoaiTru = (record) => {
+    setEditingItem(record);
+    setModalType("loaiphat");
+    setIsModalVisible(true);
+    form.setFieldsValue(record);
+  };
+
+  const handleDeleteLoaiTru = (maLoaiTienTru) => {
+    dataSourceDanhSachLichSuTru.filter(
+      (item) => item.maLoaiTienTru !== maLoaiTienTru
+    );
+    message.success("Xóa thành công!");
+  };
+
+  const handleSubmit = async () => {
+    try {
+      const values = await form.validateFields();
+
+      if (modalType === "lichsu") {
+        const formattedValues = {
+          ...values,
+          soTienTru: values.soTienTru ?? null,
+          ngayTru: values.ngayTru.format("YYYY-MM-DD"),
+        };
+
+        if (editingItem) {
+          await updateLichSuTru(values);
+          api.success({ message: "Cập nhật lịch sử trừ thành công!" });
+        } else {
+          await createLichSuTru(formattedValues);
+          api.success({ message: "Thêm lịch sử trừ thành công!" });
         }
-    };
+      } else {
+        if (editingItem) {
+          const updateValues = {
+            ...values,
+            maLoaiTienTru: editingItem.maLoaiTienTru,
+          };
+          try {
+            await updateLoaiTienTru(updateValues);
+            api.success({ message: "Cập nhật thành công!" });
+          } catch {
+            api.error({ message: "Cập nhật không thành công!" });
+          }
+        } else {
+          try {
+            await createLoaiTienTru(values);
+            api.success({ message: "Thêm thành công!" });
+          } catch {
+            api.error({ message: "Thêm Không thành công!" });
+          }
+        }
+      }
 
-    // Hàm xử lý CRUD cho Loại phạt
-    const handleAddLoaiTru = () => {
-        setEditingItem(null);
-        setModalType('loaiphat');
-        setIsModalVisible(true);
-        form.resetFields();
-    };
+      setIsModalVisible(false);
+      form.resetFields();
+    } catch (error) {
+      console.log("Validation failed:", error);
+    }
+  };
 
-    const handleEditLoaiTru = (record) => {
-        setEditingItem(record);
-        setModalType('loaiphat');
-        setIsModalVisible(true);
-        form.setFieldsValue(record);
-    };
+  const getLoaiTruName = (maLoaiTienTru) => {
+    const loaiTru = dataSourceDanhSachLichSuTru.find(
+      (item) => item.maLoaiTienTru === maLoaiTienTru
+    );
+    return loaiTru ? loaiTru.tenLoaiTru : "Không xác định";
+  };
 
-    const handleDeleteLoaiTru = (maLoaiTienTru) => {
-        (dataSourceDanhSachLichSuTru.filter(item => item.maLoaiTienTru !== maLoaiTienTru));
-        message.success('Xóa thành công!');
-    };
+  // Columns cho bảng Lịch sử phạt
+  const lichSuColumns = [
+    {
+      title: "Mã nhân viên",
+      dataIndex: "maNhanVien",
+      key: "maNhanVien",
+    },
+    {
+      title: "Tên nhân viên",
+      dataIndex: "hoTen",
+      key: "hoTen",
+      sorter: (a, b) =>
+        a.hoTen.toLowerCase().localeCompare(b.hoTen.toLowerCase()),
+    },
+    {
+      title: "Loại phạt",
+      dataIndex: "tenLoaiTienTru",
+      key: "tenLoaiTienTru",
+      filters: danhSachLoaiTienTru.map((loaiPhat) => ({
+        text: loaiPhat.tenLoaiTienTru,
+        value: loaiPhat.tenLoaiTienTru,
+      })),
+      onFilter: (value, record) => record.tenLoaiTienTru === value,
+    },
+    {
+      title: "Số tiền phạt",
+      dataIndex: "soTienTru",
+      key: "soTienTru",
+      render: (amount) => new Intl.NumberFormat("vi-VN").format(amount),
+    },
+    {
+      title: "Số tiền phạt khác",
+      dataIndex: "soTienTruKhac",
+      key: "soTienTruKhac",
+      render: (amount) => new Intl.NumberFormat("vi-VN").format(amount),
+    },
 
-    const handleSubmit = async () => {
-        try {
-            const values = await form.validateFields();
-
-            if (modalType === 'lichsu') {
-                const formattedValues = {
-                    ...values,
-                    soTienTru: values.soTienTru ?? null,
-                    ngayTru: values.ngayTru.format('YYYY-MM-DD')
-                };
-
-                if (editingItem) {
-                    await updateLichSuTru(values)
-                    api.success({ message: 'Cập nhật lịch sử trừ thành công!' });
-
-                } else {
-                    await createLichSuTru(formattedValues)
-                    api.success({ message: 'Thêm lịch sử trừ thành công!' });
-
-                }
-            } else {
-                if (editingItem) {
-                    const updateValues = {
-                        ...values,
-                        maLoaiTienTru: editingItem.maLoaiTienTru
-                    };
-                    try {
-                        await updateLoaiTienTru(updateValues)
-                        api.success({ message: 'Cập nhật thành công!' });
-                    } catch (error) {
-                        api.error({ message: 'Cập nhật không thành công!' });
-                    }
-
-                } else {
-                    try {
-                        await createLoaiTienTru(values)
-                        api.success({ message: 'Thêm thành công!' });
-                    } catch (error) {
-                        api.error({ message: 'Thêm Không thành công!' });
-
-                    }
-
-                }
+    {
+      title: "Đơn vị",
+      dataIndex: "donVi",
+      key: "donVi",
+    },
+    {
+      title: "Ngày phạt",
+      dataIndex: "ngayTao",
+      key: "ngayTao",
+      render: (date) => dayjs(date).format("DD/MM/YYYY"),
+    },
+    {
+      title: "Lý do",
+      dataIndex: "liDo",
+      key: "liDo",
+      ellipsis: true,
+    },
+    {
+      title: "Số tiền quy đổi",
+      dataIndex: "quyDoi",
+      key: "quyDoi",
+      sorter: (a, b) => a.quyDoi - b.quyDoi,
+    },
+    {
+      title: "Thao tác",
+      key: "action",
+      render: (_, record) => (
+        <Space size="middle">
+          <Button
+            ghost
+            size="middle"
+            icon={<EditOutlined />}
+            onClick={() => handleEditLichSu(record)}
+          />
+          <Popconfirm
+            title="Bạn có chắc chắn muốn xóa?"
+            onConfirm={() =>
+              handleDeleteLichSuTru(record.maNhanVien, record.maLoaiTienTru)
             }
+            okText="Có"
+            cancelText="Không"
+          >
+            <Button
+              danger
+              ghost
+              size="middle"
+              icon={<DeleteOutlined style={{ color: "red" }} />}
+            />
+          </Popconfirm>
+        </Space>
+      ),
+    },
+  ];
 
+  // Columns cho bảng Loại phạt
+  const loaiTruColumns = [
+    {
+      title: "Tên loại phạt",
+      dataIndex: "tenLoaiTienTru",
+      key: "tenLoaiTienTru",
+    },
+    {
+      title: "Số tiền",
+      dataIndex: "soTienTru",
+      key: "soTienTru",
+      render: (amount) => new Intl.NumberFormat("vi-VN").format(amount),
+    },
+    {
+      title: "Đơn vị",
+      dataIndex: "donVi",
+      key: "donVi",
+    },
+    {
+      title: "Thao tác",
+      key: "action",
+      render: (_, record) => (
+        <Space size="middle">
+          <Button
+            ghost
+            size="middle"
+            icon={<EditOutlined />}
+            onClick={() => handleEditLoaiTru(record)}
+          />
+          <Popconfirm
+            title="Bạn có chắc chắn muốn xóa?"
+            onConfirm={() => handleDeleteLoaiTru(record.maLoaiTienTru)}
+            okText="Có"
+            cancelText="Không"
+          >
+            <Button
+              danger
+              ghost
+              size="middle"
+              icon={<DeleteOutlined style={{ color: "red" }} />}
+            />
+          </Popconfirm>
+        </Space>
+      ),
+    },
+  ];
+
+  return (
+    <div
+      style={{
+        padding: "24px",
+        background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
+        minHeight: "100vh",
+      }}
+    >
+      <div style={{ maxWidth: "1400px", margin: "0 auto" }}>
+        {/* Header */}
+        <Card style={{ marginBottom: 8 }}>
+          <Title
+            level={2}
+            style={{
+              marginBottom: 8,
+              background: "linear-gradient(45deg, #ff6b6b, #ee5a52)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              fontWeight: 700,
+            }}
+          >
+            Quản lý tiền phạt
+          </Title>
+          <Text style={{ color: "grey", fontSize: 14 }}>
+            Quản lý thông tin phạt và lịch sử phạt nhân viên
+          </Text>
+        </Card>
+
+        {/* Statistics Cards */}
+        <Row gutter={24} style={{ marginBottom: "32px" }}>
+          <Col xs={24} sm={8}>
+            <Card>
+              <Statistic
+                title="Tổng nhân viên bị phạt"
+                value={tongSoNhanVienBiTru}
+                prefix={<UserOutlined />}
+                valueStyle={{ color: "#ff4d4f", cursor: "pointer" }}
+                onClick={() => setIsHistoryModalVisible(true)}
+              />
+            </Card>
+          </Col>
+          <Col xs={24} sm={8}>
+            <Card>
+              <Statistic
+                title="Tổng số tiền phạt"
+                value={getTotalFromFiltered()}
+                prefix={<DollarOutlined />}
+                valueStyle={{ color: "#ff7a45" }}
+                formatter={(value) =>
+                  new Intl.NumberFormat("vi-VN", {
+                    style: "currency",
+                    currency: "VND",
+                  }).format(value)
+                }
+              />
+            </Card>
+          </Col>
+          <Col xs={24} sm={8}>
+            <Card>
+              <Statistic
+                title="Tổng lần phạt"
+                value={getTotalLanTruFromFiltered()}
+                valueStyle={{ color: "#fa541c" }}
+              />
+            </Card>
+          </Col>
+        </Row>
+
+        {/* Main Content */}
+        <Card>
+          <Tabs defaultActiveKey="lichsu">
+            <TabPane
+              tab={
+                <span>
+                  <HistoryOutlined style={{ marginRight: 8 }} />
+                  Lịch sử phạt
+                </span>
+              }
+              key="lichsu"
+            >
+              <div
+                style={{
+                  marginBottom: "16px",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  gap: "16px",
+                  flexWrap: "wrap",
+                }}
+              >
+                <Space>
+                  <Button
+                    type="primary"
+                    icon={<PlusOutlined />}
+                    onClick={handleAddLichSu}
+                    danger
+                  >
+                    Thêm phạt cho nhân viên
+                  </Button>
+                  {selectedLichSuKeys.length > 0 && (
+                    <Button
+                      type="primary"
+                      danger
+                      icon={<DeleteOutlined />}
+                      onClick={handleDeleteMultipleLichSu}
+                    >
+                      Xóa {selectedLichSuKeys.length} mục đã chọn
+                    </Button>
+                  )}
+                </Space>
+                <Search
+                  placeholder="Tìm kiếm theo mã NV, tên, loại phạt, lý do..."
+                  allowClear
+                  style={{ width: 350 }}
+                  onChange={(e) => setSearchTextLichSu(e.target.value)}
+                  prefix={<SearchOutlined />}
+                />
+              </div>
+
+              {selectedLichSuKeys.length > 0 && (
+                <div
+                  style={{
+                    marginBottom: "16px",
+                    padding: "8px 16px",
+                    background: "#e6f7ff",
+                    border: "1px solid #91d5ff",
+                    borderRadius: "6px",
+                  }}
+                >
+                  <Text type="secondary">
+                    Đã chọn {selectedLichSuKeys.length} mục
+                  </Text>
+                  <Button
+                    type="link"
+                    size="small"
+                    onClick={() => setSelectedLichSuKeys([])}
+                  >
+                    Bỏ chọn tất cả
+                  </Button>
+                </div>
+              )}
+
+              <Table
+                columns={lichSuColumns}
+                dataSource={getFilteredLichSu()}
+                rowKey="id"
+                rowSelection={lichSuRowSelection}
+                pagination={{
+                  pageSize: 10,
+                  showSizeChanger: true,
+                  showQuickJumper: true,
+                  showTotal: (total, range) =>
+                    `${range[0]}-${range[1]} của ${total} bản ghi`,
+                }}
+                scroll={{ x: 1000 }}
+              />
+            </TabPane>
+
+            <TabPane tab={<span>Loại phạt</span>} key="loaiphat">
+              <div
+                style={{
+                  marginBottom: "16px",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  gap: "16px",
+                  flexWrap: "wrap",
+                }}
+              >
+                <Space>
+                  <Button
+                    type="primary"
+                    icon={<PlusOutlined />}
+                    onClick={handleAddLoaiTru}
+                    danger
+                  >
+                    Thêm loại phạt
+                  </Button>
+                  {selectedLoaiTruKeys.length > 0 && (
+                    <Button
+                      type="primary"
+                      danger
+                      icon={<DeleteOutlined />}
+                      onClick={handleDeleteMultipleLoaiTru}
+                    >
+                      Xóa {selectedLoaiTruKeys.length} mục đã chọn
+                    </Button>
+                  )}
+                </Space>
+                <Search
+                  placeholder="Tìm kiếm theo mã hoặc tên loại phạt..."
+                  allowClear
+                  style={{ width: 350 }}
+                  onChange={(e) => setSearchTextLoaiTru(e.target.value)}
+                  prefix={<SearchOutlined />}
+                />
+              </div>
+
+              {selectedLoaiTruKeys.length > 0 && (
+                <div
+                  style={{
+                    marginBottom: "16px",
+                    padding: "8px 16px",
+                    background: "#e6f7ff",
+                    border: "1px solid #91d5ff",
+                    borderRadius: "6px",
+                  }}
+                >
+                  <Text type="secondary">
+                    Đã chọn {selectedLoaiTruKeys.length} mục
+                  </Text>
+                  <Button
+                    type="link"
+                    size="small"
+                    onClick={() => setSelectedLoaiTruKeys([])}
+                  >
+                    Bỏ chọn tất cả
+                  </Button>
+                </div>
+              )}
+
+              <Table
+                columns={loaiTruColumns}
+                dataSource={getFilteredLoaiTru()}
+                rowKey="maLoaiTienTru"
+                rowSelection={loaiTruRowSelection}
+                pagination={{
+                  pageSize: 10,
+                  showSizeChanger: true,
+                  showQuickJumper: true,
+                  showTotal: (total, range) =>
+                    `${range[0]}-${range[1]} của ${total} bản ghi`,
+                }}
+              />
+            </TabPane>
+          </Tabs>
+        </Card>
+
+        {/* Modal thêm/sửa */}
+        <Modal
+          title={editingItem ? "Chỉnh sửa" : "Thêm mới"}
+          open={isModalVisible}
+          onOk={handleSubmit}
+          onCancel={() => {
             setIsModalVisible(false);
             form.resetFields();
-        } catch (error) {
-            console.log('Validation failed:', error);
-        }
-    };
+          }}
+          width={600}
+          okText="Lưu"
+          cancelText="Hủy"
+        >
+          <Form
+            form={form}
+            layout="vertical"
+            initialValues={{ ngayTru: dayjs() }}
+          >
+            {modalType === "lichsu" ? (
+              <>
+                <Form.Item
+                  name="maLoaiTienTru"
+                  label="Loại phạt"
+                  rules={[
+                    { required: true, message: "Vui lòng chọn loại phạt!" },
+                  ]}
+                >
+                  <Select placeholder="Chọn loại phạt">
+                    {danhSachLoaiTienTru.map((item) => (
+                      <Select.Option
+                        key={item.maLoaiTienTru}
+                        value={item.maLoaiTienTru}
+                      >
+                        {item.tenLoaiTienTru}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
 
-    const getLoaiTruName = (maLoaiTienTru) => {
-        const loaiTru = dataSourceDanhSachLichSuTru.find(item => item.maLoaiTienTru === maLoaiTienTru);
-        return loaiTru ? loaiTru.tenLoaiTru : 'Không xác định';
-    };
-
-    // Columns cho bảng Lịch sử phạt
-    const lichSuColumns = [
-        {
-            title: 'Mã nhân viên',
-            dataIndex: 'maNhanVien',
-            key: 'maNhanVien',
-        },
-        {
-            title: 'Tên nhân viên',
-            dataIndex: 'hoTen',
-            key: 'hoTen',
-        },
-        {
-            title: 'Loại phạt',
-            dataIndex: 'tenLoaiTienTru',
-            key: 'tenLoaiTienTru',
-        },
-        {
-            title: 'Số tiền phạt',
-            dataIndex: 'soTienTru',
-            key: 'soTienTru',
-            render: (amount) => new Intl.NumberFormat('vi-VN').format(amount),
-        },
-        {
-            title: 'Số tiền phạt khác',
-            dataIndex: 'soTienTruKhac',
-            key: 'soTienTruKhac',
-            render: (amount) => new Intl.NumberFormat('vi-VN').format(amount),
-        },
-        {
-            title: 'Đơn vị',
-            dataIndex: 'donVi',
-            key: 'donVi',
-        },
-        {
-            title: 'Ngày phạt',
-            dataIndex: 'ngayTao',
-            key: 'ngayTao',
-            render: (date) => dayjs(date).format('DD/MM/YYYY'),
-        },
-        {
-            title: 'Lý do',
-            dataIndex: 'liDo',
-            key: 'liDo',
-            ellipsis: true,
-        },
-        {
-            title: 'Thao tác',
-            key: 'action',
-            render: (_, record) => (
-                <Space size="middle">
-                    <Button
-                        ghost
-                        size="middle"
-                        icon={<EditOutlined />}
-                        onClick={() => handleEditLichSu(record)}
-                    />
-                    <Popconfirm
-                        title="Bạn có chắc chắn muốn xóa?"
-                        onConfirm={() => handleDeleteLichSuTru(record.maNhanVien, record.maLoaiTienTru)}
-                        okText="Có"
-                        cancelText="Không"
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <Form.Item
+                      name="maNhanVien"
+                      label="Nhân viên"
+                      rules={[
+                        {
+                          required: true,
+                          message: "Vui lòng nhập  nhân viên!",
+                        },
+                      ]}
                     >
-                        <Button
-                            danger
-                            ghost
-                            size="middle"
-                            icon={<DeleteOutlined style={{color:'red'}}/>}
-                        />
-                    </Popconfirm>
-                </Space>
-            ),
-        },
-    ];
-
-    // Columns cho bảng Loại phạt
-    const loaiTruColumns = [
-
-        {
-            title: 'Tên loại phạt',
-            dataIndex: 'tenLoaiTienTru',
-            key: 'tenLoaiTienTru',
-        },
-        {
-            title: 'Số tiền',
-            dataIndex: 'soTienTru',
-            key: 'soTienTru',
-            render: (amount) => new Intl.NumberFormat('vi-VN').format(amount),
-        },
-        {
-            title: 'Đơn vị',
-            dataIndex: 'donVi',
-            key: 'donVi',
-        },
-        {
-            title: 'Thao tác',
-            key: 'action',
-            render: (_, record) => (
-                <Space size="middle">
-                    <Button
-                        ghost
-                        size="middle"
-                        icon={<EditOutlined />}
-                        onClick={() => handleEditLoaiTru(record)}
-                    />
-                    <Popconfirm
-                        title="Bạn có chắc chắn muốn xóa?"
-                        onConfirm={() => handleDeleteLoaiTru(record.maLoaiTienTru)}
-                        okText="Có"
-                        cancelText="Không"
-                    >
-                        <Button
-                            danger
-                            ghost
-                            size="middle"
-                            icon={<DeleteOutlined style={{color:'red'}}/>}
-                        />
-                    </Popconfirm>
-                </Space>
-            ),
-        },
-    ];
-
-    return (
-        <div style={{ padding: '24px', background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)', minHeight: '100vh' }}>
-            <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-                {/* Header */}
-                <Card style={{ marginBottom: 8 }}>
-                    <Title level={2} style={{
-                        marginBottom: 8,
-                        background: 'linear-gradient(45deg, #ff6b6b, #ee5a52)',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        fontWeight: 700
-                    }}>
-                        Quản lý tiền phạt
-                    </Title>
-                    <Text style={{ color: 'grey', fontSize: 14 }}>
-                        Quản lý thông tin phạt và lịch sử phạt nhân viên
-                    </Text>
-                </Card>
-
-                {/* Statistics Cards */}
-                <Row gutter={24} style={{ marginBottom: '32px' }}>
-                    <Col xs={24} sm={8}>
-                        <Card>
-                            <Statistic
-                                title="Tổng nhân viên bị phạt"
-                                value={tongSoNhanVienBiTru}
-                                prefix={<UserOutlined />}
-                                valueStyle={{ color: '#ff4d4f', cursor: 'pointer' }}
-                                onClick={() => setIsHistoryModalVisible(true)}
-                            />
-                        </Card>
-                    </Col>
-                    <Col xs={24} sm={8}>
-                        <Card>
-                            <Statistic
-                                title="Tổng số tiền phạt"
-                                value={tongSoTienTru}
-                                prefix={<DollarOutlined />}
-                                valueStyle={{ color: '#ff7a45' }}
-                                formatter={(value) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value)}
-                            />
-                        </Card>
-                    </Col>
-                    <Col xs={24} sm={8}>
-                        <Card>
-                            <Statistic
-                                title="Tổng lần phạt"
-                                value={tongSoLanTru}
-                                valueStyle={{ color: '#fa541c' }}
-                            />
-                        </Card>
-                    </Col>
+                      <Select
+                        options={danhSachNhanVien.map((nv) => ({
+                          value: nv.maNhanVien,
+                          label: `${nv.hoTen} - ${nv.cmnd}`,
+                        }))}
+                      />
+                    </Form.Item>
+                  </Col>
                 </Row>
 
-                {/* Main Content */}
-                <Card>
-                    <Tabs defaultActiveKey="lichsu">
-                        <TabPane
-                            tab={
-                                <span>
-                                    <HistoryOutlined style={{ marginRight: 8 }} />
-                                    Lịch sử phạt
-                                </span>
-                            }
-                            key="lichsu"
-                        >
-                            <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-                                <Space>
-                                    <Button
-                                        type="primary"
-                                        icon={<PlusOutlined />}
-                                        onClick={handleAddLichSu}
-                                        danger
-                                    >
-                                        Thêm phạt cho nhân viên
-                                    </Button>
-                                    {selectedLichSuKeys.length > 0 && (
-                                        <Button
-                                            type="primary"
-                                            danger
-                                            icon={<DeleteOutlined />}
-                                            onClick={handleDeleteMultipleLichSu}
-                                        >
-                                            Xóa {selectedLichSuKeys.length} mục đã chọn
-                                        </Button>
-                                    )}
-                                </Space>
-                                <Search
-                                    placeholder="Tìm kiếm theo mã NV, tên, loại phạt, lý do..."
-                                    allowClear
-                                    style={{ width: 350 }}
-                                    onChange={(e) => setSearchTextLichSu(e.target.value)}
-                                    prefix={<SearchOutlined />}
-                                />
-                            </div>
-
-                            {selectedLichSuKeys.length > 0 && (
-                                <div style={{
-                                    marginBottom: '16px',
-                                    padding: '8px 16px',
-                                    background: '#e6f7ff',
-                                    border: '1px solid #91d5ff',
-                                    borderRadius: '6px'
-                                }}>
-                                    <Text type="secondary">
-                                        Đã chọn {selectedLichSuKeys.length} mục
-                                    </Text>
-                                    <Button
-                                        type="link"
-                                        size="small"
-                                        onClick={() => setSelectedLichSuKeys([])}
-                                    >
-                                        Bỏ chọn tất cả
-                                    </Button>
-                                </div>
-                            )}
-
-                            <Table
-                                columns={lichSuColumns}
-                                dataSource={getFilteredLichSu()}
-                                rowKey="id"
-                                rowSelection={lichSuRowSelection}
-                                pagination={{
-                                    pageSize: 10,
-                                    showSizeChanger: true,
-                                    showQuickJumper: true,
-                                    showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} bản ghi`
-                                }}
-                                scroll={{ x: 1000 }}
-                            />
-                        </TabPane>
-
-                        <TabPane
-                            tab={
-                                <span>
-                                    Loại phạt
-                                </span>
-                            }
-                            key="loaiphat"
-                        >
-                            <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-                                <Space>
-                                    <Button
-                                        type="primary"
-                                        icon={<PlusOutlined />}
-                                        onClick={handleAddLoaiTru}
-                                        danger
-                                    >
-                                        Thêm loại phạt
-                                    </Button>
-                                    {selectedLoaiTruKeys.length > 0 && (
-                                        <Button
-                                            type="primary"
-                                            danger
-                                            icon={<DeleteOutlined />}
-                                            onClick={handleDeleteMultipleLoaiTru}
-                                        >
-                                            Xóa {selectedLoaiTruKeys.length} mục đã chọn
-                                        </Button>
-                                    )}
-                                </Space>
-                                <Search
-                                    placeholder="Tìm kiếm theo mã hoặc tên loại phạt..."
-                                    allowClear
-                                    style={{ width: 350 }}
-                                    onChange={(e) => setSearchTextLoaiTru(e.target.value)}
-                                    prefix={<SearchOutlined />}
-                                />
-                            </div>
-
-                            {selectedLoaiTruKeys.length > 0 && (
-                                <div style={{
-                                    marginBottom: '16px',
-                                    padding: '8px 16px',
-                                    background: '#e6f7ff',
-                                    border: '1px solid #91d5ff',
-                                    borderRadius: '6px'
-                                }}>
-                                    <Text type="secondary">
-                                        Đã chọn {selectedLoaiTruKeys.length} mục
-                                    </Text>
-                                    <Button
-                                        type="link"
-                                        size="small"
-                                        onClick={() => setSelectedLoaiTruKeys([])}
-                                    >
-                                        Bỏ chọn tất cả
-                                    </Button>
-                                </div>
-                            )}
-
-                            <Table
-                                columns={loaiTruColumns}
-                                dataSource={getFilteredLoaiTru()}
-                                rowKey="maLoaiTienTru"
-                                rowSelection={loaiTruRowSelection}
-                                pagination={{
-                                    pageSize: 10,
-                                    showSizeChanger: true,
-                                    showQuickJumper: true,
-                                    showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} bản ghi`
-                                }}
-                            />
-                        </TabPane>
-                    </Tabs>
-                </Card>
-
-                {/* Modal thêm/sửa */}
-                <Modal
-                    title={editingItem ? 'Chỉnh sửa' : 'Thêm mới'}
-                    open={isModalVisible}
-                    onOk={handleSubmit}
-                    onCancel={() => {
-                        setIsModalVisible(false);
-                        form.resetFields();
-                    }}
-                    width={600}
-                    okText="Lưu"
-                    cancelText="Hủy"
-                >
-                    <Form
-                        form={form}
-                        layout="vertical"
-                        initialValues={{ ngayTru: dayjs() }}
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <Form.Item name="soTienTruKhac" label="Số tiền phạt">
+                      <InputNumber
+                        style={{ width: "100%" }}
+                        placeholder="Nhập số tiền phạt"
+                        formatter={(value) =>
+                          `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                        }
+                        parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item
+                      name="ngayTru"
+                      label="Ngày phạt"
+                      rules={[
+                        { required: true, message: "Vui lòng chọn ngày phạt!" },
+                      ]}
                     >
-                        {modalType === 'lichsu' ? (
-                            <>
-                                <Form.Item
-                                    name="maLoaiTienTru"
-                                    label="Loại phạt"
-                                    rules={[{ required: true, message: 'Vui lòng chọn loại phạt!' }]}
-                                >
-                                    <Select placeholder="Chọn loại phạt">
-                                        {danhSachLoaiTienTru.map(item => (
-                                            <Select.Option key={item.maLoaiTienTru} value={item.maLoaiTienTru}>
-                                                {item.tenLoaiTienTru}
-                                            </Select.Option>
-                                        ))}
-                                    </Select>
-                                </Form.Item>
+                      <DatePicker
+                        style={{ width: "100%" }}
+                        format="DD/MM/YYYY"
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>
 
-                                <Row gutter={16}>
-                                    <Col span={12}>
-                                        <Form.Item
-                                            name="maNhanVien"
-                                            label="Nhân viên"
-                                            rules={[{ required: true, message: 'Vui lòng nhập  nhân viên!' }]}
-                                        >
-                                            <Select options={danhSachNhanVien.map(nv => ({
-                                                value: nv.maNhanVien,
-                                                label: `${nv.hoTen} - ${nv.cmnd}`
-                                            }))} />
-                                        </Form.Item>
-                                    </Col>
-                                </Row>
-
-                                <Row gutter={16}>
-                                    <Col span={12}>
-                                        <Form.Item
-                                            name="soTienTruKhac"
-                                            label="Số tiền phạt"
-                                        >
-                                            <InputNumber
-                                                style={{ width: '100%' }}
-                                                placeholder="Nhập số tiền phạt"
-                                                formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                                parser={value => value.replace(/\$\s?|(,*)/g, '')}
-                                            />
-                                        </Form.Item>
-                                    </Col>
-                                    <Col span={12}>
-                                        <Form.Item
-                                            name="ngayTru"
-                                            label="Ngày phạt"
-                                            rules={[{ required: true, message: 'Vui lòng chọn ngày phạt!' }]}
-                                        >
-                                            <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" />
-                                        </Form.Item>
-                                    </Col>
-                                </Row>
-
-                                <Form.Item
-                                    name="liDo"
-                                    label="Lý do phạt"
-                                    rules={[{ required: true, message: 'Vui lòng nhập lý do phạt!' }]}
-                                >
-                                    <TextArea rows={3} placeholder="Nhập lý do phạt" />
-                                </Form.Item>
-                            </>
-                        ) : (
-                            <>
-                                <Form.Item
-                                    name="tenLoaiTienTru"
-                                    label="Tên loại phạt"
-                                    rules={[{ required: true, message: 'Vui lòng nhập tên loại phạt!' }]}
-                                >
-                                    <Input placeholder="Nhập tên loại phạt" />
-                                </Form.Item>
-
-                                <Form.Item
-                                    name="soTienTru"
-                                    label="Số tiền"
-                                    rules={[{ required: true, message: 'Vui lòng nhập số tiền!' }]}
-                                >
-                                    <InputNumber
-                                        style={{ width: '100%' }}
-                                        placeholder="Nhập số tiền"
-                                        formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                        parser={value => value.replace(/\$\s?|(,*)/g, '')}
-                                    />
-                                </Form.Item>
-
-                                <Form.Item
-                                    name="donVi"
-                                    label="Đơn vị"
-                                    rules={[{ required: true, message: 'Vui lòng chọn đơn vị!' }]}
-                                >
-                                    <Select placeholder='' options={[{ value: '%', label: '%' }, { value: 'VND', label: 'VND' }]} />
-                                </Form.Item>
-                            </>
-                        )}
-                    </Form>
-                </Modal>
-
-                {/* Modal lịch sử phạt */}
-                <Modal
-                    title="Lịch sử phạt - Chi tiết"
-                    open={isHistoryModalVisible}
-                    onCancel={() => setIsHistoryModalVisible(false)}
-                    footer={null}
-                    width={1000}
+                <Form.Item
+                  name="liDo"
+                  label="Lý do phạt"
+                  rules={[
+                    { required: true, message: "Vui lòng nhập lý do phạt!" },
+                  ]}
                 >
-                    <Table
-                        columns={lichSuColumns.filter(col => col.key !== 'action')}
-                        dataSource={danhSachLichSuTru}
-                        rowKey="id"
-                        pagination={{ pageSize: 5 }}
-                        size="small"
-                    />
-                </Modal>
-            </div>
-        </div>
-    );
+                  <TextArea rows={3} placeholder="Nhập lý do phạt" />
+                </Form.Item>
+              </>
+            ) : (
+              <>
+                <Form.Item
+                  name="tenLoaiTienTru"
+                  label="Tên loại phạt"
+                  rules={[
+                    { required: true, message: "Vui lòng nhập tên loại phạt!" },
+                  ]}
+                >
+                  <Input placeholder="Nhập tên loại phạt" />
+                </Form.Item>
+
+                <Form.Item
+                  name="soTienTru"
+                  label="Số tiền"
+                  rules={[
+                    { required: true, message: "Vui lòng nhập số tiền!" },
+                  ]}
+                >
+                  <InputNumber
+                    style={{ width: "100%" }}
+                    placeholder="Nhập số tiền"
+                    formatter={(value) =>
+                      `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                    }
+                    parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
+                  />
+                </Form.Item>
+
+                <Form.Item
+                  name="donVi"
+                  label="Đơn vị"
+                  rules={[{ required: true, message: "Vui lòng chọn đơn vị!" }]}
+                >
+                  <Select
+                    placeholder=""
+                    options={[
+                      { value: "%", label: "%" },
+                      { value: "VND", label: "VND" },
+                    ]}
+                  />
+                </Form.Item>
+              </>
+            )}
+          </Form>
+        </Modal>
+
+        {/* Modal lịch sử phạt */}
+        <Modal
+          title="Lịch sử phạt - Chi tiết"
+          open={isHistoryModalVisible}
+          onCancel={() => setIsHistoryModalVisible(false)}
+          footer={null}
+          width={1000}
+        >
+          <Table
+            columns={lichSuColumns.filter((col) => col.key !== "action")}
+            dataSource={danhSachLichSuTru}
+            rowKey="id"
+            pagination={{ pageSize: 5 }}
+            size="small"
+          />
+        </Modal>
+      </div>
+    </div>
+  );
 }

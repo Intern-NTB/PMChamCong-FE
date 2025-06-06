@@ -5,7 +5,7 @@ import {
 } from 'antd';
 import { CalendarOutlined, PlusOutlined, SearchOutlined, ClockCircleOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs';
-
+import { useAppNotification } from '../../component/ui/notification';
 const { Text, Title } = Typography;
 const { Search } = Input;
 const { Option } = Select;
@@ -17,9 +17,9 @@ export default function NgayLeComponent() {
     const [editingId, setEditingId] = useState(null);
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
-    const [statusFilter, setStatusFilter] = useState('all');
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(8);
+    const apiNotification = useAppNotification();
 
     // Mock data with proper structure
     const [ngayLeList, setNgayLeList] = useState([
@@ -94,7 +94,7 @@ export default function NgayLeComponent() {
                     updatedDate: new Date().toISOString().split('T')[0]
                 } : item
             ));
-            message.success('Cập nhật ngày lễ thành công!');
+            apiNotification.success('Cập nhật ngày lễ thành công!');
         } else {
             const newItem = {
                 maNgayLe: Date.now(),
@@ -103,7 +103,7 @@ export default function NgayLeComponent() {
                 createdDate: new Date().toISOString().split('T')[0]
             };
             setNgayLeList(prev => [...prev, newItem]);
-            message.success('Thêm ngày lễ thành công!');
+            apiNotification.success('Thêm ngày lễ thành công!');
         }
         handleCancel();
     };
@@ -133,14 +133,14 @@ export default function NgayLeComponent() {
             okType: 'danger',
             onOk: () => {
                 setNgayLeList(prev => prev.filter(item => item.maNgayLe !== data.maNgayLe));
-                message.success('Xóa ngày lễ thành công!');
+                apiNotification.success('Xóa ngày lễ thành công!');
             }
         });
     }, []);
 
     const handleBulkDelete = () => {
         if (selectedRowKeys.length === 0) {
-            message.warning('Vui lòng chọn ít nhất một ngày lễ để xóa!');
+            apiNotification.warning('Vui lòng chọn ít nhất một ngày lễ để xóa!');
             return;
         }
 
@@ -153,7 +153,7 @@ export default function NgayLeComponent() {
             onOk: () => {
                 setNgayLeList(prev => prev.filter(item => !selectedRowKeys.includes(item.maNgayLe)));
                 setSelectedRowKeys([]);
-                message.success(`Đã xóa ${selectedRowKeys.length} ngày lễ thành công!`);
+                apiNotification.success(`Đã xóa ${selectedRowKeys.length} ngày lễ thành công!`);
             }
         });
     };
