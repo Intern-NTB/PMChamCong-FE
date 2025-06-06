@@ -49,7 +49,7 @@ const Popup = ({
     } else {
       form.resetFields();
     }
-  },[]);
+  }, []);
 
   const parseDate = (dateString) => {
     return dateString ? dayjs(dateString) : null;
@@ -111,6 +111,12 @@ const Popup = ({
     form.setFieldValue("maPhongBan", value);
     getAllVaiTro(value);
     form.setFieldValue("maVaiTro", null);
+  };
+
+  // Kiểm tra giá trị hiển thị cho Select Ưu tiên
+  const getUuTienValue = () => {
+    const currentMaUuTien = form.getFieldValue("maUuTien");
+    return currentMaUuTien && currentMaUuTien > 0 ? currentMaUuTien : undefined;
   };
 
   return (
@@ -194,6 +200,7 @@ const Popup = ({
                 placeholder="Chọn ưu tiên"
                 style={{ width: "100%" }}
                 loading={loadingDoiTuongUuTien}
+                value={getUuTienValue()}
                 options={danhSachDoiTuongUuTien.map((dtut) => ({
                   value: dtut.maUuTien,
                   label: dtut.tenUuTien,

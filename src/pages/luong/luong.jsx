@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useContext } from "react";
 import {
   Table,
   Input,
@@ -10,6 +10,8 @@ import {
   DatePicker,
   Select,
   Checkbox,
+  Modal,
+  Form,
 } from "antd";
 import {
   SearchOutlined,
@@ -21,6 +23,10 @@ import {
   FilePdfOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
+import { useLuong } from "../../component/hooks/useLuong";
+import { useNhanVien } from "../../component/hooks/useNhanVien";
+import { usePhongBan } from "../../component/hooks/usePhongBan";
+import { ReloadContext } from "../../context/reloadContext";
 
 import LuongDetailModal from "./LuongDetailModal";
 import LuongEditModal from "./LuongEditModal";
@@ -28,74 +34,14 @@ import { exportToExcel } from "./exportToExcel";
 import { generatePDF } from "./generatePDF";
 
 import "./luong.css";
+import { Label } from "recharts";
 
 const { Title } = Typography;
 const { Option } = Select;
 
-const sampleData = [
-  {
-    key: 1,
-    maNhanVien: "NV001",
-    hoTen: "Nguyễn Văn A",
-    phongBan: "Phòng IT",
-    luongCoBan: 15000000,
-    tienPhuCap: 2000000,
-    tienThuong: 1000000,
-    thucNhan: 18000000,
-    ngayCong: 22,
-    ngayLe: 2,
-    mucPhat: 500000,
-    tangCa: 5,
-    viPham: 1,
-    lanDiMuon: 2,
-    lanVeSom: 0,
-    nghiCoPhep: 1,
-    nghiKhongPhep: 0,
-  },
-  {
-    key: 2,
-    maNhanVien: "NV002",
-    hoTen: "Trần Thị B",
-    phongBan: "Phòng Kinh doanh",
-    luongCoBan: 13000000,
-    tienPhuCap: 1500000,
-    tienThuong: 1200000,
-    thucNhan: 15700000,
-    ngayCong: 21,
-    ngayLe: 1,
-    mucPhat: 0,
-    tangCa: 3,
-    viPham: 0,
-    lanDiMuon: 0,
-    lanVeSom: 1,
-    nghiCoPhep: 0,
-    nghiKhongPhep: 0,
-  },
-  {
-    key: 3,
-    maNhanVien: "NV003",
-    hoTen: "Lê Văn C",
-    phongBan: "Phòng Nhân sự",
-    luongCoBan: 16000000,
-    tienPhuCap: 1800000,
-    tienThuong: 900000,
-    thucNhan: 17700000,
-    ngayCong: 23,
-    ngayLe: 0,
-    mucPhat: 300000,
-    tangCa: 7,
-    viPham: 2,
-    lanDiMuon: 1,
-    lanVeSom: 0,
-    nghiCoPhep: 2,
-    nghiKhongPhep: 1,
-  },
-];
-
 export default function Luong() {
   const phongBanList = ["Phòng IT", "Phòng Kinh doanh", "Phòng Nhân sự"];
 
-  const [dataSource, setDataSource] = useState(sampleData);
   const [selectedMonthYear, setSelectedMonthYear] = useState(dayjs());
   const [searchValue, setSearchValue] = useState("");
   const [selectedPhongBan, setSelectedPhongBan] = useState(null);
@@ -109,19 +55,72 @@ export default function Luong() {
   const [selectedRows, setSelectedRows] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
 
-  const filteredData = useMemo(() => {
-    return dataSource.filter((item) => {
-      const matchesSearch =
-        item.maNhanVien.toLowerCase().includes(searchValue.toLowerCase()) ||
-        item.hoTen.toLowerCase().includes(searchValue.toLowerCase());
+  const { setReload } = useContext(ReloadContext);
 
-      const matchesPhongBan = selectedPhongBan
-        ? item.phongBan === selectedPhongBan
+  // Modal tính lương
+  const [isTinhLuongModalVisible, setIsTinhLuongModalVisible] = useState(false);
+  const [tinhLuongForm] = Form.useForm();
+
+  const { danhSachLuong, getAllLuong, createLuong, createLuongById } =
+    useLuong();
+  const { danhSachNhanVien } = useNhanVien();
+  const { danhSachPhongBan } = usePhongBan();
+  const dataSourceLuong = danhSachLuong.map((dsl) => {
+    const danhSachNhanVienFind = danhSachNhanVien.find(
+      (nv) => nv.maNhanVien === dsl.maNhanVien
+    );
+
+    const danhSachPhongBanFind = danhSachPhongBan.find(
+      (pb) => danhSachNhanVienFind?.maPhongBan === pb.maPhongBan
+    );
+    return {
+      maNhanVien: dsl.maNhanVien,
+      nam: dsl.nam,
+      thang: dsl.thang,
+      soNgayLe: dsl.soNgayLe,
+      soNgayNghi: dsl.soNgayNghi,
+      soNgayCong: dsl.soNgayCong,
+      congChuanCuaThang: dsl.congChuanCuaThang,
+      soGioTangCa: dsl.soGioTangCa,
+      tienThuong: dsl.tienThuong,
+      tongTienPhuCap: dsl.tongTienPhuCap,
+      tongLuong: dsl.tongLuong,
+      tienTru: dsl.tienTru,
+      tongTienTangCa: dsl.tongTienTangCa,
+      luongGio: dsl.luongGio,
+      hoTen: danhSachNhanVienFind?.hoTen || "N/A",
+      heSoTangCa: danhSachNhanVienFind?.heSoTangCa || 0,
+      luongCoBan: danhSachNhanVienFind?.luongCoBan || 0,
+      tenPhongBan: danhSachPhongBanFind?.tenPhongBan || "N/A", // Thêm phòng ban
+    };
+  });
+
+  useEffect(() => {
+    setReload(() => getAllLuong);
+  }, []);
+
+  const filteredData = useMemo(() => {
+    return dataSourceLuong.filter((item) => {
+      // Tìm kiếm theo tên
+      const matchesSearch = searchValue
+        ? item.hoTen.toLowerCase().includes(searchValue.toLowerCase()) ||
+          item.maNhanVien.toLowerCase().includes(searchValue.toLowerCase())
         : true;
 
-      return matchesSearch && matchesPhongBan;
+      // Lọc theo phòng ban
+      const matchesPhongBan = selectedPhongBan
+        ? item.tenPhongBan === selectedPhongBan
+        : true;
+
+      // Lọc theo tháng/năm - sửa lại logic
+      const matchesDateFilter = selectedMonthYear
+        ? item.thang === selectedMonthYear.month() + 1 && // month() trả về 0-11, cần +1
+          item.nam === selectedMonthYear.year()
+        : true;
+
+      return matchesSearch && matchesPhongBan && matchesDateFilter;
     });
-  }, [searchValue, selectedPhongBan, dataSource]);
+  }, [searchValue, selectedPhongBan, selectedMonthYear, dataSourceLuong]);
 
   const columns = [
     {
@@ -131,7 +130,7 @@ export default function Luong() {
           onChange={(e) => {
             setSelectAll(e.target.checked);
             if (e.target.checked) {
-              setSelectedRows(filteredData.map((item) => item.key));
+              setSelectedRows(filteredData.map((item) => item.maNhanVien));
             } else {
               setSelectedRows([]);
             }
@@ -143,16 +142,36 @@ export default function Luong() {
       align: "center",
       render: (_, record) => (
         <Checkbox
-          checked={selectedRows.includes(record.key)}
+          checked={selectedRows.includes(record.maNhanVien)}
           onChange={(e) => {
             if (e.target.checked) {
-              setSelectedRows([...selectedRows, record.key]);
+              setSelectedRows([...selectedRows, record.maNhanVien]);
             } else {
-              setSelectedRows(selectedRows.filter((key) => key !== record.key));
+              setSelectedRows(
+                selectedRows.filter(
+                  (maNhanVien) => maNhanVien !== record.maNhanVien
+                )
+              );
             }
           }}
         />
       ),
+    },
+    {
+      title: "Năm",
+      dataIndex: "nam",
+      key: "nam",
+      width: 100,
+      align: "center",
+      render: (text) => <b>{text}</b>,
+    },
+    {
+      title: "Tháng",
+      dataIndex: "thang",
+      key: "thang",
+      width: 100,
+      align: "center",
+      render: (text) => <b>{text}</b>,
     },
     {
       title: "Mã NV",
@@ -171,22 +190,45 @@ export default function Luong() {
       render: (text) => <b>{text}</b>,
     },
     {
+      title: "Phòng ban",
+      dataIndex: "tenPhongBan",
+      key: "tenPhongBan",
+      width: 140,
+      ellipsis: true,
+      render: (text) => <span>{text}</span>,
+    },
+    {
+      title: "Công chuẩn của tháng",
+      dataIndex: "congChuanCuaThang",
+      key: "congChuanCuaThang",
+      width: 160,
+      ellipsis: true,
+      render: (text) => <b>{text}</b>,
+    },
+    {
+      title: "Ngày công làm việc",
+      dataIndex: "soNgayCong",
+      key: "soNgayCong",
+      width: 160,
+      ellipsis: true,
+      render: (text) => <b>{text}</b>,
+    },
+    {
       title: "Lương cơ bản",
       dataIndex: "luongCoBan",
       key: "luongCoBan",
       width: 120,
       align: "right",
-      render: (v) =>
-        v.toLocaleString("vi-VN", { style: "currency", currency: "VND" }),
+      render: (luongCoBan) =>
+        new Intl.NumberFormat("vi-VN").format(Number(luongCoBan)),
     },
     {
       title: "Phụ cấp",
-      dataIndex: "tienPhuCap",
-      key: "tienPhuCap",
+      dataIndex: "tongTienPhuCap",
+      key: "tongTienPhuCap",
       width: 110,
       align: "right",
-      render: (v) =>
-        v.toLocaleString("vi-VN", { style: "currency", currency: "VND" }),
+      render: (phuCap) => new Intl.NumberFormat("vi-VN").format(Number(phuCap)),
     },
     {
       title: "Thưởng",
@@ -194,17 +236,37 @@ export default function Luong() {
       key: "tienThuong",
       width: 110,
       align: "right",
-      render: (v) =>
-        v.toLocaleString("vi-VN", { style: "currency", currency: "VND" }),
+      render: (thuong) => new Intl.NumberFormat("vi-VN").format(Number(thuong)),
+    },
+    {
+      title: "Phạt",
+      dataIndex: "tienTru",
+      key: "tienTru",
+      width: 110,
+      align: "right",
+      render: (phat) => new Intl.NumberFormat("vi-VN").format(Number(phat)),
+    },
+    {
+      title: "Tổng tiền tăng ca",
+      dataIndex: "tongTienTangCa",
+      key: "tongTienTangCa",
+      width: 110,
+      align: "right",
+      render: (tongTienTangCa) =>
+        new Intl.NumberFormat("vi-VN").format(Number(tongTienTangCa)),
     },
     {
       title: "Thực nhận",
-      dataIndex: "thucNhan",
-      key: "thucNhan",
+      dataIndex: "tongLuong",
+      key: "tongLuong",
       width: 120,
       align: "right",
-      render: (v) =>
-        v.toLocaleString("vi-VN", { style: "currency", currency: "VND" }),
+      render: (thucNhan) =>
+        new Intl.NumberFormat("vi-VN").format(Number(thucNhan)),
+      sorter: {
+        compare: (a, b) => a.tongLuong - b.tongLuong,
+        multiple: 2,
+      },
     },
     {
       title: "Thao tác",
@@ -241,26 +303,26 @@ export default function Luong() {
   ];
 
   const onMonthYearChange = (date) => {
-    if (date) setSelectedMonthYear(date);
-  };
-
-  const handleEditSave = (updatedRecord) => {
-    setDataSource((prev) =>
-      prev.map((item) => (item.key === updatedRecord.key ? updatedRecord : item))
-    );
-    setIsEditModalVisible(false);
+    if (date) {
+      setSelectedMonthYear(date);
+    }
   };
 
   const exportToExcelHandler = () => {
     const selectedData = filteredData.filter((record) =>
-      selectedRows.includes(record.key)
+      selectedRows.includes(record.maNhanVien)
     );
-    exportToExcel(selectedData, selectedMonthYear.format("MM/YYYY"), selectedPhongBan, false);
+    exportToExcel(
+      selectedData,
+      selectedMonthYear.format("MM/YYYY"),
+      selectedPhongBan,
+      false
+    );
   };
 
   const generatePDFHandler = () => {
     const selectedData = filteredData.filter((record) =>
-      selectedRows.includes(record.key)
+      selectedRows.includes(record.maNhanVien)
     );
     if (selectedData.length > 0) {
       generatePDF(selectedData, selectedMonthYear.format("MM/YYYY"));
@@ -269,10 +331,56 @@ export default function Luong() {
     }
   };
 
+  const handleTinhLuong = () => {
+    setIsTinhLuongModalVisible(true);
+    // Đặt giá trị mặc định cho form
+    tinhLuongForm.setFieldsValue({
+      thangNam: selectedMonthYear,
+      phongBan: selectedPhongBan,
+    });
+  };
+
+  const handleTinhLuongSubmit = async (values) => {
+    if (values.nhanVienIds) {
+      values.nhanVienIds.map(async (maNhanVien) => {
+        const valuesFormated = {
+          nam: Number(dayjs(values.thangNam, "MM/YYYY").format("YYYY")),
+          thang: Number(dayjs(values.thangNam, "MM/YYYY").format("MM")),
+          maNhanVien,
+        };
+        await createLuongById(valuesFormated)
+      });
+    } else {
+      const valuesFormated = {
+        nam: Number(dayjs(values.thangNam, "MM/YYYY").format("YYYY")),
+        thang: Number(dayjs(values.thangNam, "MM/YYYY").format("MM")),
+      };
+      console.log("Tính lương với các thông số:", valuesFormated);
+      await createLuong(valuesFormated);
+    }
+    setIsTinhLuongModalVisible(false);
+    tinhLuongForm.resetFields();
+  };
+
+  // Update selectAll state based on selectedRows
+  useEffect(() => {
+    if (filteredData.length > 0) {
+      setSelectAll(selectedRows.length === filteredData.length);
+    } else {
+      setSelectAll(false);
+    }
+  }, [selectedRows, filteredData]);
+
   return (
     <div className="luong-container">
       <Row justify="center" align="middle" className="title-row">
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+          }}
+        >
           <Title level={2} className="title-text">
             BẢNG LƯƠNG THÁNG {selectedMonthYear.format("M/YYYY")}
             <CalendarOutlined className="calendar-icon" />
@@ -280,16 +388,22 @@ export default function Luong() {
         </div>
       </Row>
 
-      <Row justify="start" align="middle" className="toolbar-row">
+      <Row
+        justify="start"
+        align="middle"
+        className="toolbar-row"
+        gutter={[16, 8]}
+      >
         <Col>
           <Input
-            placeholder="Tìm nhân viên"
+            placeholder="Tìm nhân viên (tên hoặc mã NV)"
             prefix={<SearchOutlined className="icon-style" />}
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}
             allowClear
             size="large"
             className="toolbar-input"
+            style={{ width: 250 }}
           />
         </Col>
 
@@ -301,10 +415,11 @@ export default function Luong() {
             allowClear
             size="large"
             className="toolbar-select"
+            style={{ width: 180 }}
           >
-            {phongBanList.map((pb) => (
-              <Option key={pb} value={pb}>
-                {pb}
+            {danhSachPhongBan.map((pb) => (
+              <Option key={pb.maPhongBan} value={pb.tenPhongBan}>
+                {pb.tenPhongBan}
               </Option>
             ))}
           </Select>
@@ -318,7 +433,7 @@ export default function Luong() {
             format="MM/YYYY"
             size="large"
             className="toolbar-date-picker"
-            popupClassName="custom-date-picker-popup"
+            placeholder="Chọn tháng/năm"
           />
         </Col>
 
@@ -330,8 +445,9 @@ export default function Luong() {
             icon={<PlusOutlined className="icon-style" />}
             size="large"
             className="toolbar-button"
+            onClick={handleTinhLuong}
           >
-            Tạo bảng lương mới
+            Tính lương
           </Button>
         </Col>
       </Row>
@@ -339,9 +455,16 @@ export default function Luong() {
       <Table
         columns={columns}
         dataSource={filteredData}
-        pagination={{ pageSize: 10, showSizeChanger: true }}
-        scroll={{ x: 1100 }}
-        rowKey="key"
+        pagination={{
+          pageSize: 10,
+          showSizeChanger: true,
+          showTotal: (total, range) =>
+            `${range[0]}-${range[1]} của ${total} nhân viên`,
+        }}
+        scroll={{ x: 1500 }}
+        rowKey={(record) =>
+          `${record.nam}-${record.thang}-${record.maNhanVien}`
+        }
         size="middle"
         className="custom-table"
       />
@@ -351,13 +474,100 @@ export default function Luong() {
           onClick={exportToExcelHandler}
           style={{ marginRight: 10 }}
           icon={<FileExcelOutlined />}
+          disabled={selectedRows.length === 0}
         >
-          Xuất Excel
+          Xuất Excel ({selectedRows.length})
         </Button>
-        <Button onClick={generatePDFHandler} icon={<FilePdfOutlined />}>
-          Xuất PDF
+        <Button
+          onClick={generatePDFHandler}
+          icon={<FilePdfOutlined />}
+          disabled={selectedRows.length === 0}
+        >
+          Xuất PDF ({selectedRows.length})
         </Button>
       </Space>
+
+      {/* Modal Tính Lương */}
+      <Modal
+        title="Tính Lương"
+        open={isTinhLuongModalVisible}
+        onCancel={() => {
+          setIsTinhLuongModalVisible(false);
+          tinhLuongForm.resetFields();
+        }}
+        footer={null}
+        width={600}
+      >
+        <Form
+          form={tinhLuongForm}
+          layout="vertical"
+          onFinish={handleTinhLuongSubmit}
+          initialValues={{
+            thangNam: dayjs(),
+          }}
+        >
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="thangNam"
+                label="Tháng/Năm"
+                rules={[
+                  { required: true, message: "Vui lòng chọn tháng/năm!" },
+                ]}
+              >
+                <DatePicker
+                  picker="month"
+                  format="MM/YYYY"
+                  size="large"
+                  style={{ width: "100%" }}
+                  placeholder="Chọn tháng/năm"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Form.Item name="nhanVienIds" label="Nhân viên cụ thể (tùy chọn)">
+            <Select
+              mode="multiple"
+              placeholder="Chọn nhân viên (để trống sẽ tính cho tất cả)"
+              allowClear
+              size="large"
+              showSearch
+              filterOption={(input, option) =>
+                option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+              }
+            >
+              {danhSachNhanVien.map((nv) => (
+                <Option key={nv.maNhanVien} value={nv.maNhanVien}>
+                  {nv.hoTen} - {nv.cmnd}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+
+          <Form.Item>
+            <Space style={{ float: "right" }}>
+              <Button
+                onClick={() => {
+                  setIsTinhLuongModalVisible(false);
+                  tinhLuongForm.resetFields();
+                }}
+              >
+                Hủy
+              </Button>
+              <Button
+                type="primary"
+                htmlType="submit"
+                onClick={() => {
+                  console.log("click tính lương");
+                }}
+              >
+                Tính lương
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Modal>
 
       <LuongDetailModal
         visible={isDetailModalVisible}
@@ -369,7 +579,7 @@ export default function Luong() {
         visible={isEditModalVisible}
         onCancel={() => setIsEditModalVisible(false)}
         initialValues={editRecord}
-        onSave={handleEditSave}
+        onSave={null}
       />
     </div>
   );

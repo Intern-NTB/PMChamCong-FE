@@ -18,7 +18,7 @@ export const useLoaiTienThuong = () => {
         try {
             const res = await getAllLoaiTienThuongServices();
             setDanhSachLoaiTienThuong(res.data);
-        } catch (error) {
+        } catch  {
             setDanhSachLoaiTienThuong([]);
         } finally {
             setLoadingLoaiTienThuong(false);
