@@ -1,7 +1,7 @@
 /* eslint-disable no-undef */
 import React, { useState, useCallback, useMemo } from 'react';
 import {
-    Row, Col, Form, Input, Space, Divider, Modal, message,
+    Row, Col, Form, Input, Space, Divider, Modal,
     Button as AntButton, Card, Checkbox, Typography, Empty, Pagination, Badge
 } from "antd";
 import {
@@ -9,6 +9,7 @@ import {
 } from '@ant-design/icons';
 import { useNhanVien } from '../../component/hooks/useNhanVien';
 import { useVaiTro } from '../../component/hooks/useVaiTro';
+import { useAppNotification } from '../../component/ui/notification';
 const { Text, Title } = Typography;
 const { Search } = Input;
 
@@ -27,6 +28,7 @@ export default function VaiTroComponent (){
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(12);
+    const apiNotification = useAppNotification();
 
     // Lấy dữ liệu từ API
     const dataSource = Array.isArray(danhSachVaiTro) ? danhSachVaiTro.map(vt => {
@@ -67,14 +69,14 @@ export default function VaiTroComponent (){
                     ...values
                 } : item
             ));
-            message.success('Cập nhật vai trò thành công!');
+            apiNotification.success('Cập nhật vai trò thành công!');
         } else {
             const newItem = {
                 id: Date.now(),
                 ...values
             };
             setVaiTroList(prev => [...prev, newItem]);
-            message.success('Thêm vai trò thành công!');
+            apiNotification.success('Thêm vai trò thành công!');
         }
         handleCancel();
     };
@@ -100,7 +102,7 @@ export default function VaiTroComponent (){
 
     const handleBulkDelete = () => {
         if (selectedRowKeys.length === 0) {
-            message.warning('Vui lòng chọn ít nhất một vai trò để xóa!');
+            apiNotification.warning('Vui lòng chọn ít nhất một vai trò để xóa!');
             return;
         }
 
@@ -113,7 +115,7 @@ export default function VaiTroComponent (){
             onOk: () => {
                 setVaiTroList(prev => prev.filter(item => !selectedRowKeys.includes(item.id)));
                 setSelectedRowKeys([]);
-                message.success(`Đã xóa ${selectedRowKeys.length} vai trò thành công!`);
+                apiNotification.success(`Đã xóa ${selectedRowKeys.length} vai trò thành công!`);
             }
         });
     };

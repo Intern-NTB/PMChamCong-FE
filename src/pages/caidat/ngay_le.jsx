@@ -1,7 +1,8 @@
 import React, { useState, useCallback, useContext, useEffect  } from 'react';
 import {
     Typography, Input, Select, DatePicker, Form, Row, Col, Space,
-    Button as AntButton, Checkbox, Card, Tag, Modal, Empty, Pagination
+    Button as AntButton, Checkbox, Card, Tag, Modal, Empty, Pagination,
+    message
 } from 'antd';
 import { CalendarOutlined, PlusOutlined, SearchOutlined, ClockCircleOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs';
@@ -75,7 +76,10 @@ export default function NgayLeComponent() {
                 updatedDate: new Date().toISOString().split('T')[0]
             };
             updateNgayLe(updatedItem)
-            apiNotification.success('Cập nhật ngày lễ thành công!');
+            apiNotification.success({
+                message: 'Thành công!',
+                description: 'Cập nhật ngày lễ thành công!'
+            });
         } else {
             const newItem = {
                 maNgayLe: Date.now(),
@@ -84,7 +88,10 @@ export default function NgayLeComponent() {
                 createdDate: new Date().toISOString().split('T')[0]
             };
             createNgayLe(newItem);
-            apiNotification.success('Thêm ngày lễ thành công!');
+            apiNotification.success({
+                message: 'Thành công!',
+                description: 'Thêm ngày lễ thành công!'
+            });
         }
         handleCancel();
     };
@@ -114,7 +121,10 @@ export default function NgayLeComponent() {
 
     const handleBulkDelete = () => {
         if (selectedRowKeys.length === 0) {
-            apiNotification.warning('Vui lòng chọn ít nhất một ngày lễ để xóa!');
+            apiNotification.warning({
+                message: 'Cảnh báo',
+                description: 'Vui lòng chọn ít nhất một ngày lễ để xóa!'
+            });
             return;
         }
     };
@@ -124,11 +134,17 @@ export default function NgayLeComponent() {
         try {
             if (isModalConfirmVisible.data) {
                 await deleteNgayLe(isModalConfirmVisible.data.maNgayLe);
-                message.success('Xóa phòng ban thành công!');
+                apiNotification.success({
+                    message: 'Thành công',
+                    description: 'Xóa phòng ban thành công!'
+                });
             }
         } catch (error) {
             console.error('Error deleting:', error);
-            message.error('Có lỗi xảy ra khi xóa!');
+            apiNotification.error({
+                message: 'Lỗi',
+                description: 'Có lỗi xảy ra khi xóa!'
+            });
         } finally {
             setIsModalConfirmVisible({ visible: false, data: null });
         }

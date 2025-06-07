@@ -3,6 +3,7 @@ import { Table, Button, Modal, Form, Input, TimePicker, Space, Card, Statistic, 
 import { PlusOutlined, EditOutlined, DeleteOutlined, ClockCircleOutlined, TeamOutlined, SearchOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useCaLam } from '../../component/hooks/useCaLam';
+import { useAppNotification } from "../../component/ui/notification";
 
 const { Title, Text } = Typography;
 const { Search } = Input;
@@ -14,9 +15,9 @@ export default function CaLamComponent  (){
   const [form] = Form.useForm();
   const [currentRecord, setCurrentRecord] = useState(null);
   const [previewHours, setPreviewHours] = useState(0);
-
+  const apiNotification = useAppNotification();
   const { danhSachCaLam, loadingCaLam, createCaLam, updateCaLam, deleteCaLam, getAllCaLam } = useCaLam();
-
+  
   // Load data on component mount
   useEffect(() => {
     getAllCaLam();
@@ -81,15 +82,15 @@ export default function CaLamComponent  (){
       if (currentRecord) {
         shiftData.maCa = currentRecord.maCa;
         await updateCaLam(currentRecord.maCa, shiftData);
-        message.success('Cập nhật ca làm thành công!');
+        apiNotification.success('Cập nhật ca làm thành công!');
       } else {
         await createCaLam(shiftData);
-        message.success('Thêm ca làm thành công!');
+        apiNotification.success('Thêm ca làm thành công!');
       }
       handleCancel();
     } catch (err) {
       console.error('Error saving shift:', err);
-      message.error('Đã xảy ra lỗi khi lưu ca làm: ' + (err.response?.data?.message || err.message));
+      apiNotification.error('Đã xảy ra lỗi khi lưu ca làm: ' + (err.response?.data?.message || err.message));
     }
   };
 
@@ -116,9 +117,9 @@ export default function CaLamComponent  (){
     console.log(maCa)
     try {
       await deleteCaLam(maCa);
-      message.success('Xóa ca làm thành công!');
+      apiNotification.success('Xóa ca làm thành công!');
     } catch (error) {
-      message.error('Đã xảy ra lỗi khi xóa ca làm');
+      apiNotification.error('Đã xảy ra lỗi khi xóa ca làm');
     }
   };
 

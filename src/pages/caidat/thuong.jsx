@@ -62,7 +62,7 @@ export default function ThuongComponent() {
   } = useLichSuThuong();
   const { danhSachNhanVien } = useNhanVien();
   // state
-  const api = useAppNotification();
+  const apiNotification = useAppNotification();
   const { setReload } = useContext(ReloadContext);
 
   // Data Source
@@ -201,7 +201,7 @@ export default function ThuongComponent() {
           }
         });
         setSelectedLoaiThuongKeys([]);
-        message.success(`Đã xóa ${selectedLoaiThuongKeys.length} loại thưởng!`);
+        apiNotification.success(`Đã xóa ${selectedLoaiThuongKeys.length} loại thưởng!`);
       },
     });
   };
@@ -227,9 +227,9 @@ export default function ThuongComponent() {
   const handleDeleteLichSuThuong = async (maNhanVien, maLoaiTienThuong) => {
     try {
       await deleteLichSuThuong(maNhanVien, maLoaiTienThuong);
-      api.success({ message: "Xoá thành công" });
+      apiNotification.success({ message: "Xoá thành công" });
     } catch (error) {
-      api.error({ message: "Xoá thất bại", descriptions: error });
+      apiNotification.error({ message: "Xoá thất bại", descriptions: error });
     }
   };
 
@@ -252,7 +252,7 @@ export default function ThuongComponent() {
     dataSourceDanhSachLichSuThuong.filter(
       (item) => item.maLoaiTienThuong !== maLoaiTienThuong
     );
-    message.success("Xóa thành công!");
+    apiNotification.success("Xóa thành công!");
   };
 
   const handleSubmit = async () => {
@@ -267,10 +267,10 @@ export default function ThuongComponent() {
 
         if (editingItem) {
           await updateLichSuThuong(values);
-          api.success({ message: "Cập nhật lịch sử thưởng thành công!" });
+          apiNotification.success({ message: "Cập nhật lịch sử thưởng thành công!" });
         } else {
           await createLichSuThuong(formattedValues);
-          api.success({ message: "Thêm lịch sử thưởng thành công!" });
+          apiNotification.success({ message: "Thêm lịch sử thưởng thành công!" });
         }
       } else {
         if (editingItem) {
@@ -280,9 +280,9 @@ export default function ThuongComponent() {
           };
           try {
             await updateLoaiTienThuong(updateValues);
-            api.success({ message: "Cập nhật thành công!" });
+            apiNotification.success({ message: "Cập nhật thành công!" });
           } catch (error) {
-            api.error({
+            apiNotification.error({
               message: "Cập nhật không thành công!",
               descriptions: error,
             });
@@ -290,9 +290,9 @@ export default function ThuongComponent() {
         } else {
           try {
             await createLoaiTienThuong(values);
-            api.success({ message: "Thêm thành công!" });
+            apiNotification.success({ message: "Thêm thành công!" });
           } catch (error) {
-            api.error({
+            apiNotification.error({
               message: "Thêm Không thành công!",
               descriptions: error,
             });
