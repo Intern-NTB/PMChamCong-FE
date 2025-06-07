@@ -133,6 +133,7 @@ export default function Luong() {
               setSelectedRows(filteredData.map((item) => item.maNhanVien));
             } else {
               setSelectedRows([]);
+              console.log("Deselected all.");
             }
           }}
         />
@@ -320,7 +321,11 @@ export default function Luong() {
     );
   };
 
-  const generatePDFHandler = () => {
+  const generatePDFHandler = async () => {
+    console.log("--- GENERATE PDF HANDLER INITIATED ---");
+    console.log("Current selectedRows:", selectedRows);
+    console.log("Current filteredData:", filteredData);
+
     const selectedData = filteredData.filter((record) =>
       selectedRows.includes(record.maNhanVien)
     );

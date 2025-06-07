@@ -61,7 +61,6 @@ export default function LuongDetailModal({
           {record.mucPhat ? record.mucPhat.toLocaleString("vi-VN", { style: "currency", currency: "VND" }) : "-"}
         </Descriptions.Item>
         <Descriptions.Item label="Tăng ca">{record.tangCa || "-"}</Descriptions.Item>
-        <Descriptions.Item label="Vi phạm">{record.viPham || "-"}</Descriptions.Item>
         <Descriptions.Item label="Số lần đi muộn">{record.lanDiMuon || "-"}</Descriptions.Item>
         <Descriptions.Item label="Số lần về sớm">{record.lanVeSom || "-"}</Descriptions.Item>
         <Descriptions.Item label="Số lần nghỉ có phép">{record.nghiCoPhep || "-"}</Descriptions.Item>
