@@ -31,7 +31,7 @@ export default function NgayLeComponent() {
     const [pageSize, setPageSize] = useState(8);
     const apiNotification = useAppNotification();
 
-    const {danhsachNgayLe, loadingNgayLe, isCreatedNgayLe, getAllNgayLe, createNgayLe, updateNgayLe, deleteNgayLe} = useNgayLe()
+    const {danhsachNgayLe, getAllNgayLe, createNgayLe, updateNgayLe, deleteNgayLe} = useNgayLe()
 
     // CONTEXT
     const { setReload } = useContext(ReloadContext);
