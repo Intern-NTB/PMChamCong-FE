@@ -1,7 +1,7 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useContext, useEffect  } from 'react';
 import {
     Typography, Input, Select, DatePicker, Form, Row, Col, Space,
-    Button as AntButton, Checkbox, Card, Tag, Modal, Empty
+    Button as AntButton, Checkbox, Card, Tag, Modal, Empty, Pagination
 } from 'antd';
 import { CalendarOutlined, PlusOutlined, SearchOutlined, ClockCircleOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs';
@@ -11,9 +11,19 @@ const { Search } = Input;
 const { Option } = Select;
 const { RangePicker } = DatePicker;
 
+// ===== CONTEXT =====
+import { ReloadContext } from '../../context/reloadContext';
+
+// === Hook ===
+import { useNgayLe } from '../../component/hooks/useNgayLe';
+
 export default function NgayLeComponent() {
     const [form] = Form.useForm();
     const [isModalVisible, setIsModalVisible] = useState(false);
+    const [isModalConfirmVisible, setIsModalConfirmVisible] = useState({
+            visible: false,
+            data: null
+        });
     const [editingId, setEditingId] = useState(null);
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -21,54 +31,26 @@ export default function NgayLeComponent() {
     const [pageSize, setPageSize] = useState(8);
     const apiNotification = useAppNotification();
 
-    // Mock data with proper structure
-    const [ngayLeList, setNgayLeList] = useState([
-        {
-            maNgayLe: 1,
-            tenNgayLe: 'Tết Dương lịch',
-            ngayBatDau: '2025-01-01',
-            ngayKetThuc: '2025-01-01',
-            soNgayNghi: 1,
-        },
-        {
-            maNgayLe: 2,
-            tenNgayLe: 'Tết Nguyên đán',
-            ngayBatDau: '2025-01-29',
-            ngayKetThuc: '2025-02-02',
-            soNgayNghi: 5,
-        },
-        {
-            maNgayLe: 3,
-            tenNgayLe: 'Giỗ Tổ Hùng Vương',
-            ngayBatDau: '2025-04-10',
-            ngayKetThuc: '2025-04-10',
-            soNgayNghi: 1,
-        },
-        {
-            maNgayLe: 4,
-            tenNgayLe: 'Ngày Giải phóng miền Nam',
-            ngayBatDau: '2025-04-30',
-            ngayKetThuc: '2025-04-30',
-            soNgayNghi: 1,
-        },
-        {
-            maNgayLe: 5,
-            tenNgayLe: 'Ngày Quốc tế Lao động',
-            ngayBatDau: '2025-05-01',
-            ngayKetThuc: '2025-05-01',
-            soNgayNghi: 1,
-        },
-        {
-            maNgayLe: 6,
-            tenNgayLe: 'Quốc khánh 2/9',
-            ngayBatDau: '2025-09-02',
-            ngayKetThuc: '2025-09-03',
-            soNgayNghi: 2,
-        },
-    ]);
+    const {danhsachNgayLe, loadingNgayLe, isCreatedNgayLe, getAllNgayLe, createNgayLe, updateNgayLe, deleteNgayLe} = useNgayLe()
+
+    // CONTEXT
+    const { setReload } = useContext(ReloadContext);
+
+    useEffect(() => {
+        setReload(() => getAllNgayLe)
+      }, [])
+
+    Array.isArray(danhsachNgayLe) ? danhsachNgayLe.map(ngl => ({
+        key: ngl.maNgayLe,
+        maNgayLe: ngl.maNgayLe,
+        tenNgayLe: ngl.tenNgayLe,
+        ngayBatDau: ngl.ngayBatDau,
+        ngayKetThuc: ngl.ngayKetThuc,
+        soNgayNghi: ngl.soNgayNghi
+    })) : [];
 
     // Filter data
-    const filteredData = ngayLeList.filter(item => {
+    const filteredData = danhsachNgayLe.filter(item => {
         const matchSearch = item.tenNgayLe.toLowerCase().includes(searchTerm.toLowerCase())
         return matchSearch;
     });
@@ -87,13 +69,12 @@ export default function NgayLeComponent() {
         delete formData.dateRange;
 
         if (editingId) {
-            setNgayLeList(prev => prev.map(item =>
-                item.maNgayLe === editingId ? {
-                    ...item,
-                    ...formData,
-                    updatedDate: new Date().toISOString().split('T')[0]
-                } : item
-            ));
+            const updatedItem = {
+                maNgayLe: editingId,
+                ...formData,
+                updatedDate: new Date().toISOString().split('T')[0]
+            };
+            updateNgayLe(updatedItem)
             apiNotification.success('Cập nhật ngày lễ thành công!');
         } else {
             const newItem = {
@@ -102,7 +83,7 @@ export default function NgayLeComponent() {
                 status: 'Hoạt động',
                 createdDate: new Date().toISOString().split('T')[0]
             };
-            setNgayLeList(prev => [...prev, newItem]);
+            createNgayLe(newItem);
             apiNotification.success('Thêm ngày lễ thành công!');
         }
         handleCancel();
@@ -125,16 +106,9 @@ export default function NgayLeComponent() {
     }, [form]);
 
     const handleDelete = useCallback((data) => {
-        Modal.confirm({
-            title: 'Xác nhận xóa',
-            content: `Bạn có chắc chắn muốn xóa ngày lễ "${data.tenNgayLe}"?`,
-            okText: 'Xóa',
-            cancelText: 'Hủy',
-            okType: 'danger',
-            onOk: () => {
-                setNgayLeList(prev => prev.filter(item => item.maNgayLe !== data.maNgayLe));
-                apiNotification.success('Xóa ngày lễ thành công!');
-            }
+        setIsModalConfirmVisible({
+            visible: true,
+            data: data
         });
     }, []);
 
@@ -143,20 +117,22 @@ export default function NgayLeComponent() {
             apiNotification.warning('Vui lòng chọn ít nhất một ngày lễ để xóa!');
             return;
         }
-
-        Modal.confirm({
-            title: 'Xác nhận xóa nhiều',
-            content: `Bạn có chắc chắn muốn xóa ${selectedRowKeys.length} ngày lễ đã chọn?`,
-            okText: 'Xóa',
-            cancelText: 'Hủy',
-            okType: 'danger',
-            onOk: () => {
-                setNgayLeList(prev => prev.filter(item => !selectedRowKeys.includes(item.maNgayLe)));
-                setSelectedRowKeys([]);
-                apiNotification.success(`Đã xóa ${selectedRowKeys.length} ngày lễ thành công!`);
-            }
-        });
     };
+
+    // Confirm delete handler
+    const handleConfirmDelete = useCallback(async () => {
+        try {
+            if (isModalConfirmVisible.data) {
+                await deleteNgayLe(isModalConfirmVisible.data.maNgayLe);
+                message.success('Xóa phòng ban thành công!');
+            }
+        } catch (error) {
+            console.error('Error deleting:', error);
+            message.error('Có lỗi xảy ra khi xóa!');
+        } finally {
+            setIsModalConfirmVisible({ visible: false, data: null });
+        }
+    }, [isModalConfirmVisible.data, deleteNgayLe]);
 
     const handleCancel = () => {
         setIsModalVisible(false);
@@ -246,9 +222,6 @@ export default function NgayLeComponent() {
                     }}>
                         {item.tenNgayLe}
                     </Title>
-                    <Text type="secondary" style={{ fontSize: '12px', fontWeight: 500 }}>
-                        Mã: {item.maNgayLe}
-                    </Text>
                 </div>
 
                 {/* Details */}
@@ -446,6 +419,52 @@ export default function NgayLeComponent() {
                         }}
                     />
                 )}
+                
+                {/* Modal Confirm Delete */}
+                <Modal
+                    title={
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <DeleteOutlined style={{ color: '#ff4d4f' }} />
+                            Xác nhận xóa
+                        </div>
+                    }
+                    open={isModalConfirmVisible.visible}
+                    centered
+                    width={400}
+                    onCancel={() => setIsModalConfirmVisible({ visible: false, data: null })}
+                    footer={[
+                        <AntButton
+                            key="cancel"
+                            onClick={() => setIsModalConfirmVisible({ visible: false, data: null })}
+                            size="large"
+                        >
+                            Hủy
+                        </AntButton>,
+                        <AntButton
+                            key="delete"
+                            type="primary"
+                            danger
+                            onClick={handleConfirmDelete}
+                            size="large"
+                        >
+                            Xóa
+                        </AntButton>
+                    ]}
+                >
+                    <div style={{ padding: '16px 0' }}>
+                        <Text style={{ fontSize: 16 }}>
+                            Bạn có chắc chắn muốn xóa {' '} 
+                            <Text strong style={{ color: '#ff4d4f' }}>
+                                "{isModalConfirmVisible.data?.tenNgayLe}"
+                            </Text>{' '}
+                            ra khỏi danh sách ngày lễ không ?
+                        </Text>
+                        <br />
+                        <Text type="secondary" style={{ fontSize: 14, marginTop: 8 }}>
+                            Hành động này không thể hoàn tác.
+                        </Text>
+                    </div>
+                </Modal>
 
                 {/* Modal Form */}
                 <Modal
@@ -468,40 +487,7 @@ export default function NgayLeComponent() {
                         layout="vertical"
                         style={{ marginTop: 24 }}
                     >
-                        <Row gutter={16}>
-                            <Col span={12}>
-                                <Form.Item
-                                    name="maNgayLe"
-                                    label="Mã ngày lễ"
-                                    rules={[
-                                        { required: true, message: 'Vui lòng nhập mã ngày lễ!' },
-                                        { min: 2, message: 'Mã ngày lễ phải có ít nhất 2 ký tự!' }
-                                    ]}
-                                >
-                                    <Input
-                                        placeholder="Nhập mã ngày lễ"
-                                        size="large"
-                                        style={{ borderRadius: 8 }}
-                                    />
-                                </Form.Item>
-                            </Col>
-                            <Col span={12}>
-                                <Form.Item
-                                    name="soNgayNghi"
-                                    label="Số ngày nghỉ"
-                                    rules={[
-                                        { required: true, message: 'Vui lòng nhập số ngày nghỉ!' }
-                                    ]}
-                                >
-                                    <Input
-                                        type="number"
-                                        placeholder="Nhập số ngày nghỉ"
-                                        size="large"
-                                        style={{ borderRadius: 8 }}
-                                    />
-                                </Form.Item>
-                            </Col>
-                        </Row>
+                        
 
                         <Form.Item
                             name="tenNgayLe"
