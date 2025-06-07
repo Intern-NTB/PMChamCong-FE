@@ -29,6 +29,7 @@ import {
 import { usePhongBan } from '../../component/hooks/usePhongBan';
 import { useCaLam } from '../../component/hooks/useCaLam';
 import { ReloadContext } from '../../context/reloadContext';
+import { useAppNotification } from '../../component/ui/notification';
 
 const { Text, Title } = Typography;
 const { Search } = Input;
@@ -47,6 +48,7 @@ export default function PhongBanComponent  ()  {
     const [statusFilter, setStatusFilter] = useState('all');
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(8);
+    const apiNotification = useAppNotification();
 
     const {
         danhSachPhongBan,
@@ -125,15 +127,24 @@ export default function PhongBanComponent  ()  {
                     ...values
                 };
                 await updatePhongBan(updatedData);
-                message.success('Cập nhật phòng ban thành công!');
+                apiNotification.success({
+                    message: 'Thành công',
+                    description: 'Cập nhật phòng ban thành công!'
+                });
             } else {
                 await createPhongBan(values);
-                message.success('Thêm phòng ban thành công!');
+                apiNotification.success({
+                    message: 'Thành công',
+                    description: 'Thêm phòng ban thành công!'
+                });
             }
             handleCancel();
         } catch (error) {
             console.error('Error:', error);
-            message.error('Có lỗi xảy ra, vui lòng thử lại!');
+            apiNotification.error({
+                message: 'Lỗi',
+                description: 'Có lỗi xảy ra, vui lòng thử lại!'
+            });
         }
     }, [editingId, updatePhongBan, createPhongBan]);
 
@@ -161,7 +172,10 @@ export default function PhongBanComponent  ()  {
 
     const handleBulkDelete = useCallback(() => {
         if (selectedRowKeys.length === 0) {
-            message.warning('Vui lòng chọn ít nhất một phòng ban để xóa!');
+            apiNotification.warning({
+                message: 'Cảnh báo',
+                description: 'Vui lòng chọn ít nhất một phòng ban để xóa!'
+            });
             return;
         }
         // Implement bulk delete logic here
@@ -200,11 +214,17 @@ export default function PhongBanComponent  ()  {
         try {
             if (isModalConfirmVisible.data) {
                 await deletePhongBan(isModalConfirmVisible.data.maPhongBan);
-                message.success('Xóa phòng ban thành công!');
+                apiNotification.success({
+                    message: 'Thành công',
+                    description: 'Xóa phòng ban thành công!'
+                });
             }
         } catch (error) {
             console.error('Error deleting:', error);
-            message.error('Có lỗi xảy ra khi xóa!');
+            apiNotification.error({
+                message: 'Lỗi',
+                description: 'Có lỗi xảy ra khi xóa!'
+            });
         } finally {
             setIsModalConfirmVisible({ visible: false, data: null });
         }

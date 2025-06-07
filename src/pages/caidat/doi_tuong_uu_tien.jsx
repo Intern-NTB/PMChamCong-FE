@@ -19,6 +19,7 @@ import {
   Tabs,
   DatePicker,
   TimePicker,
+  message,
 } from "antd";
 import {
   PlusOutlined,
@@ -151,7 +152,10 @@ export default function DoiTuongUuTienComponent() {
     };
 
     if (editingHistoryId) {
-      api.success("Cập nhật lịch sử ưu tiên thành công!");
+      api.success({
+        message: 'Thành công',
+        description: "Cập nhật lịch sử ưu tiên thành công!"
+      });
     } else {
       const newHistoryItem = {
         id: Date.now(),
@@ -160,7 +164,10 @@ export default function DoiTuongUuTienComponent() {
         nguoiPheDuyet: "Admin",
         ngayTao: new Date().toISOString().split("T")[0],
       };
-      api.success("Thêm lịch sử ưu tiên thành công!");
+      api.success({
+        message: 'Thành công',
+        description: "Thêm lịch sử ưu tiên thành công!"
+      });
     }
     handleHistoryCancel();
   };

@@ -136,7 +136,7 @@ export default function NgayLeComponent() {
                 await deleteNgayLe(isModalConfirmVisible.data.maNgayLe);
                 apiNotification.success({
                     message: 'Thành công',
-                    description: 'Xóa phòng ban thành công!'
+                    description: 'Xóa ngày lễ thành công!'
                 });
             }
         } catch (error) {
@@ -212,13 +212,6 @@ export default function NgayLeComponent() {
                         onChange={(e) => handleCardSelect(item.maNgayLe, e.target.checked)}
                         style={{ transform: 'scale(1.1)' }}
                     />
-                    <Tag color={getStatusColor(item.status)} style={{
-                        borderRadius: 8,
-                        fontSize: '11px',
-                        fontWeight: 500
-                    }}>
-                        {item.status}
-                    </Tag>
                 </div>
 
                 {/* Main Content */}
@@ -367,7 +360,7 @@ export default function NgayLeComponent() {
                 </Row>
 
                 {/* Filter Section */}
-                <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+                <Row gutter={[16, 16]} style={{ marginBottom: 24, alignItems: 'center' }}>
                     <Col xs={24} sm={12} md={8}>
                         <Search
                             placeholder="Tìm kiếm ngày lễ..."
@@ -382,7 +375,7 @@ export default function NgayLeComponent() {
                     </Col>
 
                     <Col xs={24} sm={4} md={10}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 16 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                             <Checkbox
                                 checked={paginatedData.length > 0 && selectedRowKeys.length === paginatedData.length}
                                 indeterminate={selectedRowKeys.length > 0 && selectedRowKeys.length < paginatedData.length}
@@ -534,32 +527,6 @@ export default function NgayLeComponent() {
                                 placeholder={['Ngày bắt đầu', 'Ngày kết thúc']}
                             />
                         </Form.Item>
-
-                        <Form.Item
-                            name="note"
-                            label="Ghi chú"
-                        >
-                            <Input.TextArea
-                                placeholder="Nhập ghi chú (tùy chọn)"
-                                rows={3}
-                                style={{ borderRadius: 8 }}
-                            />
-                        </Form.Item>
-
-                        {editingId && (
-                            <Form.Item
-                                name="status"
-                                label="Trạng thái"
-                                rules={[
-                                    { required: true, message: 'Vui lòng chọn trạng thái!' }
-                                ]}
-                            >
-                                <Select size="large" placeholder="Chọn trạng thái" style={{ borderRadius: 8 }}>
-                                    <Option value="Hoạt động">Hoạt động</Option>
-                                    <Option value="Tạm dừng">Tạm dừng</Option>
-                                </Select>
-                            </Form.Item>
-                        )}
 
                         <Form.Item style={{ marginBottom: 0, marginTop: 32 }}>
                             <Space style={{ wmaNgayLeth: '100%', justifyContent: 'flex-end' }}>
