@@ -1,6 +1,6 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { Layout, Menu, Button, Drawer } from 'antd';
-import { ReloadOutlined, UnorderedListOutlined, UserOutlined, DollarOutlined, BarChartOutlined, HomeOutlined, SolutionOutlined, ScheduleOutlined, SettingFilled, MenuOutlined } from '@ant-design/icons';
+import { ReloadOutlined, UnorderedListOutlined, UserOutlined, DollarOutlined, BarChartOutlined, HomeOutlined, SolutionOutlined, ScheduleOutlined, SettingFilled, MenuOutlined, LogoutOutlined } from '@ant-design/icons';
 import LogoIcon from '../../assets/images/LogoIcon.png';
 import './mainLayout.css';
 import { useState, useEffect } from 'react';
@@ -33,7 +33,13 @@ const MainLayout = () => {
         window.addEventListener('resize', checkScreenSize);
         return () => window.removeEventListener('resize', checkScreenSize);
     }, []);
-
+    
+    const handleLogout = () => {
+        // Xử lý logout: ví dụ xóa token, chuyển hướng...
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+    };
+    
     const menuContent = (
         <>
             <div style={{
@@ -105,7 +111,7 @@ const MainLayout = () => {
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     padding: '0 16px',
-                    height: '64px'
+                    height: '65px'
                 }}>
                     <Button
                         type="text"
@@ -116,8 +122,8 @@ const MainLayout = () => {
                     />
                     <h2 style={{ margin: 0, flex: 1, textAlign: 'center' }}>{title}</h2>
                     <Button
-                        icon={<ReloadOutlined />}
-                        onClick={() => reloadFn()}
+                        icon={<LogoutOutlined />}
+                        onClick={() => handleLogout()}
                         type="text"
                         size="large"
                     />
@@ -213,12 +219,17 @@ const MainLayout = () => {
                 }}>
                     <span></span>
                     <div><h2 style={{ margin: 0 }}>{title}</h2></div>
-                    <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <span>Chào, <strong>Admin</strong></span>
                         <Button
-                            icon={<ReloadOutlined />}
-                            onClick={() => reloadFn()}
-                            style={{ backgroundColor: 'white' }}
-                        />
+                            icon={<LogoutOutlined />}
+                            onClick={handleLogout}
+                            type="primary"
+                            danger
+                            size="middle"
+                        >
+                            Đăng xuất
+                        </Button>
                     </div>
                 </Layout.Header>
 
