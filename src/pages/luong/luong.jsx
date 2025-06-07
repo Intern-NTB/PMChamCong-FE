@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Table,
   Input,
@@ -10,6 +10,7 @@ import {
   DatePicker,
   Select,
   Checkbox,
+  message,
 } from "antd";
 import {
   SearchOutlined,
@@ -34,7 +35,7 @@ const { Option } = Select;
 
 const sampleData = [
   {
-    key: 1,
+    key: 1, 
     maNhanVien: "NV001",
     hoTen: "Nguyễn Văn A",
     phongBan: "Phòng IT",
@@ -46,11 +47,11 @@ const sampleData = [
     ngayLe: 2,
     mucPhat: 500000,
     tangCa: 5,
-    viPham: 1,
-    lanDiMuon: 2,
+    lanDiMuon: 1,
     lanVeSom: 0,
     nghiCoPhep: 1,
     nghiKhongPhep: 0,
+    tieuHaoTaiSanChung: 0,
   },
   {
     key: 2,
@@ -65,11 +66,11 @@ const sampleData = [
     ngayLe: 1,
     mucPhat: 0,
     tangCa: 3,
-    viPham: 0,
     lanDiMuon: 0,
     lanVeSom: 1,
     nghiCoPhep: 0,
     nghiKhongPhep: 0,
+    tieuHaoTaiSanChung: 0,
   },
   {
     key: 3,
@@ -84,11 +85,11 @@ const sampleData = [
     ngayLe: 0,
     mucPhat: 300000,
     tangCa: 7,
-    viPham: 2,
     lanDiMuon: 1,
     lanVeSom: 0,
     nghiCoPhep: 2,
     nghiKhongPhep: 1,
+    tieuHaoTaiSanChung: 0,
   },
 ];
 
@@ -123,17 +124,35 @@ export default function Luong() {
     });
   }, [searchValue, selectedPhongBan, dataSource]);
 
+  useEffect(() => {
+    console.log("filteredData changed, resetting selections. New filteredData length:", filteredData.length);
+    setSelectedRows([]);
+    setSelectAll(false);
+  }, [filteredData]);
+
+  useEffect(() => {
+    if (filteredData.length > 0 && selectedRows.length === filteredData.length) {
+      setSelectAll(true);
+    } else {
+      setSelectAll(false);
+    }
+  }, [selectedRows, filteredData]);
+
   const columns = [
     {
       title: (
         <Checkbox
           checked={selectAll}
           onChange={(e) => {
-            setSelectAll(e.target.checked);
-            if (e.target.checked) {
+            const checked = e.target.checked;
+            setSelectAll(checked);
+            if (checked) {
+              // Lấy tất cả key từ filteredData HIỆN TẠI
               setSelectedRows(filteredData.map((item) => item.key));
+              console.log("Selected all keys:", filteredData.map((item) => item.key));
             } else {
               setSelectedRows([]);
+              console.log("Deselected all.");
             }
           }}
         />
@@ -145,10 +164,20 @@ export default function Luong() {
         <Checkbox
           checked={selectedRows.includes(record.key)}
           onChange={(e) => {
-            if (e.target.checked) {
-              setSelectedRows([...selectedRows, record.key]);
+            const checked = e.target.checked;
+            console.log(`Checkbox for key ${record.key} clicked. Checked: ${checked}`); // Log từng click
+            if (checked) {
+              setSelectedRows((prevSelected) => {
+                const newSelected = [...prevSelected, record.key];
+                console.log("New selectedRows (add):", newSelected);
+                return newSelected;
+              });
             } else {
-              setSelectedRows(selectedRows.filter((key) => key !== record.key));
+              setSelectedRows((prevSelected) => {
+                const newSelected = prevSelected.filter((key) => key !== record.key);
+                console.log("New selectedRows (remove):", newSelected);
+                return newSelected;
+              });
             }
           }}
         />
@@ -251,21 +280,53 @@ export default function Luong() {
     setIsEditModalVisible(false);
   };
 
-  const exportToExcelHandler = () => {
-    const selectedData = filteredData.filter((record) =>
-      selectedRows.includes(record.key)
-    );
-    exportToExcel(selectedData, selectedMonthYear.format("MM/YYYY"), selectedPhongBan, false);
+  const exportToExcelHandler = async () => {
+    console.log("--- EXPORT EXCEL HANDLER INITIATED ---");
+    console.log("Current selectedRows:", selectedRows);
+    console.log("Current filteredData:", filteredData);
+
+    const selectedData = filteredData.filter((record) => {
+      const isIncluded = selectedRows.includes(record.key);
+      console.log(`Checking record key ${record.key}: ${isIncluded ? 'Included' : 'Not Included'}`);
+      return isIncluded;
+    });
+    console.log("Data to be exported (selectedData):", selectedData);
+
+    if (selectedData.length === 0) {
+      message.warning("Vui lòng chọn ít nhất một nhân viên để xuất Excel.");
+      return;
+    }
+    try {
+      // isDetail = false for summary report
+      await exportToExcel(selectedData, selectedMonthYear.format("MM/YYYY"), selectedPhongBan, false);
+      message.success("Xuất Excel tổng quát thành công!");
+    } catch (error) {
+      message.error("Có lỗi xảy ra khi xuất Excel tổng quát.");
+      console.error("Export Excel Summary Error:", error);
+    }
   };
 
-  const generatePDFHandler = () => {
+  const generatePDFHandler = async () => {
+    console.log("--- GENERATE PDF HANDLER INITIATED ---");
+    console.log("Current selectedRows:", selectedRows);
+    console.log("Current filteredData:", filteredData);
+
     const selectedData = filteredData.filter((record) =>
       selectedRows.includes(record.key)
     );
-    if (selectedData.length > 0) {
-      generatePDF(selectedData, selectedMonthYear.format("MM/YYYY"));
-    } else {
-      alert("Vui lòng chọn ít nhất một nhân viên để in.");
+    console.log("Data to be generated PDF (selectedData):", selectedData);
+
+    if (selectedData.length === 0) {
+      message.warning("Vui lòng chọn ít nhất một nhân viên để in PDF.");
+      return;
+    }
+    try {
+      // isDetail = false for general PDF, if you want detailed PDF, change last param to true
+      await generatePDF(selectedData, selectedMonthYear.format("MM/YYYY"), false);
+      message.success("Xuất PDF thành công!");
+    } catch (error) {
+      message.error("Có lỗi xảy ra khi xuất PDF.");
+      console.error("Export PDF Error:", error);
     }
   };
 
@@ -330,6 +391,7 @@ export default function Luong() {
             icon={<PlusOutlined className="icon-style" />}
             size="large"
             className="toolbar-button"
+            // onClick={() => { /* Logic to create new payroll */ }}
           >
             Tạo bảng lương mới
           </Button>
