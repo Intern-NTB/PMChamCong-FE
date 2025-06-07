@@ -31,6 +31,7 @@ import { ReloadContext } from "../../context/reloadContext";
 import LuongDetailModal from "./LuongDetailModal";
 import LuongEditModal from "./LuongEditModal";
 import { exportToExcel } from "./exportToExcel";
+// import { exportToExcel  } from "./exportToExcel_version2";
 import { generatePDF } from "./generatePDF";
 
 import "./luong.css";
@@ -40,7 +41,6 @@ const { Title } = Typography;
 const { Option } = Select;
 
 export default function Luong() {
-  const phongBanList = ["Phòng IT", "Phòng Kinh doanh", "Phòng Nhân sự"];
 
   const [selectedMonthYear, setSelectedMonthYear] = useState(dayjs());
   const [searchValue, setSearchValue] = useState("");
