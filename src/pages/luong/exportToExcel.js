@@ -235,7 +235,7 @@ export const exportToExcel = async (data, monthYear = "", phongBan = null, isDet
 
     currentRow++; 
 
-    worksheet.getCell(currentRow, 1).value = `Mức phạt: ${record ? record.mucPhat.toLocaleString("vi-VN", { style: "currency", currency: "VND" }) : "0 VND"}`; // A15
+    worksheet.getCell(currentRow, 1).value = record?.mucPhat || 0 // A15
     worksheet.getCell(currentRow, 1).font = { ...DEFAULT_FONT, bold: true };
     worksheet.getCell(currentRow, 1).alignment = { horizontal: "left", vertical: "middle" };
     currentRow++; 
@@ -262,7 +262,7 @@ export const exportToExcel = async (data, monthYear = "", phongBan = null, isDet
 
     worksheet.mergeCells(currentRow, 2, currentRow, 3); 
     const thucNhanCell = worksheet.getCell(currentRow, 2); 
-    thucNhanCell.value = `THỰC NHẬN: ${record ? record.thucNhan.toLocaleString("vi-VN", { style: "currency", currency: "VND" }) : "- VND"}`;
+    thucNhanCell.value = record?.thucNhan || 0
     thucNhanCell.font = { ...DEFAULT_FONT, bold: true, size: 14, color: { argb: "FF0000FF" } }; 
     thucNhanCell.alignment = { horizontal: "right", vertical: "middle" };
     currentRow++; 
