@@ -1,5 +1,6 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
+import "../../assets/fonts/Roboto.js";
 
 const removeVietnameseTones = (str) => {
   const map = {
@@ -25,111 +26,601 @@ const removeVietnameseTones = (str) => {
     .join("");
 };
 
-export const generatePDF = (data, monthYear = "", isDetail = false) => {
-  if (!data || data.length === 0) {
-    alert("Dữ liệu không hợp lệ để xuất PDF");
+const formatCurrency = (value) => {
+  if (value == null || value === 0) return "0";
+  return Math.round(value).toLocaleString("vi-VN") + " đ";
+};
+
+// Hàm tính toán số tiền dựa trên đơn vị
+const calculateAmount = (value, unit, baseSalary) => {
+  if (!value || value === 0) return 0;
+
+  if (unit === "%") {
+    // Nếu đơn vị là %, tính phần trăm của lương cơ bản
+    return (baseSalary * value) / 100;
+  } else {
+    // Nếu không phải %, trả về giá trị gốc (số tiền cố định)
+    return value;
+  }
+};
+
+// Hàm tạo các dòng chi tiết thưởng (đã cập nhật)
+const createBonusRows = (bonusData, startIndex, baseSalary = 0) => {
+  const rows = [];
+
+  if (!bonusData) {
+    return [[`${startIndex}`, "Chi tiết Thưởng", "Không có thưởng"]];
+  }
+
+  // Dòng tiêu đề
+  rows.push([`${startIndex}`, "Chi tiết Thưởng", ""]);
+
+  // Nếu là array (nhiều loại thưởng)
+  if (Array.isArray(bonusData)) {
+    bonusData.forEach((bonus, index) => {
+      let bonusAmount = 0;
+
+      if (bonus.soTienThuongKhac && bonus.soTienThuongKhac > 0) {
+        bonusAmount = calculateAmount(
+          bonus.soTienThuongKhac,
+          bonus.donViThuongKhac || bonus.donVi,
+          baseSalary
+        );
+      } else if (bonus.soTienThuong) {
+        bonusAmount = calculateAmount(
+          bonus.soTienThuong,
+          bonus.donViThuong || bonus.donVi,
+          baseSalary
+        );
+      }
+
+      const bonusText = `${bonus.tenLoaiTienThuong || "Thưởng khác"}${
+        bonus.lyDo ? ` (${bonus.lyDo})` : ""
+      }${
+        bonus.donVi === "%"
+          ? ` - ${bonus.soTienThuong || bonus.soTienThuongKhac}%`
+          : ""
+      }`;
+
+      rows.push([
+        `${startIndex}.${index + 1}`,
+        bonusText,
+        formatCurrency(bonusAmount),
+      ]);
+    });
+  }
+  // Nếu là object (một loại thưởng)
+  else {
+    let bonusAmount = 0;
+
+    if (bonusData.soTienThuongKhac && bonusData.soTienThuongKhac > 0) {
+      bonusAmount = calculateAmount(
+        bonusData.soTienThuongKhac,
+        bonusData.donViThuongKhac || bonusData.donVi,
+        baseSalary
+      );
+    } else if (bonusData.soTienThuong) {
+      bonusAmount = calculateAmount(
+        bonusData.soTienThuong,
+        bonusData.donViThuong || bonusData.donVi,
+        baseSalary
+      );
+    }
+
+    const bonusText = `${bonusData.tenLoaiTienThuong || "Thưởng khác"}${
+      bonusData.lyDo ? ` (${bonusData.lyDo})` : ""
+    }${
+      bonusData.donVi === "%"
+        ? ` - ${bonusData.soTienThuong || bonusData.soTienThuongKhac}%`
+        : ""
+    }`;
+
+    rows.push([`${startIndex}.1`, bonusText, formatCurrency(bonusAmount)]);
+  }
+
+  return rows;
+};
+
+// Hàm tạo các dòng chi tiết phạt (đã cập nhật)
+const createPenaltyRows = (penaltyData, startIndex, baseSalary = 0) => {
+  const rows = [];
+
+  if (!penaltyData) {
+    return [[`${startIndex}`, "Chi tiết Phạt", "Không có phạt"]];
+  }
+
+  // Dòng tiêu đề
+  rows.push([`${startIndex}`, "Chi tiết Phạt", ""]);
+
+  // Nếu là array (nhiều loại phạt)
+  if (Array.isArray(penaltyData)) {
+    penaltyData.forEach((penalty, index) => {
+      let penaltyAmount = 0;
+
+      if (penalty.soTienTruKhac && penalty.soTienTruKhac > 0) {
+        penaltyAmount = calculateAmount(
+          penalty.soTienTruKhac,
+          penalty.donViTruKhac || penalty.donVi,
+          baseSalary
+        );
+      } else if (penalty.soTienTru) {
+        penaltyAmount = calculateAmount(
+          penalty.soTienTru,
+          penalty.donViTru || penalty.donVi,
+          baseSalary
+        );
+      }
+
+      const penaltyText = `${penalty.tenLoaiTienTru || "Phạt khác"}${
+        penalty.liDo ? ` (${penalty.liDo})` : ""
+      }${
+        penalty.donVi === "%"
+          ? ` - ${penalty.soTienTru || penalty.soTienTruKhac}%`
+          : ""
+      }`;
+
+      rows.push([
+        `${startIndex}.${index + 1}`,
+        penaltyText,
+        formatCurrency(penaltyAmount),
+      ]);
+    });
+  }
+  // Nếu là object (một loại phạt)
+  else {
+    let penaltyAmount = 0;
+
+    if (penaltyData.soTienTruKhac && penaltyData.soTienTruKhac > 0) {
+      penaltyAmount = calculateAmount(
+        penaltyData.soTienTruKhac,
+        penaltyData.donViTruKhac || penaltyData.donVi,
+        baseSalary
+      );
+    } else if (penaltyData.soTienTru) {
+      penaltyAmount = calculateAmount(
+        penaltyData.soTienTru,
+        penaltyData.donViTru || penaltyData.donVi,
+        baseSalary
+      );
+    }
+
+    const penaltyText = `${penaltyData.tenLoaiTienTru || "Phạt khác"}${
+      penaltyData.liDo ? ` (${penaltyData.liDo})` : ""
+    }${
+      penaltyData.donVi === "%"
+        ? ` - ${penaltyData.soTienTru || penaltyData.soTienTruKhac}%`
+        : ""
+    }`;
+
+    rows.push([`${startIndex}.1`, penaltyText, formatCurrency(penaltyAmount)]);
+  }
+
+  return rows;
+};
+
+// Function xuất PDF chi tiết cho 1 nhân viên
+export const generateDetailedSalaryPDF = (employeeData, monthYear = "") => {
+  if (!employeeData) {
     return;
   }
 
   const doc = new jsPDF();
-  doc.setFontSize(16);
+  const baseSalary = employeeData.luongCoBan || 0; // Lương cơ bản để tính %
 
+  // Tiêu đề
+  doc.setFont("Roboto-Regular", "normal");
+  doc.setFontSize(16);
   doc.text(
-    `Bang Luong Thang ${removeVietnameseTones(monthYear)}`,
+    `BẢNG TÍNH LƯƠNG THÁNG ${removeVietnameseTones(monthYear)}`,
     doc.internal.pageSize.getWidth() / 2,
-    10,
+    15,
     { align: "center" }
   );
 
-  const formatCurrency = (value) =>
-    value != null ? value.toLocaleString("vi-VN", { style: "currency", currency: "VND" }) : "-";
+  const basicData = [
+    ["STT", "Nội dung", "Giá trị"], // Header row
+    ["1", "Họ và tên", employeeData.hoTen || "-"],
+    ["2", "Mã nhân viên", employeeData.maNhanVien || "-"],
+    ["3", "Phòng ban", employeeData.tenPhongBan || "-"],
+    ["4", "Năm", employeeData.nam || "-"],
+    ["5", "Tháng", employeeData.thang || "-"],
+    ["6", "Lương cơ bản", formatCurrency(baseSalary)],
+    ["7", "Số ngày làm việc", employeeData.soNgayCong || 0],
+    ["8", "Công chuẩn của tháng", employeeData.congChuanCuaThang || 0],
+    ["9", "Số ngày nghỉ lễ", employeeData.soNgayLe || 0],
+    ["10", "Số ngày nghỉ", employeeData.soNgayNghi || 0],
+    ["11", "Số ngày nghỉ có phép", employeeData.soNgayNghiCoPhep || 0],
+    ["12", "Số giờ tăng ca", employeeData.soGioTangCa || 0],
+    ["13", "Hệ số tăng ca", employeeData.heSoTangCa || 0],
+    ["14", "Lương giờ", formatCurrency(employeeData.luongGio)],
+    ["15", "Tiền tăng ca", formatCurrency(employeeData.tongTienTangCa || 0)],
+  ];
 
-  let yOffset = 20; 
+  // Tạo dòng phụ cấp
+  const allowanceRow = [
+    String(16),
+    "Tổng tiền phụ cấp",
+    formatCurrency(employeeData.tongTienPhuCap || 0),
+  ];
+  // Tạo các dòng chi tiết thưởng (truyền thêm baseSalary)
+  const bonusRows = createBonusRows(
+    employeeData.danhSachLichSuThuong,
+    17,
+    baseSalary
+  );
 
-  if (isDetail) {
-    const formFields = [
-      { label: "Mã nhân viên", value: data[0].maNhanVien || "-" },
-      { label: "Họ tên", value: data[0].hoTen || "-" },
-      { label: "Phòng ban", value: data[0].phongBan || "-" },
-      { label: "Luong cơ bản", value: formatCurrency(data[0].luongCoBan) },
-      { label: "Phu cấp", value: formatCurrency(data[0].tienPhuCap) },
-      { label: "Luong thuong", value: formatCurrency(data[0].tienThuong) },
-      { label: "Muc phạt", value: formatCurrency(data[0].mucPhat) },
-      { label: "Tang ca", value: data[0].tangCa != null ? data[0].tangCa : "-" },
-      { label: "Vi phạm", value: data[0].viPham != null ? data[0].viPham : "-" },
-      { label: "Di muon", value: data[0].lanDiMuon != null ? data[0].lanDiMuon : "-" },
-      { label: "Ve som", value: data[0].lanVeSom != null ? data[0].lanVeSom : "-" },
-      { label: "Nghỉ có phép", value: data[0].nghiCoPhep != null ? data[0].nghiCoPhep : "-" },
-      { label: "Nghỉ không phép", value: data[0].nghiKhongPhep != null ? data[0].nghiKhongPhep : "-" },
-      { label: "Ngày công", value: data[0].ngayCong != null ? data[0].ngayCong : "-" },
-      { label: "Ngày lễ", value: data[0].ngayLe != null ? data[0].ngayLe : "-" },
-      { label: "Thuc nhận", value: formatCurrency(data[0].thucNhan) },
-    ];
+  // Tạo dòng tổng thưởng
+  const totalBonusRow = [
+    String(18),
+    "Tổng Tiền Thưởng",
+    formatCurrency(employeeData.tienThuong || 0),
+  ];
 
-    const formWidth = 200;
-    const formHeight = yOffset + (formFields.length * 11); 
+  // Tạo các dòng chi tiết phạt (truyền thêm baseSalary)
+  const penaltyRows = createPenaltyRows(
+    employeeData.danhSachLichSuTru,
+    19,
+    baseSalary
+  );
 
-    doc.setDrawColor(169, 169, 169); 
-    doc.setLineWidth(0.5); 
-    doc.roundedRect(5, yOffset - 5, formWidth, formHeight - 5, 5, 5); 
+  // Tạo dòng tổng phạt
+  const totalPenaltyRow = [
+    String(20),
+    "Tổng Tiền Phạt",
+    formatCurrency(employeeData.tienTru || 0),
+  ];
 
-    formFields.forEach((field) => {
-      doc.setFontSize(12);
-      doc.text(`${removeVietnameseTones(field.label)}:`, 10, yOffset);
+  // Tạo dòng lương thực lãnh
+  const finalSalaryRow = [
+    String(21),
+    "Lương thực lãnh",
+    formatCurrency(employeeData.tongLuong || 0),
+  ];
 
-      doc.setFontSize(12);
-      doc.text(`${field.value}`, 60, yOffset);
+  // Kết hợp tất cả dữ liệu
+  const tableData = [
+    ...basicData,
+    allowanceRow,
+    ...bonusRows,
+    totalBonusRow,
+    ...penaltyRows,
+    totalPenaltyRow,
+    finalSalaryRow,
+  ];
 
-      doc.setDrawColor(169, 169, 169); 
-      doc.setLineWidth(0.2); 
-      doc.line(55, yOffset - 5, 55, yOffset + 5);
-
-      doc.setLineWidth(0.2); 
-      doc.line(5, yOffset + 6, formWidth + 5, yOffset + 6);
-
-      yOffset += 12; 
-    });
-  } else {
-    const columns = [
-      removeVietnameseTones("Mã NV"),
-      removeVietnameseTones("Họ Tên"),
-      removeVietnameseTones("Phòng ban"),
-      removeVietnameseTones("Luong cơ bản"),
-      removeVietnameseTones("Phụ cấp"),
-      removeVietnameseTones("Thuong"),
-      removeVietnameseTones("Thuc nhận"),
-    ];
-
-    const rows = data.map((item) => [
-      item.maNhanVien || "-",
-      item.hoTen || "-",
-      item.phongBan || "-",
-      formatCurrency(item.luongCoBan),
-      formatCurrency(item.tienPhuCap),
-      formatCurrency(item.tienThuong),
-      formatCurrency(item.thucNhan),
-    ]);
-
-    autoTable(doc, {
-      head: [columns],
-      body: rows,
-      styles: {
-        fontSize: 9,
-        cellPadding: 4, 
-        lineWidth: 0.5, 
-        lineColor: [169, 169, 169], 
+  // Tạo bảng với autoTable
+  autoTable(doc, {
+    body: tableData,
+    startY: 25,
+    styles: {
+      fontSize: 10,
+      cellPadding: 3,
+      lineWidth: 0.5,
+      lineColor: [0, 0, 0],
+      font: "Roboto-Regular",
+      fontStyle: "normal",
+    },
+    columnStyles: {
+      0: {
+        halign: "center",
+        cellWidth: 15,
+        fillColor: [169, 169, 169], // Màu xám cho cột STT
       },
-      columnStyles: {
-        3: { halign: "right" },
-        4: { halign: "right" },
-        5: { halign: "right" },
-        6: { halign: "right" },
+      1: {
+        halign: "left",
+        cellWidth: 100,
+        fontStyle: "normal",
       },
-      startY: 20,
-      margin: { left: 10, right: 10 },
-      theme: "grid", 
-    });
+      2: {
+        halign: "right",
+        cellWidth: 75,
+      },
+    },
+    didParseCell: function (data) {
+      // Tô hàng tiêu đề
+      if (data.row.index === 0) {
+        data.cell.styles.fillColor = [169, 169, 169];
+        data.cell.styles.textColor = [255, 255, 255];
+        return;
+      }
+
+      // Lấy nội dung ở cột "Nội dung" (cột thứ 2)
+      const cellText = data.row.cells[1]?.text?.[0];
+
+      // Dòng tiêu đề chi tiết
+      const isDetailHeader =
+        cellText === "Chi tiết Thưởng" || cellText === "Chi tiết Phạt";
+      if (isDetailHeader) {
+        data.cell.styles.fillColor = [169, 169, 169];
+        data.cell.styles.textColor = [255, 255, 255];
+        return;
+      }
+
+      // Dòng tổng quan trọng
+      const isImportantRow = [
+        "Tổng Tiền Thưởng",
+        "Tổng Tiền Phạt",
+        "Lương thực lãnh",
+      ].includes(cellText);
+      if (isImportantRow) {
+        data.cell.styles.fillColor = [140, 40, 80];
+        data.cell.styles.textColor = [255, 255, 255];
+        return;
+      }
+
+      // Dòng chi tiết con (có số thứ tự kiểu "2.1", "3.2" v.v)
+      if (data.cell.text[0]?.includes(".")) {
+        data.cell.styles.fillColor = [245, 245, 245];
+      }
+    },
+    didDrawPage: function () {
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+
+      const centerX = pageWidth / 2;
+      const centerY = pageHeight / 2;
+
+      doc.saveGraphicsState();
+      doc.setFontSize(65);
+      doc.setTextColor(12, 67, 110);
+      doc.setFont("helvetica", "bold");
+      doc.setGState(new doc.GState({ opacity: 0.08 })); // mờ hơn
+      doc.text("Công ty Manor", centerX, centerY, {
+        align: "center",
+      });
+      doc.restoreGraphicsState();
+    },
+    theme: "grid",
+    tableWidth: "auto",
+    margin: { left: 10, right: 10 },
+  });
+
+  // Thêm chân trang
+  const pageHeight = doc.internal.pageSize.getHeight();
+  doc.setFontSize(10);
+  doc.text(
+    `Ngày xuất: ${new Date().toLocaleDateString("vi-VN")}`,
+    10,
+    pageHeight - 10
+  );
+
+  doc.text(`Trang 1`, doc.internal.pageSize.getWidth() - 20, pageHeight - 10, {
+    align: "right",
+  });
+
+  // Lưu file
+  const fileName = `bang_tinh_luong_${removeVietnameseTones(
+    (employeeData.hoTen || "nhan_vien").replace(/\s+/g, "_")
+  )}_${removeVietnameseTones(monthYear.replace("/", "-")) || "thang"}.pdf`;
+
+  doc.save(fileName);
+};
+
+// Xuất nhiều file PDF chi tiết (mỗi nhân viên 1 file)
+export const generateMultipleDetailedPDFs = async (
+  employeesData,
+  monthYear = ""
+) => {
+  if (!employeesData || employeesData.length === 0) {
+    return;
   }
 
-  doc.save(`baocaoluong_${removeVietnameseTones(monthYear.replace("/", "-")) || "all"}_${isDetail ? "chi_tiet" : "tong"}.pdf`);
+  for (let i = 0; i < employeesData.length; i++) {
+    const employee = employeesData[i];
+    generateDetailedSalaryPDF(employee, monthYear);
+
+    // Delay 500ms giữa các file để tránh browser bị quá tải
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
+};
+
+// Xuất tất cả nhân viên vào 1 file PDF nhiều trang
+export const generateSinglePDFMultiplePages = (
+  employeesData,
+  monthYear = ""
+) => {
+  if (!employeesData || employeesData.length === 0) {
+    return;
+  }
+
+  const doc = new jsPDF();
+  const formatCurrency = (value) => {
+    if (value == null || value === 0) return 0;
+    return Math.round(value).toLocaleString("vi-VN") + " đ";
+  };
+  employeesData.forEach((employeeData, index) => {
+    // Nếu không phải trang đầu tiên, thêm trang mới
+    if (index > 0) {
+      doc.addPage();
+    }
+    const baseSalary = employeeData.luongCoBan || 0; // Lương cơ bản để tính %
+
+    // Tiêu đề cho mỗi trang
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text(
+      `BANG TINH LUONG THANG ${monthYear}`,
+      doc.internal.pageSize.getWidth() / 2,
+      15,
+      { align: "center" }
+    );
+
+    // Dữ liệu cho bảng
+    // Tạo dữ liệu cơ bản
+    const basicData = [
+      ["STT", "Nội dung", "Giá trị"], // Header row
+      ["1", "Họ và tên", employeeData.hoTen || "-"],
+      ["2", "Mã nhân viên", employeeData.maNhanVien || "-"],
+      ["3", "Phòng ban", employeeData.tenPhongBan || "-"],
+      ["4", "Năm", employeeData.nam || "-"],
+      ["5", "Tháng", employeeData.thang || "-"],
+      ["6", "Lương cơ bản", formatCurrency(baseSalary)],
+      ["7", "Số ngày làm việc", employeeData.soNgayCong || 0],
+      ["8", "Công chuẩn của tháng", employeeData.congChuanCuaThang || 0],
+      ["9", "Số ngày nghỉ lễ", employeeData.soNgayLe || 0],
+      ["10", "Số ngày nghỉ", employeeData.soNgayNghi || 0],
+      ["11", "Số ngày nghỉ có phép", employeeData.soNgayNghiCoPhep || 0],
+      // ["12", "Số ngày nghỉ trừ lương", employeeData.soNgayNghiTruLuong || 0],
+      ["13", "Số giờ tăng ca", employeeData.soGioTangCa || 0],
+      ["14", "Hệ số tăng ca", employeeData.heSoTangCa || 0],
+      ["15", "Lương giờ", formatCurrency(employeeData.luongGio)],
+      ["16", "Tiền tăng ca", formatCurrency(employeeData.tongTienTangCa || 0)],
+    ];
+
+    // Tạo dòng phụ cấp
+    const allowanceRow = [
+      String(17),
+      "Tổng tiền phụ cấp",
+      formatCurrency(employeeData.tongTienPhuCap || 0),
+    ];
+    // Tạo các dòng chi tiết thưởng (truyền thêm baseSalary)
+    const bonusRows = createBonusRows(
+      employeeData.danhSachLichSuThuong,
+      18,
+      baseSalary
+    );
+
+    // Tạo dòng tổng thưởng
+    const totalBonusRow = [
+      String(19),
+      "Tổng Tiền Thưởng",
+      formatCurrency(employeeData.tienThuong || 0),
+    ];
+
+    // Tạo các dòng chi tiết phạt (truyền thêm baseSalary)
+    const penaltyRows = createPenaltyRows(
+      employeeData.danhSachLichSuTru,
+      20,
+      baseSalary
+    );
+
+    // Tạo dòng tổng phạt
+    const totalPenaltyRow = [
+      String(21),
+      "Tổng Tiền Phạt",
+      formatCurrency(employeeData.tienTru || 0),
+    ];
+
+    // Tạo dòng lương thực lãnh
+    const finalSalaryRow = [
+      String(22),
+      "Lương thực lãnh",
+      formatCurrency(employeeData.tongLuong || 0),
+    ];
+
+    // Kết hợp tất cả dữ liệu
+    const tableData = [
+      ...basicData,
+      allowanceRow,
+      ...bonusRows,
+      totalBonusRow,
+      ...penaltyRows,
+      totalPenaltyRow,
+      finalSalaryRow,
+    ];
+
+    // Tạo bảng với autoTable
+    autoTable(doc, {
+      body: tableData,
+      startY: 25,
+      styles: {
+        fontSize: 10,
+        cellPadding: 3,
+        lineWidth: 0.5,
+        lineColor: [0, 0, 0],
+        font: "Roboto-Regular",
+        fontStyle: "normal",
+      },
+      columnStyles: {
+        0: {
+          halign: "center",
+          cellWidth: 15,
+          fillColor: [169, 169, 169], // Màu xám cho cột STT
+        },
+        1: {
+          halign: "left",
+          cellWidth: 100,
+          fontStyle: "normal",
+        },
+        2: {
+          halign: "right",
+          cellWidth: 75,
+        },
+      },
+      didParseCell: function (data) {
+        // Tô hàng tiêu đề
+        if (data.row.index === 0) {
+          data.cell.styles.fillColor = [169, 169, 169];
+          data.cell.styles.textColor = [255, 255, 255];
+          return;
+        }
+
+        // Lấy nội dung ở cột "Nội dung" (cột thứ 2)
+        const cellText = data.row.cells[1]?.text?.[0];
+
+        // Dòng tiêu đề chi tiết
+        const isDetailHeader =
+          cellText === "Chi tiết Thưởng" || cellText === "Chi tiết Phạt";
+        if (isDetailHeader) {
+          data.cell.styles.fillColor = [169, 169, 169];
+          data.cell.styles.textColor = [255, 255, 255];
+          return;
+        }
+
+        // Dòng tổng quan trọng
+        const isImportantRow = [
+          "Tổng Tiền Thưởng",
+          "Tổng Tiền Phạt",
+          "Lương thực lãnh",
+        ].includes(cellText);
+        if (isImportantRow) {
+          data.cell.styles.fillColor = [140, 40, 80];
+          data.cell.styles.textColor = [255, 255, 255];
+          return;
+        }
+
+        // Dòng chi tiết con (có số thứ tự kiểu "2.1", "3.2" v.v)
+        if (data.cell.text[0]?.includes(".")) {
+          data.cell.styles.fillColor = [245, 245, 245];
+        }
+      },
+      didDrawPage: function () {
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+
+        const centerX = pageWidth / 2;
+        const centerY = pageHeight / 2;
+
+        doc.saveGraphicsState();
+        doc.setFontSize(65);
+        doc.setTextColor(12, 67, 110);
+        doc.setFont("helvetica", "bold");
+        doc.setGState(new doc.GState({ opacity: 0.08 })); // mờ hơn
+        doc.text("Công ty Manor", centerX, centerY, {
+          align: "center",
+        });
+        doc.restoreGraphicsState();
+      },
+      theme: "grid",
+      tableWidth: "auto",
+      margin: { left: 10, right: 10 },
+    });
+    // Thêm chân trang cho mỗi trang
+    const pageHeight = doc.internal.pageSize.getHeight();
+    doc.setFontSize(10);
+    doc.text(`${new Date().toLocaleDateString("vi-VN")}`, 10, pageHeight - 10);
+
+    doc.text(
+      `Trang ${index + 1}/${employeesData.length}`,
+      doc.internal.pageSize.getWidth() - 20,
+      pageHeight - 10,
+      { align: "right" }
+    );
+  });
+
+  // Lưu file
+  const fileName = `bang_tinh_luong_tat_ca_${
+    removeVietnameseTones(monthYear.replace("/", "-")) || "thang"
+  }.pdf`;
+  doc.save(fileName);
 };

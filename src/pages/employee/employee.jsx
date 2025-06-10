@@ -53,14 +53,11 @@ export default function NhanVien() {
     // Load saved data from localStorage
     useEffect(() => {
         const savedSearchHistory = localStorage.getItem('employeeSearchHistory');
-        const savedFiltersData = localStorage.getItem('employeeSavedFilters');
 
         if (savedSearchHistory) {
             setSearchHistory(JSON.parse(savedSearchHistory));
         }
-        if (savedFiltersData) {
-            setSavedFilters(JSON.parse(savedFiltersData));
-        }
+      
     }, []);
 
     // Transform data with filtering and searching

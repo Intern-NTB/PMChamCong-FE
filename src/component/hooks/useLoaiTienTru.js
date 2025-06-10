@@ -18,7 +18,7 @@ export const useLoaiTienTru = () => {
     try {
       const res = await getAllLoaiTienTruServices();
       setDanhSachLoaiTienTru(res.data);
-    } catch (error) {
+    } catch  {
       setDanhSachLoaiTienTru([]);
     } finally {
       setLoadingLoaiTienTru(false);
@@ -30,7 +30,7 @@ export const useLoaiTienTru = () => {
     try {
       await createLoaiTienTruServices(duLieuLoaiTienTru);
       setIsCreatedLoaiTienTru(true);
-    } catch (error) {
+    } catch  {
       setIsCreatedLoaiTienTru(false);
     } finally {
       setLoadingLoaiTienTru(false);
@@ -42,7 +42,7 @@ export const useLoaiTienTru = () => {
     try {
       await updateLoaiTienTruServices(duLieuLoaiTienTru);
       setIsUpdatedLoaiTienTru(true);
-    } catch (error) {
+    } catch  {
       setIsUpdatedLoaiTienTru(false);
     } finally {
       setLoadingLoaiTienTru(false);
@@ -54,7 +54,7 @@ export const useLoaiTienTru = () => {
     try {
       await deleteLoaiTienTruServices(maLoaiTienTru);
       setIsDeletedLoaiTienTru(true);
-    } catch (error) {
+    } catch  {
       setIsDeletedLoaiTienTru(false);
     } finally {
       setLoadingLoaiTienTru(false);

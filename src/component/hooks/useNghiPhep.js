@@ -14,7 +14,7 @@ export const useNghiPhep = () => {
         try {
             const res = await getAllNghiPhepServices()
             setDanhSachNghiPhep(res.data)
-        } catch (error) {
+        } catch  {
             setDanhSachNghiPhep([])
         } finally {
             setLoadingNghiPhep(false)
@@ -26,7 +26,7 @@ export const useNghiPhep = () => {
         try {
             await updateNghiPhepServices(duLieuNghiPhep)
             setIsUpdatedNghiPhep(true)
-        } catch (error) {
+        } catch  {
             setIsUpdatedNghiPhep(false)
         } finally {
             setLoadingNghiPhep(false)
@@ -39,7 +39,7 @@ export const useNghiPhep = () => {
         try {
             await createNghiPhepServices(duLieuNghiPhep)
             setIsCreatedNghiPhep(true)
-        } catch (error) {
+        } catch  {
             setIsCreatedNghiPhep(true)
         } finally {
             setLoadingNghiPhep(false)
@@ -52,7 +52,7 @@ export const useNghiPhep = () => {
         try {
             await deleteNghiPhepServices(maNghiPhep)
             setIsDeletedNghiPhep(true)
-        } catch (error) {
+        } catch  {
             setIsDeletedNghiPhep(false)
         } finally {
             setLoadingNghiPhep(false)

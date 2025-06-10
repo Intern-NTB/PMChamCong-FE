@@ -30,7 +30,7 @@ export const useLoaiTienThuong = () => {
         try {
             await createLoaiTienThuongServices(duLieuLoaiTienThuong);
             setIsCreatedLoaiTienThuong(true);
-        } catch (error) {
+        } catch  {
             setIsCreatedLoaiTienThuong(false);
         } finally {
             setLoadingLoaiTienThuong(false);
@@ -42,7 +42,7 @@ export const useLoaiTienThuong = () => {
         try {
             await updateLoaiTienThuongServices(duLieuLoaiTienThuong);
             setIsUpdatedLoaiTienThuong(true);
-        } catch (error) {
+        } catch  {
             setIsUpdatedLoaiTienThuong(false);
         } finally {
             setLoadingLoaiTienThuong(false);
@@ -54,7 +54,7 @@ export const useLoaiTienThuong = () => {
         try {
             await deleteLoaiTienThuongServices(maLoaiTienThuong);
             setIsDeletedLoaiTienThuong(true);
-        } catch (error) {
+        } catch  {
             setIsDeletedLoaiTienThuong(false);
         } finally {
             setLoadingLoaiTienThuong(false);

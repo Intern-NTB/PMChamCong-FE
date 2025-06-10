@@ -12,6 +12,9 @@ import {
   Checkbox,
   Modal,
   Form,
+  Dropdown,
+  Menu,
+  ConfigProvider,
 } from "antd";
 import {
   SearchOutlined,
@@ -21,27 +24,34 @@ import {
   CalendarOutlined,
   FileExcelOutlined,
   FilePdfOutlined,
+  DownOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
+import locale from "antd/locale/vi_VN";
 import { useLuong } from "../../component/hooks/useLuong";
 import { useNhanVien } from "../../component/hooks/useNhanVien";
 import { usePhongBan } from "../../component/hooks/usePhongBan";
 import { ReloadContext } from "../../context/reloadContext";
+import { useAppNotification } from "../../component/ui/notification";
+import { useLichSuThuong } from "../../component/hooks/useLichSuTienThuong";
+import { useLichSuTru } from "../../component/hooks/useLichSuTienTru";
+import { useLoaiTienThuong } from "../../component/hooks/useLoaiTienThuong";
+import { useLoaiTienTru } from "../../component/hooks/useLoaiTienTru";
 
 import LuongDetailModal from "./LuongDetailModal";
 import LuongEditModal from "./LuongEditModal";
-import { exportToExcel } from "./exportToExcel";
-// import { exportToExcel  } from "./exportToExcel_version2";
-import { generatePDF } from "./generatePDF";
+import { exportToExcel } from "./exportToExcel_version2";
+import {
+  generateMultipleDetailedPDFs,
+  generateSinglePDFMultiplePages,
+} from "./generatePDF";
 
 import "./luong.css";
-import { Label } from "recharts";
-
 const { Title } = Typography;
 const { Option } = Select;
+dayjs.locale("vi");
 
 export default function Luong() {
-
   const [selectedMonthYear, setSelectedMonthYear] = useState(dayjs());
   const [searchValue, setSearchValue] = useState("");
   const [selectedPhongBan, setSelectedPhongBan] = useState(null);
@@ -65,6 +75,12 @@ export default function Luong() {
     useLuong();
   const { danhSachNhanVien } = useNhanVien();
   const { danhSachPhongBan } = usePhongBan();
+  const { danhSachLichSuThuong } = useLichSuThuong();
+  const { danhSachLichSuTru } = useLichSuTru();
+  const { danhSachLoaiTienTru } = useLoaiTienTru();
+  const { danhSachLoaiTienThuong } = useLoaiTienThuong();
+  const apiNotification = useAppNotification();
+
   const dataSourceLuong = danhSachLuong.map((dsl) => {
     const danhSachNhanVienFind = danhSachNhanVien.find(
       (nv) => nv.maNhanVien === dsl.maNhanVien
@@ -73,12 +89,56 @@ export default function Luong() {
     const danhSachPhongBanFind = danhSachPhongBan.find(
       (pb) => danhSachNhanVienFind?.maPhongBan === pb.maPhongBan
     );
+
+    const danhSachLichSuTruFind = danhSachLichSuTru.filter((lst) => {
+      if (lst.maNhanVien !== dsl.maNhanVien) return false;
+      const ngayTru = dayjs(lst.ngayTao, "DD/MM/YYYY");
+      return (
+        ngayTru.month() + 1 === selectedMonthYear.month() + 1 &&
+        ngayTru.year() === selectedMonthYear.year()
+      );
+    });
+
+    const danhSachLichSuThuongFind = danhSachLichSuThuong.filter((lsth) => {
+      if (lsth.maNhanVien !== dsl.maNhanVien) return false;
+      const ngayThuong = dayjs(lsth.ngayTao, "YYYY-MM-DD");
+      return (
+        ngayThuong.month() + 1 === selectedMonthYear.month() + 1 &&
+        ngayThuong.year() === selectedMonthYear.year()
+      );
+    });
+    console.log(danhSachLichSuThuongFind);
+    const danhSachLichSuTruFinal = danhSachLichSuTruFind.map((tru) => {
+      const loaiTru = danhSachLoaiTienTru.find(
+        (ltt) => ltt.maLoaiTienTru === tru.maLoaiTienTru
+      );
+      return {
+        ...tru,
+        tenLoaiTienTru: loaiTru?.tenLoaiTienTru || "N/A",
+        soTienTru: loaiTru?.soTienTru || 0,
+        donVi: loaiTru?.donVi || "N/A",
+      };
+    });
+
+    const danhSachLichSuThuongFinal = danhSachLichSuThuongFind.map((thuong) => {
+      const loaiThuong = danhSachLoaiTienThuong.find(
+        (ltt) => ltt.maLoaiTienThuong === thuong.maLoaiTienThuong
+      );
+      return {
+        ...thuong,
+        tenLoaiTienThuong: loaiThuong?.tenLoaiTienThuong || "N/A",
+        soTienThuong: loaiThuong?.soTienThuong || 0,
+        donVi: loaiThuong?.donVi || "N/A",
+      };
+    });
     return {
       maNhanVien: dsl.maNhanVien,
       nam: dsl.nam,
       thang: dsl.thang,
       soNgayLe: dsl.soNgayLe,
       soNgayNghi: dsl.soNgayNghi,
+      soNgayNghiCoPhep: dsl.soNgayNghiCoPhep || 0,
+      soNgayNghiTruLuong: dsl.soNgayNghiTruLuong || 0,
       soNgayCong: dsl.soNgayCong,
       congChuanCuaThang: dsl.congChuanCuaThang,
       soGioTangCa: dsl.soGioTangCa,
@@ -91,20 +151,63 @@ export default function Luong() {
       hoTen: danhSachNhanVienFind?.hoTen || "N/A",
       heSoTangCa: danhSachNhanVienFind?.heSoTangCa || 0,
       luongCoBan: danhSachNhanVienFind?.luongCoBan || 0,
-      tenPhongBan: danhSachPhongBanFind?.tenPhongBan || "N/A", // Thêm phòng ban
+      tenPhongBan: danhSachPhongBanFind?.tenPhongBan || "N/A",
+      danhSachLichSuTru: danhSachLichSuTruFinal,
+      danhSachLichSuThuong: danhSachLichSuThuongFinal,
     };
   });
 
   useEffect(() => {
     setReload(() => getAllLuong);
   }, []);
-
+  
+  // Menu cho PDF
+  const menuPdf = (
+    <Menu>
+      <Menu.Item key="1">
+        <Button
+          type="text"
+          onClick={() => {
+            if (selectedRows.length !== 0) {
+              apiNotification.success({ message: "Xuất PDF Thành công" });
+              generateMultipagePDFHandler();
+            } else {
+              apiNotification.warning({
+                message: "Vui lòng chọn ít nhất 1 nhân viên !",
+              });
+            }
+          }}
+        >
+          Xuất lương cho nhân viên
+        </Button>
+      </Menu.Item>
+      <Menu.Item key="2">
+        <Button
+          type="text"
+          onClick={() => {
+            if (selectedRows.length !== 0) {
+              apiNotification.success({ message: "Xuất PDF Thành công" });
+              generateSummaryPDFHandler();
+            } else {
+              apiNotification.warning({
+                message: "Vui lòng chọn ít nhất 1 nhân viên !",
+              });
+            }
+          }}
+        >
+          Xuất báo cáo
+        </Button>
+      </Menu.Item>
+    </Menu>
+  );
   const filteredData = useMemo(() => {
     return dataSourceLuong.filter((item) => {
       // Tìm kiếm theo tên
       const matchesSearch = searchValue
         ? item.hoTen.toLowerCase().includes(searchValue.toLowerCase()) ||
-          item.maNhanVien.toLowerCase().includes(searchValue.toLowerCase())
+          String(item.maNhanVien)
+            .toLowerCase()
+            .includes(searchValue.toLowerCase())
         : true;
 
       // Lọc theo phòng ban
@@ -321,16 +424,31 @@ export default function Luong() {
     );
   };
 
-  const generatePDFHandler = async () => {
-    console.log("--- GENERATE PDF HANDLER INITIATED ---");
-    console.log("Current selectedRows:", selectedRows);
-    console.log("Current filteredData:", filteredData);
-
+  const generateSummaryPDFHandler = async () => {
     const selectedData = filteredData.filter((record) =>
       selectedRows.includes(record.maNhanVien)
     );
+    console.log(selectedData);
     if (selectedData.length > 0) {
-      generatePDF(selectedData, selectedMonthYear.format("MM/YYYY"));
+      generateSinglePDFMultiplePages(
+        selectedData,
+        selectedMonthYear.format("MM/YYYY")
+      );
+    } else {
+      alert("Vui lòng chọn ít nhất một nhân viên để in.");
+    }
+  };
+
+  const generateMultipagePDFHandler = async () => {
+    const selectedData = filteredData.filter((record) =>
+      selectedRows.includes(record.maNhanVien)
+    );
+    console.log(selectedData);
+    if (selectedData.length > 0) {
+      generateMultipleDetailedPDFs(
+        selectedData,
+        selectedMonthYear.format("MM/YYYY")
+      );
     } else {
       alert("Vui lòng chọn ít nhất một nhân viên để in.");
     }
@@ -353,7 +471,7 @@ export default function Luong() {
           thang: Number(dayjs(values.thangNam, "MM/YYYY").format("MM")),
           maNhanVien,
         };
-        await createLuongById(valuesFormated)
+        await createLuongById(valuesFormated);
       });
     } else {
       const valuesFormated = {
@@ -431,15 +549,17 @@ export default function Luong() {
         </Col>
 
         <Col>
-          <DatePicker
-            picker="month"
-            value={selectedMonthYear}
-            onChange={onMonthYearChange}
-            format="MM/YYYY"
-            size="large"
-            className="toolbar-date-picker"
-            placeholder="Chọn tháng/năm"
-          />
+          <ConfigProvider locale={locale}>
+            <DatePicker
+              picker="month"
+              value={selectedMonthYear}
+              onChange={onMonthYearChange}
+              format="MM/YYYY"
+              size="large"
+              className="toolbar-date-picker"
+              placeholder="Chọn tháng/năm"
+            />
+          </ConfigProvider>
         </Col>
 
         <Col flex="auto" />
@@ -483,13 +603,11 @@ export default function Luong() {
         >
           Xuất Excel ({selectedRows.length})
         </Button>
-        <Button
-          onClick={generatePDFHandler}
-          icon={<FilePdfOutlined />}
-          disabled={selectedRows.length === 0}
-        >
-          Xuất PDF ({selectedRows.length})
-        </Button>
+        <Dropdown overlay={menuPdf}>
+          <Button>
+            Xuất PDF <DownOutlined />
+          </Button>
+        </Dropdown>
       </Space>
 
       {/* Modal Tính Lương */}
