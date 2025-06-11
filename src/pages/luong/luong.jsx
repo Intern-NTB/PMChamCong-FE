@@ -159,6 +159,7 @@ export default function Luong() {
 
   useEffect(() => {
     setReload(() => getAllLuong);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
   // Menu cho PDF

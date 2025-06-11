@@ -49,6 +49,7 @@ const Popup = ({
     } else {
       form.resetFields();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const parseDate = (dateString) => {
@@ -91,7 +92,7 @@ const Popup = ({
         values.maUuTien = Number(values.maUuTien) || null;
         values.luongCoBan = Number(values.luongCoBan) || null;
         values.heSoTangCa = Number(values.heSoTangCa) || null;
-        values.cmnd = Number(values.CCCD) || null;
+        values.cmnd = String(values.CCCD) || null;
         values.hoTen = values.hoTen || null;
 
         // Thêm thời gian hiện tại

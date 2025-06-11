@@ -48,6 +48,7 @@ export default function NhanVien() {
         checkScreenSize();
         window.addEventListener('resize', checkScreenSize);
         return () => window.removeEventListener('resize', checkScreenSize);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // Load saved data from localStorage
