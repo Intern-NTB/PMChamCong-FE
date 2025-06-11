@@ -21,10 +21,10 @@ export const useNghiPhep = () => {
         }
     }
 
-    const updateNghiPhep = async (duLieuNghiPhep) => {
+    const updateNghiPhep = async (maNghiPhep,duLieuNghiPhep) => {
         setLoadingNghiPhep(true)
         try {
-            await updateNghiPhepServices(duLieuNghiPhep)
+            await updateNghiPhepServices(maNghiPhep,duLieuNghiPhep)
             setIsUpdatedNghiPhep(true)
         } catch  {
             setIsUpdatedNghiPhep(false)
