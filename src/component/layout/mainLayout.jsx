@@ -145,6 +145,12 @@ const MainLayout = () => {
             type="text"
             size="large"
           />
+          <Button
+          style={{marginLeft:12}}
+            icon={<ReloadOutlined />}
+            onClick={() => reloadFn()}
+            size="large"
+          />
         </Layout.Header>
 
         <Drawer
@@ -250,7 +256,11 @@ const MainLayout = () => {
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <Button icon={<ReloadOutlined />} onClick={() => reloadFn()} size="large"/>
+            <Button
+              icon={<ReloadOutlined />}
+              onClick={() => reloadFn()}
+              size="large"
+            />
             <span style={{ fontSize: 24 }}>
               Chào, <strong>{taiKhoan.tenVaiTro}</strong>
             </span>

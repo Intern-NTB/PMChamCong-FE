@@ -384,6 +384,7 @@ export default function TruComponent() {
       title: "Số tiền quy đổi",
       dataIndex: "quyDoi",
       key: "quyDoi",
+      render: (soTienQuyDoi) => new Intl.NumberFormat('vi-vn').format(soTienQuyDoi),
       sorter: (a, b) => a.quyDoi - b.quyDoi,
     },
     {
