@@ -177,12 +177,15 @@ export default function NgayLeComponent() {
     };
 
     //Kiểm tra lịch nghỉ lễ bị trùng
-    const isOverlapping = (newStart, newEnd, existingList) => {
+    const isOverlapping = (newStart, newEnd, existingList, currentId = null) => {
         const start = new Date(newStart);
         start.setHours(0, 0, 0, 0);
         const end = new Date(newEnd);
         end.setHours(23, 59, 59, 999);
         return existingList.some(item => {
+            if (currentId && item.maNgayLe === currentId) {
+                return false; // bỏ qua chính ngày lễ đang chỉnh sửa
+            }
             const existingStart = new Date(item.ngayBatDau);
             existingStart.setHours(0, 0, 0, 0);
             const existingEnd = new Date(item.ngayKetThuc);
@@ -538,7 +541,8 @@ export default function NgayLeComponent() {
                                             return Promise.reject('Vui lòng chọn thời gian nghỉ lễ!');
                                         }
                                         const [newStart, newEnd] = value;
-                                        if (isOverlapping(newStart, newEnd, danhsachNgayLe)) {
+                                        
+                                        if (isOverlapping(newStart, newEnd, danhsachNgayLe, editingId)) {
                                             return Promise.reject('Khoảng thời gian đã trùng với kỳ nghỉ lễ khác!');
                                         }
                                         return Promise.resolve();
