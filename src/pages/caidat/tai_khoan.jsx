@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Table, Button, Modal, Form, Input, TimePicker, Space, Card, Statistic, Row, Col, Typography, Tag, Popconfirm, message, Divider, Select } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, ClockCircleOutlined, TeamOutlined, SearchOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, ClockCircleOutlined, TeamOutlined, SearchOutlined, EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons';
 import { useTaiKhoan } from '../../component/hooks/useTaiKhoan';
 import { useNhanVien } from '../../component/hooks/useNhanVien'
 import { useAppNotification } from "../../component/ui/notification";
@@ -13,6 +13,7 @@ export default function TaiKhoanComponent() {
     const { danhSachNhanVien, loading, fetchNhanVien } = useNhanVien();
     const [editingId, setEditingId] = useState(null);
     const [isModalVisible, setIsModalVisible] = useState(false);
+    const [visible, setVisible] = useState(false);
     const [form] = Form.useForm();
     const apiNotification = useAppNotification();
     
@@ -32,7 +33,7 @@ export default function TaiKhoanComponent() {
         form.setFieldsValue({
             maNhanVien: data.maNhanVien,
             tenDangNhap: data.tenDangNhap,
-            matKhau: data.matKhau
+            matKhau: ''
         });
         setIsModalVisible(true);
     }, [form]);
@@ -81,6 +82,9 @@ export default function TaiKhoanComponent() {
                     maNhanVien: editingId,
                     ...values
                 };
+                if(!values.matKhau){
+                    updatedData.matKhau = 'Admin@123'
+                }
                 updateTaiKhoan(updatedData)
                 apiNotification.error({
                     message: 'Không thành công!',
@@ -134,7 +138,26 @@ export default function TaiKhoanComponent() {
           dataIndex: 'matKhau',
           key: 'matKhau',
           width: 150,
-          render: (text) => <Text strong>{text}</Text>,
+          render: (text) => {               
+                return (
+                    <span>
+                        <Text strong>
+                            {visible ? text : '••••••••'}
+                        </Text>
+                        {visible ? (
+                            <EyeInvisibleOutlined
+                                style={{ marginLeft: 8, cursor: 'pointer' }}
+                                onClick={() => setVisible(false)}
+                            />
+                        ) : (
+                            <EyeOutlined
+                                style={{ marginLeft: 8, cursor: 'pointer' }}
+                                onClick={() => setVisible(true)}
+                            />
+                        )}
+                    </span>
+                );
+            },
         },
         {
           title: 'Thao Tác',
@@ -283,7 +306,9 @@ export default function TaiKhoanComponent() {
                             name="matKhau"
                             label={<Text strong>Mật khẩu</Text>}
                             rules={[
-                                { required: true, message: 'Vui lòng nhập mật khẩu!' },
+                                ...(!editingId ? [
+                                    { required: true, message: 'Vui lòng nhập mật khẩu!' }
+                                ] : []),
                                 { min: 8, message: 'Mật khẩu phải có ít nhất 8 ký tự!' },
                                 {
                                     pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/,
@@ -292,7 +317,7 @@ export default function TaiKhoanComponent() {
                             ]}
                         >
                             <Input.Password
-                                placeholder="Nhập mật khẩu"
+                                placeholder={editingId ? "Nhập mật khẩu mới, nếu không tự mặc định sẽ là Admin@123" : "Nhập mật khẩu"}
                                 size="large"
                                 style={{ borderRadius: 8 }}
                             />
