@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Button, Modal, Form, Input, TimePicker, Space, Card, Statistic, Row, Col, Typography, Tag, Popconfirm, message, Divider } from 'antd';
+import { Table, Button, Modal, Form, Input, TimePicker, Space, Card, Statistic, Row, Col, Typography, Tag, Popconfirm, Divider } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, ClockCircleOutlined, TeamOutlined, SearchOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useCaLam } from '../../component/hooks/useCaLam';
@@ -11,7 +11,6 @@ const { Search } = Input;
 export default function CaLamComponent  (){
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [searchText, setSearchText] = useState('');
-  const [isMobile, setIsMobile] = useState(false);
   const [form] = Form.useForm();
   const [currentRecord, setCurrentRecord] = useState(null);
   const [previewHours, setPreviewHours] = useState(0);
@@ -118,7 +117,7 @@ export default function CaLamComponent  (){
     try {
       await deleteCaLam(maCa);
       apiNotification.success('Xóa ca làm thành công!');
-    } catch (error) {
+    } catch  {
       apiNotification.error('Đã xảy ra lỗi khi xóa ca làm');
     }
   };

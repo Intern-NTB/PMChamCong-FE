@@ -51,7 +51,7 @@ export const useCaLam = () => {
         try {
             await createCaLamServices(duLieuCaLam)
             await getAllCaLam()
-        } catch (error) {
+        } catch {
             throw error
         } finally {
             setLoadingCaLam(false)
