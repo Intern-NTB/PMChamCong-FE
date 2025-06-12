@@ -16,6 +16,8 @@ import PhongBanComponent from '../pages/caidat/phong_ban.jsx';
 import CaLamComponent from '../pages/caidat/ca_lam.jsx';
 import VaiTroComponent from '../pages/caidat/vai_tro.jsx';
 import TaiKhoanComponent from '../pages/caidat/tai_khoan.jsx';
+// Thêm import cho thành phần Máy chấm công
+import MayChamCong from '../pages/maychamcong/maychamcong.jsx'; 
 
 export const privateRoutes = [
     {
@@ -27,6 +29,8 @@ export const privateRoutes = [
             { path: 'trangchu', element: <TrangChu /> },
             { path: 'nhanvien', element: <NhanVien /> },
             { path: 'chamcong', element: <ChamCong /> },
+            // Thêm tuyến đường cho Máy chấm công tại đây
+            { path: 'maychamcong', element: <MayChamCong /> }, // Đường dẫn: /main-layout/maychamcong
             { path: 'nghiphep', element: <NghiPhep /> },
             { path: 'luong', element: <Luong /> },
             {
