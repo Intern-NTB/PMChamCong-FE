@@ -1,0 +1,78 @@
+
+.pageContainer {
+    padding: 24px;
+    background-color: #f0f2f5; 
+    min-height: 100vh;
+}
+
+.card {
+    margin-bottom: 24px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e8e8e8;
+}
+
+.menuCardTitle {
+    margin-bottom: 0;
+}
+
+.button {
+    font-weight: 500;
+    border-radius: 4px;
+}
+
+.dangerButton {
+    background-color: #ff4d4f; 
+    border-color: #ff4d4f;
+    color: #1e38cb;
+}
+.dangerButton:hover {
+    background-color: #ff7875 !important;
+    border-color: #ff7875 !important;
+}
+.dangerButton:active {
+    background-color: #d9363e !important;
+    border-color: #d9363e !important;
+}
+
+.logContainer {
+    border: 1px solid #d9d9d9;
+    padding: 12px;
+    height: 200px;
+    overflow-y: auto;
+    background: #fff; 
+    border-radius: 4px;
+    margin-top: 16px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.logEntry {
+    margin: 0;
+    font-size: 0.9em;
+    color: #595959;
+    display: flex;
+    align-items: center;
+    padding: 4px 0;
+    border-bottom: 1px dotted #eee; 
+}
+
+.logEntry:last-child {
+    border-bottom: none; 
+}
+
+.logIcon {
+    margin-right: 8px;
+    color: #8c8c8c;
+}
+
+.modalTableTitle {
+    margin-bottom: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+}
+
+.alertInfo {
+    margin-top: 16px;
+    border-radius: 4px;
+}
