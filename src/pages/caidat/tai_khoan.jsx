@@ -13,7 +13,7 @@ export default function TaiKhoanComponent() {
     const { danhSachNhanVien, loading, fetchNhanVien } = useNhanVien();
     const [editingId, setEditingId] = useState(null);
     const [isModalVisible, setIsModalVisible] = useState(false);
-    const [visible, setVisible] = useState(false);
+    const [visiblePasswords, setVisiblePasswords] = useState({});
     const [form] = Form.useForm();
     const apiNotification = useAppNotification();
     
@@ -74,6 +74,13 @@ export default function TaiKhoanComponent() {
         tenNhanViens: nv.hoTen,
     }));
 
+    const togglePasswordVisibility = (maNhanVien) => {
+        setVisiblePasswords(prev => ({
+            ...prev,
+            [maNhanVien]: !prev[maNhanVien],
+        }));
+    };
+
     // Handle form submission
     const onFinish = useCallback(async (values) => {
         try {
@@ -86,9 +93,9 @@ export default function TaiKhoanComponent() {
                     updatedData.matKhau = 'Admin@123'
                 }
                 updateTaiKhoan(updatedData)
-                apiNotification.error({
-                    message: 'Không thành công!',
-                    description: 'Tạm thời chưa thay đổi được!'
+                apiNotification.success({
+                    message: 'Thành công!',
+                    description: 'Cập nhật tài khoản thành công!'
                 });
             } else {
                 await createTaiKhoan(values);
@@ -138,21 +145,22 @@ export default function TaiKhoanComponent() {
           dataIndex: 'matKhau',
           key: 'matKhau',
           width: 150,
-          render: (text) => {               
+          render: (text, record) => {  
+            const isVisible = visiblePasswords[record.maNhanVien];            
                 return (
                     <span>
                         <Text strong>
-                            {visible ? text : '••••••••'}
+                            {isVisible ? text : '••••••••'}
                         </Text>
-                        {visible ? (
+                        {isVisible ? (
                             <EyeInvisibleOutlined
                                 style={{ marginLeft: 8, cursor: 'pointer' }}
-                                onClick={() => setVisible(false)}
+                                onClick={() => togglePasswordVisibility(record.maNhanVien)}
                             />
                         ) : (
                             <EyeOutlined
                                 style={{ marginLeft: 8, cursor: 'pointer' }}
-                                onClick={() => setVisible(true)}
+                                onClick={() => togglePasswordVisibility(record.maNhanVien)}
                             />
                         )}
                     </span>
