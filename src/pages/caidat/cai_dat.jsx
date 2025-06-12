@@ -25,6 +25,7 @@ export default function CaiDat() {
         { key: 'nghi-le', label: 'Nghỉ lễ' },
         { key: 'thuong', label: 'Thưởng' },
         { key: 'phat', label: 'Phạt' },
+        { key: 'tai-khoan', label: 'Tài khoản' },
     ]
 
     // Chọn tab hiện tại từ URL

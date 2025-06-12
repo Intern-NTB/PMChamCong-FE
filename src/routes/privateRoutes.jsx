@@ -15,6 +15,7 @@ import PhatComponent from '../pages/caidat/phat.jsx';
 import PhongBanComponent from '../pages/caidat/phong_ban.jsx';
 import CaLamComponent from '../pages/caidat/ca_lam.jsx';
 import VaiTroComponent from '../pages/caidat/vai_tro.jsx';
+import TaiKhoanComponent from '../pages/caidat/tai_khoan.jsx';
 
 export const privateRoutes = [
     {
@@ -63,6 +64,10 @@ export const privateRoutes = [
                     {
                         path: 'phat',
                         element: <PhatComponent />
+                    },
+                    {
+                        path: 'tai-khoan',
+                        element: <TaiKhoanComponent />
                     }
                 ]
             },
