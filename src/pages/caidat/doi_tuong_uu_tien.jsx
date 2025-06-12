@@ -63,10 +63,11 @@ export default function DoiTuongUuTienComponent() {
   const soThang = thoiGianHieuLuc ? (thoiGianHieuLuc / 30).toFixed(1) : null;
 
   const api = useAppNotification();
-  const { danhSachNhanVien } = useNhanVien();
-  const { danhSachLichSuUuTien } = useLichSuUuTien();
-  const dataSourceLichSuUuTien = danhSachLichSuUuTien.map(  (lsut) =>  {
-    const dataNhanVienFind =  danhSachNhanVien.find(
+  const { danhSachNhanVien, updateNhanVien } = useNhanVien();
+  const { danhSachLichSuUuTien, updateLichSuUuTien, deleteLichSuUuTien } =
+    useLichSuUuTien();
+  const dataSourceLichSuUuTien = danhSachLichSuUuTien.map((lsut) => {
+    const dataNhanVienFind = danhSachNhanVien.find(
       (nv) => nv.maNhanVien === lsut.maNhanVien
     );
     const dataDoiTuongUuTienFilter = danhSachDoiTuongUuTien.find(
@@ -142,32 +143,43 @@ export default function DoiTuongUuTienComponent() {
     handleCancel();
   };
 
-  const onHistoryFinish = (values) => {
+  const onHistoryFinish = async (values) => {
     const formattedValues = {
       ...values,
-      thoiGianHieuLucBatDau: values.thoiGianHieuLucBatDau.format("YYYY-MM-DD"),
-      thoiGianHieuLucKetThuc: values.thoiGianHieuLucKetThuc
-        ? values.thoiGianHieuLucKetThuc.format("YYYY-MM-DD")
+      thoiGianHieuLucBatDau: values.thoiGianHieuLucBatDau
+        ? dayjs(values.thoiGianHieuLucBatDau).format("YYYY-MM-DD")
+        : null,
+      thoiGianHieuLucKetThuc: values.thoiGianHieuLucBatDau
+        ? dayjs(values.thoiGianHieuLucKetThuc).format("YYYY-MM-DD")
         : null,
     };
-
     if (editingHistoryId) {
+      updateLichSuUuTien(
+        editingHistoryId,
+        formattedValues.maNhanVien,
+        formattedValues
+      );
       api.success({
-        message: 'Thành công',
-        description: "Cập nhật lịch sử ưu tiên thành công!"
+        message: "Thành công",
+        description: "Cập nhật lịch sử ưu tiên thành công!",
       });
     } else {
-      const newHistoryItem = {
-        id: Date.now(),
-        ...formattedValues,
-        trangThai: "Đang áp dụng",
-        nguoiPheDuyet: "Admin",
-        ngayTao: new Date().toISOString().split("T")[0],
-      };
-      api.success({
-        message: 'Thành công',
-        description: "Thêm lịch sử ưu tiên thành công!"
-      });
+      try {
+        console.log("formattedValues: ", formattedValues);
+        // Cập nhật vai trò cho nhân viên
+        await updateNhanVien(formattedValues.maNhanVien, {
+          maUuTien: formattedValues.maUuTien,
+        });
+
+        // Nếu có thời gian bắt đầu hiệu lực thì cập nhật bên lịch sử ưu tiên
+        await updateLichSuUuTien(
+          formattedValues.maNhanVien,
+          formattedValues.maUuTien,
+          formattedValues
+        );
+      } catch {
+        api.error({ message: "Lỗi khi thêm ưu tiên cho nhân viên " });
+      }
     }
     handleHistoryCancel();
   };
@@ -204,7 +216,7 @@ export default function DoiTuongUuTienComponent() {
 
   const handleEditHistory = useCallback(
     (record) => {
-      setEditingHistoryId(record.id);
+      setEditingHistoryId(record.maUuTien);
       historyForm.setFieldsValue({
         maNhanVien: record.maNhanVien,
         hoTen: record.hoTen,
@@ -241,8 +253,9 @@ export default function DoiTuongUuTienComponent() {
     setSelectedKeys([]);
   };
 
-  const handleDeleteHistory = async (id) => {
+  const handleDeleteHistory = async (maNhanVien, maUuTien) => {
     try {
+      await deleteLichSuUuTien(maNhanVien, maUuTien);
       api.success({ message: "Xóa lịch sử ưu tiên thành công!" });
     } catch (error) {
       api.error({
@@ -389,7 +402,9 @@ export default function DoiTuongUuTienComponent() {
           <Popconfirm
             title="Xóa lịch sử ưu tiên"
             description="Bạn có chắc chắn muốn xóa bản ghi này?"
-            onConfirm={() => handleDeleteHistory(record.id)}
+            onConfirm={() =>
+              handleDeleteHistory(record.maNhanVien, record.maUuTien)
+            }
             okText="Có"
             cancelText="Không"
           >
@@ -511,11 +526,12 @@ export default function DoiTuongUuTienComponent() {
               >
                 <Space>
                   <Button
+                    width={50}
                     type="primary"
                     icon={<PlusOutlined />}
-                    onClick={handleAddHistory}
+                    onClick={() => handleAddHistory()}
                   >
-                    Thêm lịch sử ưu tiên
+                    Thêm Ưu tiên
                   </Button>
                   {selectedHistoryKeys.length > 0 && (
                     <Button
@@ -754,41 +770,28 @@ export default function DoiTuongUuTienComponent() {
           open={isHistoryModalVisible}
           onCancel={handleHistoryCancel}
           footer={null}
-          width={800}
         >
           <Form form={historyForm} layout="vertical" onFinish={onHistoryFinish}>
             <Row gutter={16}>
               <Col xs={24} sm={12}>
                 <Form.Item
-                  label="Mã nhân viên"
-                  name="maNhanVien"
-                  rules={[
-                    { required: true, message: "Vui lòng nhập mã nhân viên!" },
-                    {
-                      pattern: /^[A-Z]{2}\d{3}$/,
-                      message: "Mã nhân viên phải có định dạng như NV001!",
-                    },
-                  ]}
-                >
-                  <Input
-                    placeholder="Ví dụ: NV001"
-                    style={{ textTransform: "uppercase" }}
-                  />
-                </Form.Item>
-              </Col>
-              <Col xs={24} sm={12}>
-                <Form.Item
                   label="Họ tên nhân viên"
-                  name="hoTen"
+                  name="maNhanVien"
                   rules={[
                     {
                       required: true,
-                      api: "Vui lòng nhập họ tên nhân viên!",
+                      message: "Vui lòng chọn đối tượng ưu tiên!",
                     },
-                    { min: 2, api: "Họ tên phải có ít nhất 2 ký tự!" },
                   ]}
                 >
-                  <Input placeholder="Nhập họ tên đầy đủ" />
+                  <Select
+                    disabled={editingHistoryId ? true : false}
+                    placeholder="Họ tên nhân viên"
+                    options={danhSachNhanVien.map((nv) => ({
+                      value: nv.maNhanVien,
+                      label: `${nv.hoTen} - ${nv.cmnd}`,
+                    }))}
+                  />
                 </Form.Item>
               </Col>
             </Row>
@@ -801,11 +804,15 @@ export default function DoiTuongUuTienComponent() {
                   rules={[
                     {
                       required: true,
-                      api: "Vui lòng chọn đối tượng ưu tiên!",
+                      message: "Vui lòng chọn đối tượng ưu tiên!",
                     },
                   ]}
                 >
-                  <Select placeholder="Chọn đối tượng ưu tiên" showSearch>
+                  <Select
+                    disabled={editingHistoryId ? true : false}
+                    placeholder="Chọn đối tượng ưu tiên"
+                    showSearch
+                  >
                     {danhSachDoiTuongUuTien.map((item) => (
                       <Select.Option key={item.maUuTien} value={item.maUuTien}>
                         {item.tenUuTien}
@@ -820,24 +827,22 @@ export default function DoiTuongUuTienComponent() {
               <Col xs={24} sm={12}>
                 <Form.Item
                   label="Ngày bắt đầu"
-                  name="thoiGianHieuLucBatDau."
+                  name="thoiGianHieuLucBatDau"
                   rules={[
-                    { required: true, api: "Vui lòng chọn ngày bắt đầu!" },
+                    {
+                      required: editingHistoryId ? true : false,
+                      message: "Vui lòng chọn ngày bắt đầu!",
+                    },
                   ]}
                 >
                   <DatePicker
                     style={{ width: "100%" }}
                     format="DD/MM/YYYY"
-                    placeholder="Chọn ngày bắt đầu"
-                  />
-                </Form.Item>
-              </Col>
-              <Col xs={24} sm={12}>
-                <Form.Item label="Ngày kết thúc" name="thoiGianHieuLucKetThuc.">
-                  <DatePicker
-                    style={{ width: "100%" }}
-                    format="DD/MM/YYYY"
-                    placeholder="Chọn ngày kết thúc (không bắt buộc)"
+                    placeholder={
+                      editingHistoryId
+                        ? "Chọn ngày bắt đầu"
+                        : "Mặc định là hôm nay"
+                    }
                   />
                 </Form.Item>
               </Col>

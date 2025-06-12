@@ -24,10 +24,10 @@ export const useLichSuUuTien = () => {
     }
   };
 
-  const updateLichSuUuTien = async (maNhanVien, maUuTien) => {
+  const updateLichSuUuTien = async (maNhanVien, maUuTien,duLieuCapNhat) => {
     setLoadingLichSuUuTien(true);
     try {
-      await updateLichSuUuTienServices(maNhanVien, maUuTien);
+      await updateLichSuUuTienServices(maNhanVien, maUuTien,duLieuCapNhat);
       setIsUpdatedLichSuUuTien(true);
     } catch (error) {
       console.error("Lỗi khi cập nhật lịch sử ưu tiên:", error);

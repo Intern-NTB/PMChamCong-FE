@@ -19,9 +19,9 @@ export const getAllLichSuUuTienServices = async () => {
 // };
 
 
-export const updateLichSuUuTienServices = async (maNhanVien,maUuTien) => {
+export const updateLichSuUuTienServices = async (maNhanVien,maUuTien,duLieuCapNhat) => {
     try {
-        const res = await axiosInstance.put(`/lichsuuutien/${maNhanVien}/${maUuTien}`)
+        const res = await axiosInstance.put(`/lichsuuutien/${maNhanVien}/${maUuTien}`,duLieuCapNhat)
         return res.data
     } catch (error) {
         console.log(error)
