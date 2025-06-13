@@ -5,13 +5,13 @@ import axiosInstance from "../config/axiosInstance";
  * @returns {Promise<NhanVien[]>} Danh sách nhân viên
  */
 export const getAllNhanVienChiTietServices = async () => {
-    try {
-        const response = await axiosInstance.get('/nhanvien/chitiet');
-        return response.data;
-    } catch (error) {
-        console.error('Lỗi khi lấy danh sách nhân viên:', error);
-        throw error;
-    }
+  try {
+    const response = await axiosInstance.get("/nhanvien/chitiet");
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi lấy danh sách nhân viên:", error);
+    throw error;
+  }
 };
 
 /**
@@ -20,13 +20,13 @@ export const getAllNhanVienChiTietServices = async () => {
  * @returns {Promise<NhanVien>} Thông tin nhân viên
  */
 export const getNhanVienById = async (maNhanVien) => {
-    try {
-        const response = await axiosInstance.get(`/nhanvien/${maNhanVien}`);
-        return response.data;
-    } catch (error) {
-        console.error('Lỗi khi lấy thông tin nhân viên:', error);
-        throw error;
-    }
+  try {
+    const response = await axiosInstance.get(`/nhanvien/${maNhanVien}`);
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi lấy thông tin nhân viên:", error);
+    throw error;
+  }
 };
 
 /**
@@ -35,17 +35,17 @@ export const getNhanVienById = async (maNhanVien) => {
  * @returns {Promise<NhanVien>} Nhân viên vừa tạo
  */
 export const createNhanVienServices = async (nhanVienData) => {
-    try {
-        console.log('Data sending to API:', nhanVienData); // Debug log
+  try {
+    console.log("Data sending to API:", nhanVienData); // Debug log
 
-        // Gửi trực tiếp object, không wrap trong {nhanVienData}
-        const response = await axiosInstance.post('/nhanvien', nhanVienData);
-        return response.data;
-    } catch (error) {
-        console.error('Lỗi khi tạo nhân viên:', error);
-        console.error('Error response:', error.response?.data); // Log chi tiết lỗi từ server
-        throw error;
-    }
+    // Gửi trực tiếp object, không wrap trong {nhanVienData}
+    const response = await axiosInstance.post("/nhanvien", nhanVienData);
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi tạo nhân viên:", error);
+    console.error("Error response:", error.response?.data); // Log chi tiết lỗi từ server
+    throw error;
+  }
 };
 
 /**
@@ -55,14 +55,17 @@ export const createNhanVienServices = async (nhanVienData) => {
  * @returns {Promise<NhanVien>} Nhân viên sau khi cập nhật
  */
 export const updateNhanVienService = async (maNhanVien, updateData) => {
-    try {
-        const response = await axiosInstance.put(`/nhanvien/${maNhanVien}`, updateData);
-        return response.data;
-    } catch (error) {
-        console.error('Lỗi khi cập nhật nhân viên:', error);
-        console.error('Lỗi khi cập nhật nhân viên:', error.response?.data);
-        throw error;
-    }
+  try {
+    const response = await axiosInstance.put(
+      `/nhanvien/${maNhanVien}`,
+      updateData
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi cập nhật nhân viên:", error);
+    console.error("Lỗi khi cập nhật nhân viên:", error.response?.data);
+    throw error;
+  }
 };
 
 /**
@@ -71,20 +74,40 @@ export const updateNhanVienService = async (maNhanVien, updateData) => {
  * @returns {Promise<boolean>} Kết quả xóa
  */
 export const deleteNhanVienServices = async (maNhanVien) => {
-    try {
-        await axiosInstance.delete(`/nhanvien/${maNhanVien}`);
-        return true;
-    } catch (error) {
-        console.error('Lỗi khi xóa nhân viên:', error);
-        throw error;
-    }
+  try {
+    await axiosInstance.delete(`/nhanvien/${maNhanVien}`);
+    return true;
+  } catch (error) {
+    console.error("Lỗi khi xóa nhân viên:", error);
+    throw error;
+  }
 };
 
-export const reloadNhanVienServices = async (maNhanVien) => {
-    try {
-        await axiosInstance.get(`/nhanvien/reload`);
-    } catch (error) {
-        console.error('Lỗi khi xóa nhân viên:', error);
-        throw error;
-    }
+export const reloadNhanVienServices = async () => {
+  try {
+    await axiosInstance.get(`/nhanvien/reload`);
+  } catch (error) {
+    console.error("Lỗi khi xóa nhân viên:", error);
+    throw error;
+  }
+};
+
+export const getAllFingerprintsOfNhanVienServices = async () => {
+  try {
+    const res = await axiosInstance.get(`/nhanvien/vantay`);
+    return res.data;
+  } catch (error) {
+    console.error("Lỗi khi xóa nhân viên:", error);
+    throw error;
+  }
+};
+
+export const uploadFingerPrintsServices = async () => {
+  try {
+    const res = await axiosInstance.post(`/device/upload/fingerprints`);
+    return res.data;
+  } catch (error) {
+    console.error("Lỗi khi xóa nhân viên:", error);
+    throw error;
+  }
 };

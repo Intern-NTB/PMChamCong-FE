@@ -1,358 +1,572 @@
-import React, { useState, useEffect } from 'react';
-import { Card, Input, Button, Space, Typography, Alert, Table, Row, Col, message, Modal } from 'antd';
+import React, { useState } from "react";
 import {
-    WifiOutlined,
-    UploadOutlined,
-    DownloadOutlined,
-    DeleteOutlined,
-    LockOutlined,
-    ClockCircleOutlined,
-    WarningOutlined,
-    ReloadOutlined
-} from '@ant-design/icons';
-import './maychamcong.css'; 
-
+  Card,
+  Input,
+  Button,
+  Space,
+  Typography,
+  Alert,
+  Table,
+  Row,
+  Col,
+  Modal,
+  Form,
+  Tag,
+  Spin,
+} from "antd";
+import {
+  WifiOutlined,
+  UploadOutlined,
+  DownloadOutlined,
+  DeleteOutlined,
+  LockOutlined,
+  ClockCircleOutlined,
+  WarningOutlined,
+  ReloadOutlined,
+} from "@ant-design/icons";
+import "./maychamcong.css";
+import { useMayChamCong } from "../../component/hooks/useMayChamCong";
+import { useForm } from "antd/es/form/Form";
+import { useNhanVien } from "../../component/hooks/useNhanVien";
+import { useAppNotification } from "../../component/ui/notification";
+import { ModalDeleteEmployee } from "./modleHandleDeleteNhanVien";
+import { ModalDeleteFingerprints } from "./modleHandleDeleteVanTay";
+import { ModalUploadFingerPrintsToMayChamCong } from "./modleUploadFingerprintsToMayChamCong";
 const { Title, Text } = Typography;
 
 const MayChamCong = () => {
-    const staticDbEmployees = [
-        { maNhanVien: 101, hoTen: 'Nguyễn Văn A', trangThai: 'Đang làm việc', key: 101 },
-        { maNhanVien: 102, hoTen: 'Trần Thị B', trangThai: 'Đang làm việc', key: 102 },
-        { maNhanVien: 103, hoTen: 'Lê Văn C', trangThai: 'Nghỉ việc', key: 103 },
-        { maNhanVien: 104, hoTen: 'Phạm Thị D', trangThai: 'Đang làm việc', key: 104 },
-        { maNhanVien: 105, hoTen: 'Đinh Công E', trangThai: 'Đang làm việc', key: 105 },
-        { maNhanVien: 106, hoTen: 'Vũ Thị F', trangThai: 'Đang làm việc', key: 106 },
-    ];
+  const [connectionStatus, setConnectionStatus] = useState("Chưa kết nối");
+  const [progress, setProgress] = useState(0);
 
-    const staticDeviceEmployees = [
-        { maNhanVien: 101, hoTen: 'Nguyễn Văn A', trangThai: 'Đã có trên máy', key: 101 },
-        { maNhanVien: 105, hoTen: 'Đinh Công E', trangThai: 'Đã có trên máy', key: 105 },
-        { maNhanVien: 201, hoTen: 'Zang Xiao', trangThai: 'Mới trên máy', key: 201 },
-    ];
-
-    const [ipAddress, setIpAddress] = useState('192.168.1.201');
-    const [port, setPort] = useState('4370');
-    const [isConnected, setIsConnected] = useState(false);
-    const [connectionStatus, setConnectionStatus] = useState('Chưa kết nối');
-    const [isConnecting, setIsConnecting] = useState(false);
-
-    const [logs, setLogs] = useState([]);
-    const [isFunctionEnabled, setIsFunctionEnabled] = useState(false);
-    const [showEmployeeModal, setShowEmployeeModal] = useState(false);
-
-    const [dbEmployees, setDbEmployees] = useState([]);
-    const [deviceEmployees, setDeviceEmployees] = useState([]);
-    const [selectedDbEmployees, setSelectedDbEmployees] = useState([]);
-
-    useEffect(() => {
-        setDbEmployees(staticDbEmployees);
-        setDeviceEmployees(staticDeviceEmployees);
-    }, []);
-
-    const handleConnect = async () => {
-        setLogs(prev => [...prev, `Đang cố gắng kết nối đến ${ipAddress}:${port}...`]);
-        setConnectionStatus('Đang kết nối...');
-        setIsConnecting(true);
-        setIsConnected(false);
-        setIsFunctionEnabled(false);
-
-        await new Promise(resolve => setTimeout(resolve, 2000));
-
-        setIsConnected(true);
-        setIsFunctionEnabled(true);
-        setConnectionStatus('Đã kết nối thành công');
-        setLogs(prev => [...prev, 'Kết nối thành công!']);
-        message.success('Kết nối máy chấm công thành công!');
-
-        setIsConnecting(false);
+  const [form] = useForm();
+  const apiNotification = useAppNotification();
+  const [logs, setLogs] = useState([]);
+  const [isFunctionEnabled, setIsFunctionEnabled] = useState(false);
+  const [
+    isDeleteTingModalNhanVienMayChamCong,
+    setIsDeleteTingModalNhanVienMayChamCong,
+  ] = useState(false);
+  const [isDeleteTingModalVanTay, setIsDeleteTingModalVanTay] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [showEmployeeModal, setShowEmployeeModal] = useState(false);
+  const [isVisibleModalDeleteEmployee, setIsVisibleModalDeleteEmployee] =
+    useState(false);
+  const [isVisibleModalDeleteVanTay, setIsVisibleModalDeleteVanTay] =
+    useState(false);
+  const [isVisibleModalUploadVanTay, setIsVisibleModalUploadVanTay] =
+    useState(false);
+  const [selectedDbEmployees, setSelectedDbEmployees] = useState([]);
+  const {
+    danhSachNhanVienMayChamCong,
+    isLoadingMayChamCong,
+    isConnected,
+    checkConnection,
+    getAllNhanVienMayChamCong,
+    createNhanVienMayChamCong,
+    deleteNhanVienMayChamCong,
+    deleteFingerprintDBAndMayChamCong,
+    syncFingerprintsToDB,
+    uploadFingerprintsToMayChamCong,
+  } = useMayChamCong();
+  const {
+    danhSachNhanVien,
+    danhSachVanTayNhanVien,
+    getAllFingerprintsOfNhanVien,
+  } = useNhanVien();
+  const dataSourceNhanVien = danhSachNhanVien.map((nv) => {
+    return {
+      maNhanVien: nv.maNhanVien,
+      hoTen: nv.hoTen,
+      trangThai: nv.trangThai,
     };
+  });
+
+  const dataSourceDanhSachVanTayNhanVien = danhSachVanTayNhanVien.map(
+    (dsvt) => {
+      const dataSourceNhanVienFilter = danhSachNhanVien.find(
+        (nv) => nv.maNhanVien === dsvt.maNhanVien
+      );
+      return {
+        maNhanVien: dsvt.maNhanVien,
+        hoTen: dataSourceNhanVienFilter?.hoTen || "N/A",
+        viTriNgonTay: dsvt.viTriNgonTay,
+      };
+    }
+  );
+  const dataSourceNhanVienMayChamCong = danhSachNhanVienMayChamCong.map(
+    (nv) => {
+      return {
+        maNhanVien: nv.employeeId,
+        hoTen: nv.name,
+        dacQuyen: nv.privilege,
+        kichHoat: nv.enable,
+      };
+    }
+  );
+
+  const handleOkModalUploadNhanVien = async (selectedRows) => {
+    setLogs((prev) => [...prev, "Bắt đầu cập nhật vân tay lên  máy chấm công"]);
+    setProgress(0);
 
 
-    const fetchDeviceEmployees = async () => {
-        setLogs(prev => [...prev, 'Đang tải danh sách nhân viên từ máy chấm công (dữ liệu tĩnh)...']);
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        setDeviceEmployees(staticDeviceEmployees);
-        setLogs(prev => [...prev, 'Đã tải xong danh sách nhân viên từ máy chấm công.']);
-        message.success('Tải danh sách nhân viên từ máy thành công!');
-    };
+    await uploadFingerprintsToMayChamCong(selectedRows);
 
-    const handleUploadEmployees = async () => {
-        if (selectedDbEmployees.length === 0) {
-            message.warning('Vui lòng chọn nhân viên từ bảng trong DB để gửi lên máy.');
-            return;
-        }
+    setIsVisibleModalUploadVanTay(false);
+  };
+  const handleReloadNhanVienMayChamCong = async () => {
+    try {
+      setLogs((prev) => [...prev, "Đang tải lại dữ liệu nhân viên  !"]);
+      const isReloadedGetAllNhanVienMayChamCong =
+        await getAllNhanVienMayChamCong();
+      if (isReloadedGetAllNhanVienMayChamCong) {
+        setLogs((prev) => [...prev, "Tải lại dữ liêu nhân viên Thành công !"]);
+      }
+    } catch {
+      setLogs((prev) => [...prev, "Tải lại dữ liêu nhân viên Thất bại !"]);
+    }
+  };
+  const handleConnect = async () => {
+    const values = await form.validateFields();
+    const { ipAddress, port } = values;
+    console.log("Connect Đến Máy chấm Công .....");
 
-        setLogs(prev => [...prev, `Đang gửi ${selectedDbEmployees.length} nhân viên lên máy chấm công (giả lập)...`]);
-        await new Promise(resolve => setTimeout(resolve, 2000));
+    // Cập nhật UI trước khi kết nối
+    setConnectionStatus("Đang kết nối...");
+    setIsFunctionEnabled(false);
+    setLogs((prev) => [
+      ...prev,
+      `Đang cố gắng kết nối đến ${ipAddress}:${port}...`,
+    ]);
 
-        const newDeviceEmployees = [...deviceEmployees];
-        selectedDbEmployees.forEach(emp => {
-            if (!newDeviceEmployees.some(devEmp => devEmp.maNhanVien === emp.maNhanVien)) {
-                newDeviceEmployees.push({ ...emp, trangThai: 'Đã có trên máy' });
-            }
-        });
-        setDeviceEmployees(newDeviceEmployees);
+    // Đợi kết quả từ checkConnection
+    const isSuccess = await checkConnection(ipAddress, port);
 
+    if (isSuccess) {
+      console.log("Connect thành công");
+      setIsFunctionEnabled(true);
+      setConnectionStatus("Đã kết nối thành công");
+      setLogs((prev) => [...prev, "Kết nối thành công!"]);
+      setLogs((prev) => [...prev, "Đang lấy dữ liệu nhân viên !"]);
+      const isGetDataNhanVienMCCSuccess = await getAllNhanVienMayChamCong();
+      if (isGetDataNhanVienMCCSuccess) {
+        setLogs((prev) => [...prev, " lấy dữ liệu nhân viên thành công !"]);
+      } else {
+        setLogs((prev) => [...prev, " lấy dữ liệu nhân viên Thất bại !"]);
+      }
+    } else {
+      console.log("Connect thất bại");
+      setIsFunctionEnabled(false);
+      setConnectionStatus("Kết nối thất bại");
+      setLogs((prev) => [...prev, "Kết nối thất bại!"]);
+    }
+  };
+  const handeCancelModelDeleteVanTay = () => {
+    setIsVisibleModalDeleteVanTay(false);
+  };
 
-        setLogs(prev => [...prev, `Đã gửi ${selectedDbEmployees.length} nhân viên thành công lên máy chấm công.`]);
-        message.success('Gửi nhân viên lên máy chấm công thành công!');
-        setShowEmployeeModal(false);
-        setSelectedDbEmployees([]);
-    };
+  const handleUpload = async (dataEmployees) => {
+    try {
+      const isCreatedNhanVienMayChamCong = await createNhanVienMayChamCong(
+        dataEmployees
+      );
+      if (isCreatedNhanVienMayChamCong) {
+        setLogs((prev) => [
+          ...prev,
+          `Đã gửi  nhân viên  thành công lên máy chấm công.`,
+        ]);
+      } else {
+        setLogs((prev) => [
+          ...prev,
+          `Gửi nhân viên không thành công lên máy chấm công.`,
+        ]);
+      }
+    } catch (error) {
+      setLogs((prev) => [
+        ...prev,
+        `Lỗi trong quá trình gửi  nhân viên lên máy chấm công : ${error}`,
+      ]);
+    }
+  };
 
-    const handleUploadFingerprints = async () => {
-        setLogs(prev => [...prev, 'Đang gửi dữ liệu vân tay từ DB lên máy chấm công (giả lập)...']);
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        setLogs(prev => [...prev, 'Dữ liệu vân tay đã được gửi thành công lên máy chấm công.']);
-        message.success('Gửi vân tay lên máy chấm công thành công!');
-    };
+  const handleUploadEmployees = async () => {
+    handleUpload(selectedDbEmployees);
+    setShowEmployeeModal(false);
+    setSelectedDbEmployees([]);
+  };
 
-    const handleDownloadAttendance = async () => {
-        setLogs(prev => [...prev, 'Đang tải dữ liệu chấm công từ máy chấm công về DB (giả lập)...']);
-        await new Promise(resolve => setTimeout(resolve, 4000));
-        setLogs(prev => [...prev, 'Dữ liệu chấm công đã được tải và lưu thành công vào DB.']);
-        message.success('Tải dữ liệu chấm công thành công!');
-    };
+  const handleUploadFingerprints = async () => {
+    setIsVisibleModalUploadVanTay(true);
+  };
 
-    const handleDownloadFingerprints = async () => {
-        setLogs(prev => [...prev, 'Đang tải dữ liệu vân tay từ máy chấm công về DB (giả lập)...']);
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        setLogs(prev => [...prev, 'Dữ liệu vân tay đã được tải và lưu thành công vào DB.']);
-        message.success('Tải dữ liệu vân tay về DB thành công!');
-    };
+  const handleOkModalDeleteVanTay = async (selectedRows) => {
+    setIsDeleteTingModalVanTay(true);
+    setLogs((prev) => [...prev, "Bắt đầu xoá Vân tay trên máy chấm công"]);
+    setProgress(0);
 
-    const handleDeleteEmployee = async () => {
-        const confirmDelete = await Modal.confirm({
-            title: 'Xác nhận xóa nhân viên trên máy?',
-            icon: <WarningOutlined />,
-            content: 'Bạn có chắc chắn muốn xóa nhân viên khỏi máy chấm công? Thao tác này không thể hoàn tác.',
-            okText: 'Xóa',
-            cancelText: 'Hủy',
-            okType: 'danger',
-        });
+    const total = selectedRows.length;
+    let completed = 0;
 
-        if (confirmDelete) {
-            setLogs(prev => [...prev, 'Đang xóa nhân viên trên máy chấm công (giả lập)...']);
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            if (deviceEmployees.length > 0) {
-                const updatedDeviceEmployees = deviceEmployees.slice(1);
-                setDeviceEmployees(updatedDeviceEmployees);
-                setLogs(prev => [...prev, 'Nhân viên đã được xóa thành công khỏi máy chấm công.']);
-                message.success('Xóa nhân viên trên máy chấm công thành công!');
-            } else {
-                setLogs(prev => [...prev, 'Không có nhân viên trên máy để xóa.']);
-                message.info('Không có nhân viên trên máy để xóa.');
-            }
-        }
-    };
-
-    const handleDeleteFingerprints = async () => {
-        const confirmDelete = await Modal.confirm({
-            title: 'Xác nhận xóa vân tay trên máy và DB?',
-            icon: <WarningOutlined />,
-            content: 'Bạn có chắc chắn muốn xóa dữ liệu vân tay trên cả máy chấm công và trong DB? Thao tác này không thể hoàn tác.',
-            okText: 'Xóa',
-            cancelText: 'Hủy',
-            okType: 'danger',
-        });
-
-        if (confirmDelete) {
-            setLogs(prev => [...prev, 'Đang xóa dữ liệu vân tay trên máy chấm công và DB (giả lập)...']);
-            await new Promise(resolve => setTimeout(resolve, 3000));
-            setLogs(prev => [...prev, 'Dữ liệu vân tay đã được xóa thành công trên máy chấm công và DB.']);
-            message.success('Xóa vân tay trên máy và DB thành công!');
-        }
-    };
-
-    const employeeColumns = [
-        { title: 'Mã Nhân viên', dataIndex: 'maNhanVien', key: 'maNhanVien', width: 120 },
-        { title: 'Họ Tên', dataIndex: 'hoTen', key: 'hoTen' },
-        { title: 'Trạng thái', dataIndex: 'trangThai', key: 'trangThai', width: 150 },
-    ];
-
-    const rowSelection = {
-        selectedRowKeys: selectedDbEmployees.map(emp => emp.key),
-        onChange: (selectedRowKeys, selectedRows) => {
-            setSelectedDbEmployees(selectedRows);
-        },
-        getCheckboxProps: (record) => ({
-            disabled: record.trangThai === 'Nghỉ việc',
-        }),
-    };
-
-    return (
-        <div className="pageContainer">
-            <Card title="Cấu hình Kết nối Máy Chấm Công" className="card">
-                <Space direction="vertical" style={{ width: '100%' }}>
-                    <Input
-                        addonBefore="Địa chỉ IP"
-                        value={ipAddress}
-                        onChange={(e) => setIpAddress(e.target.value)}
-                        placeholder="VD: 192.168.1.100"
-                        disabled={isConnecting}
-                    />
-                    <Input
-                        addonBefore="Port"
-                        value={port}
-                        onChange={(e) => setPort(e.target.value)}
-                        placeholder="VD: 4370"
-                        disabled={isConnecting}
-                    />
-                    <Button
-                        type="primary"
-                        icon={<WifiOutlined />}
-                        onClick={handleConnect}
-                        loading={isConnecting}
-                        block
-                        className="button"
-                    >
-                        {isConnecting ? 'Đang kết nối...' : 'Kết nối'}
-                    </Button>
-                    <Alert
-                        message={`Trạng thái: ${connectionStatus}`}
-                        type={isConnected ? 'success' : isConnecting ? 'info' : 'error'}
-                        showIcon
-                    />
-                </Space>
-            </Card>
-
-            <Card title={<Title level={3} className="menuCardTitle">Chức năng Quản lý Máy Chấm Công</Title>} className="card">
-                <Space size="middle" wrap style={{ marginBottom: 16 }}>
-                    <Button
-                        icon={<UploadOutlined />}
-                        onClick={() => {
-                            setShowEmployeeModal(true);
-                            fetchDeviceEmployees();
-                        }}
-                        disabled={!isFunctionEnabled}
-                        className="button"
-                    >
-                        Tải Nhân viên lên máy
-                    </Button>
-                    <Button
-                        icon={<LockOutlined />}
-                        onClick={handleUploadFingerprints}
-                        disabled={!isFunctionEnabled}
-                        className="button"
-                    >
-                        Tải Vân tay lên máy
-                    </Button>
-                    <Button
-                        icon={<DownloadOutlined />}
-                        onClick={handleDownloadAttendance}
-                        disabled={!isFunctionEnabled}
-                        className="button"
-                    >
-                        Lưu Dữ liệu Chấm công về DB
-                    </Button>
-                    <Button
-                        icon={<DownloadOutlined />}
-                        onClick={handleDownloadFingerprints}
-                        disabled={!isFunctionEnabled}
-                        className="button"
-                    >
-                        Lưu Vân tay về DB
-                    </Button>
-                    <Button
-                        danger
-                        icon={<DeleteOutlined />}
-                        onClick={handleDeleteEmployee}
-                        disabled={!isFunctionEnabled}
-                        className="button dangerButton"
-                    >
-                        Xóa Nhân viên (trên máy)
-                    </Button>
-                    <Button
-                        danger
-                        icon={<DeleteOutlined />}
-                        onClick={handleDeleteFingerprints}
-                        disabled={!isFunctionEnabled}
-                        className="button dangerButton"
-                    >
-                        Xóa Vân tay (trên máy & DB)
-                    </Button>
-                </Space>
-
-                <Title level={4}>Log Thao tác</Title>
-                <div className="logContainer">
-                    {logs.length === 0 ? (
-                        <Text type="secondary">Chưa có thao tác nào.</Text>
-                    ) : (
-                        logs.map((log, index) => (
-                            <p key={index} className="logEntry">
-                                <ClockCircleOutlined className="logIcon" />
-                                {log}
-                            </p>
-                        ))
-                    )}
-                </div>
-            </Card>
-
-            <Modal
-                title="Tải Nhân viên lên Máy Chấm Công"
-                open={showEmployeeModal}
-                onCancel={() => setShowEmployeeModal(false)}
-                footer={[
-                    <Button key="back" onClick={() => setShowEmployeeModal(false)} className="button">
-                        Hủy
-                    </Button>,
-                    <Button
-                        key="submit"
-                        type="primary"
-                        onClick={handleUploadEmployees}
-                        disabled={selectedDbEmployees.length === 0}
-                        className="button"
-                    >
-                        Gửi Nhân viên đã chọn lên máy ({selectedDbEmployees.length})
-                    </Button>,
-                ]}
-                width={1000}
-            >
-                <Row gutter={16}>
-                    <Col span={12}>
-                        <Title level={5} className="modalTableTitle">Nhân viên trong hệ thống (DB)</Title>
-                        <Table
-                            rowSelection={rowSelection}
-                            columns={employeeColumns}
-                            dataSource={dbEmployees}
-                            pagination={{ pageSize: 5 }}
-                            size="small"
-                            scroll={{ y: 300 }}
-                            locale={{ emptyText: 'Không có dữ liệu nhân viên trong DB.' }}
-                        />
-                    </Col>
-                    <Col span={12}>
-                        <Title level={5} className="modalTableTitle">Nhân viên trên Máy Chấm Công</Title>
-                        <Button
-                            icon={<ReloadOutlined />}
-                            onClick={fetchDeviceEmployees}
-                            className="button"
-                            style={{ marginBottom: 12 }}
-                            size="small"
-                        >
-                            Tải lại từ máy
-                        </Button>
-                        <Table
-                            columns={employeeColumns}
-                            dataSource={deviceEmployees}
-                            pagination={{ pageSize: 5 }}
-                            size="small"
-                            scroll={{ y: 300 }}
-                            locale={{ emptyText: 'Không có dữ liệu nhân viên trên máy.' }}
-                        />
-                    </Col>
-                </Row>
-                {selectedDbEmployees.length > 0 && (
-                    <Alert
-                        message={`Đã chọn ${selectedDbEmployees.length} nhân viên để gửi lên máy.`}
-                        type="info"
-                        showIcon
-                        className="alertInfo"
-                    />
-                )}
-            </Modal>
-        </div>
+    const deletePromises = selectedRows.map((nv) =>
+      deleteFingerprintDBAndMayChamCong(nv.maNhanVien, nv.viTriNgonTay)
+        .then(() => {
+          setLogs((prev) => [...prev, `Xoá Vân tay ${nv.hoTen} thành công`]);
+        })
+        .catch((err) => {
+          setLogs((prev) => [...prev, `Lỗi xoá Vân tay ${nv.hoTen}: ${err}`]);
+        })
+        .finally(() => {
+          completed++;
+          setProgress(Math.round((completed / total) * 100));
+        })
     );
+
+    await Promise.allSettled(deletePromises);
+    setIsVisibleModalDeleteVanTay(false);
+    setIsDeleteTingModalVanTay(false);
+  };
+  const handleDownloadAttendance = async () => {};
+
+  const handleDownloadFingerprints = async () => {
+    try {
+      setIsSyncing(true); // Bắt đầu loading
+      setLogs((prev) => [
+        ...prev,
+        "Đang đồng bộ dữ liệu vân tay từ máy chấm công về DB hệ thống",
+      ]);
+
+      await syncFingerprintsToDB();
+
+      // Gọi lại để lấy dữ liệu vân tay của nhân viên
+      await getAllFingerprintsOfNhanVien();
+      setLogs((prev) => [...prev, "Đồng bộ dữ liệu vân tay hoàn tất"]);
+      setIsSyncing(false); // Kết thúc loading
+    } catch (error) {
+      setLogs((prev) => [...prev, `Lỗi khi đồng bộ dữ liệu vân tay: ${error}`]);
+    }
+  };
+
+  const handleDeleteEmployee = async () => {
+    setIsVisibleModalDeleteEmployee(true);
+  };
+
+  const handleOnOkModal = async (selectedRows) => {
+    setIsDeleteTingModalNhanVienMayChamCong(true);
+    setLogs((prev) => [...prev, "Bắt đầu xoá Nhân viên trên máy chấm công"]);
+    setProgress(0);
+
+    const total = selectedRows.length;
+    let completed = 0;
+
+    const deletePromises = selectedRows.map((nv) =>
+      deleteNhanVienMayChamCong(nv.maNhanVien)
+        .then(() => {
+          setLogs((prev) => [...prev, `Xoá Nhân viên ${nv.hoTen} thành công`]);
+        })
+        .catch((err) => {
+          setLogs((prev) => [...prev, `Lỗi xoá nhân viên ${nv.hoTen}: ${err}`]);
+        })
+        .finally(() => {
+          completed++;
+          setProgress(Math.round((completed / total) * 100));
+        })
+    );
+
+    await Promise.allSettled(deletePromises);
+    await getAllNhanVienMayChamCong();
+    setIsVisibleModalDeleteEmployee(false);
+    setIsDeleteTingModalNhanVienMayChamCong(false);
+  };
+
+  const handleCancelModalDeleteEployeeNhanVien = () => {
+    setIsVisibleModalDeleteEmployee(false);
+  };
+
+  const handleDeleteFingerprints = async () => {
+    setIsVisibleModalDeleteVanTay(true);
+  };
+
+  const NhanVienDBColumns = [
+    {
+      title: "Mã Nhân viên",
+      dataIndex: "maNhanVien",
+      label: "maNhanVien",
+      width: 120,
+    },
+    { title: "Họ Tên", dataIndex: "hoTen", label: "hoTen" },
+    {
+      title: "Trạng thái",
+      dataIndex: "trangThai",
+      label: "trangThai",
+      width: 150,
+    },
+  ];
+  const NhanVienMayChamCongColumns = [
+    {
+      title: "Mã Nhân viên",
+      dataIndex: "maNhanVien",
+      label: "maNhanVien",
+      width: 120,
+    },
+    { title: "Họ Tên", dataIndex: "hoTen", label: "hoTen" },
+    {
+      title: "Trạng thái",
+      dataIndex: "kichHoat",
+      label: "kichHoat",
+      width: 150,
+      render: (number) => {
+        const color = number === 0 ? "red" : "green";
+        return (
+          <Tag color={color}>
+            {number === 0 ? "Chưa kích hoạt" : "Đã kích hoạt"}
+          </Tag>
+        );
+      },
+    },
+  ];
+
+  const rowSelection = {
+    selectedRowKeys: selectedDbEmployees.map((emp) => emp.maNhanVien),
+    onChange: (selectedRowKeys, selectedRows) => {
+      setSelectedDbEmployees(selectedRows);
+    },
+    getCheckboxProps: (record) => ({
+      disabled: dataSourceNhanVienMayChamCong.some(
+        (emp) => emp.maNhanVien === record.maNhanVien
+      ),
+    }),
+  };
+
+  return (
+    <Spin spinning={isSyncing}>
+      <div className="pageContainer">
+        <Card title="Cấu hình Kết nối Máy Chấm Công" className="card">
+          <Space direction="vertical" style={{ width: "100%" }}>
+            <Form form={form} layout="vertical">
+              <Form.Item
+                name="ipAddress"
+                label="Địa chỉ IP"
+                rules={[
+                  { required: true, message: "Vui lòng nhập địa chỉ IP!" },
+                ]}
+              >
+                <Input
+                  placeholder="VD: 192.168.1.100"
+                  disabled={isLoadingMayChamCong}
+                />
+              </Form.Item>
+
+              <Form.Item
+                name="port"
+                label="Port"
+                rules={[{ required: true, message: "Vui lòng nhập port!" }]}
+              >
+                <Input placeholder="VD: 4370" disabled={isLoadingMayChamCong} />
+              </Form.Item>
+            </Form>
+            <Button
+              type="primary"
+              icon={<WifiOutlined />}
+              onClick={handleConnect}
+              loading={isLoadingMayChamCong}
+              block
+              className="button"
+            >
+              {isLoadingMayChamCong ? "Đang kết nối..." : "Kết nối"}
+            </Button>
+            <Alert
+              message={`Trạng thái: ${connectionStatus}`}
+              type={
+                isConnected
+                  ? "success"
+                  : isLoadingMayChamCong
+                  ? "info"
+                  : "error"
+              }
+              showIcon
+            />
+          </Space>
+        </Card>
+        <Card
+          title={
+            <Title level={3} className="menuCardTitle">
+              Chức năng Quản lý Máy Chấm Công
+            </Title>
+          }
+          className="card"
+        >
+          <Space size="middle" wrap style={{ marginBottom: 16 }}>
+            <Button
+              icon={<UploadOutlined />}
+              onClick={() => {
+                setShowEmployeeModal(true);
+              }}
+              disabled={!isFunctionEnabled}
+              className="button"
+            >
+              Tải Nhân viên lên máy
+            </Button>
+            <Button
+              icon={<LockOutlined />}
+              onClick={handleUploadFingerprints}
+              disabled={!isFunctionEnabled}
+              className="button"
+            >
+              Tải Vân tay lên máy
+            </Button>
+            <Button
+              icon={<DownloadOutlined />}
+              onClick={handleDownloadAttendance}
+              disabled={!isFunctionEnabled}
+              className="button"
+            >
+              Lưu Dữ liệu Chấm công về DB
+            </Button>
+            <Button
+              icon={<DownloadOutlined />}
+              onClick={handleDownloadFingerprints}
+              disabled={!isFunctionEnabled}
+              className="button"
+            >
+              Lưu Vân tay về DB
+            </Button>
+            <Button
+              danger
+              icon={<DeleteOutlined />}
+              onClick={handleDeleteEmployee}
+              disabled={!isFunctionEnabled}
+              className="button dangerButton"
+            >
+              Xóa Nhân viên (trên máy)
+            </Button>
+            <Button
+              danger
+              icon={<DeleteOutlined />}
+              onClick={handleDeleteFingerprints}
+              disabled={!isFunctionEnabled}
+              className="button dangerButton"
+            >
+              Xóa Vân tay (trên máy & DB)
+            </Button>
+          </Space>
+
+          <Title level={4}>Log Thao tác</Title>
+          <div className="logContainer">
+            {logs.length === 0 ? (
+              <Text type="secondary">Chưa có thao tác nào.</Text>
+            ) : (
+              logs.map((log, index) => (
+                <p maNhanVien={index} className="logEntry">
+                  <ClockCircleOutlined className="logIcon" />
+                  {log}
+                </p>
+              ))
+            )}
+          </div>
+        </Card>
+        {/**Modal Cập nhật vân tay từ DB lên máy chấm công cho nhân viên */}
+        <ModalUploadFingerPrintsToMayChamCong
+          isVisible={isVisibleModalUploadVanTay}
+          dataSourceNhanVienMayChamCon={dataSourceNhanVienMayChamCong}
+          NhanVienChamCongEmployyes={NhanVienMayChamCongColumns}
+          onCancel={() => setIsVisibleModalUploadVanTay(false)}
+          onOk={handleOkModalUploadNhanVien}
+          apiReload={getAllFingerprintsOfNhanVien}
+        />
+        {/**Modal Xoá nhân viên trên máy chấm công */}
+        <ModalDeleteEmployee
+          isDelete={isDeleteTingModalNhanVienMayChamCong}
+          progress={progress}
+          isVisible={isVisibleModalDeleteEmployee}
+          onOk={handleOnOkModal}
+          onCancel={handleCancelModalDeleteEployeeNhanVien}
+          dataSourceNhanVienMayChamCong={dataSourceNhanVienMayChamCong}
+          employeeColumns={NhanVienMayChamCongColumns}
+        />
+        {/**Modal Xoá vân tay nhân viên */}
+        <ModalDeleteFingerprints
+          isDelete={isDeleteTingModalVanTay}
+          isVisible={isVisibleModalDeleteVanTay}
+          onOk={handleOkModalDeleteVanTay}
+          onCancel={handeCancelModelDeleteVanTay}
+          dataSourceNhanVienVanTay={dataSourceDanhSachVanTayNhanVien}
+          apiReload={getAllFingerprintsOfNhanVien}
+        />
+        <Modal
+          title="Tải Nhân viên lên Máy Chấm Công"
+          open={showEmployeeModal}
+          onCancel={() => setShowEmployeeModal(false)}
+          footer={[
+            <Button
+              maNhanVien="back"
+              onClick={() => setShowEmployeeModal(false)}
+              className="button"
+            >
+              Hủy
+            </Button>,
+            <Button
+              maNhanVien="submit"
+              type="primary"
+              onClick={handleUploadEmployees}
+              disabled={selectedDbEmployees.length === 0}
+              className="button"
+            >
+              Gửi Nhân viên đã chọn lên máy ({selectedDbEmployees.length})
+            </Button>,
+          ]}
+          width={1000}
+        >
+          <Row gutter={16}>
+            <Col span={12}>
+              <Title level={5} className="modalTableTitle">
+                Nhân viên trong hệ thống (DB)
+              </Title>
+              <Table
+                rowKey={"maNhanVien"}
+                rowSelection={rowSelection}
+                columns={NhanVienDBColumns}
+                dataSource={dataSourceNhanVien}
+                pagination={{ pageSize: 5 }}
+                size="small"
+                scroll={{ y: 300 }}
+                locale={{ emptyText: "Không có dữ liệu nhân viên trong DB." }}
+              />
+            </Col>
+            <Col span={12}>
+              <Title level={5} className="modalTableTitle">
+                Nhân viên trên Máy Chấm Công
+              </Title>
+              <Button
+                icon={<ReloadOutlined />}
+                className="button"
+                style={{ marginBottom: 12 }}
+                size="small"
+                onClick={() => handleReloadNhanVienMayChamCong()}
+              >
+                Tải lại từ máy
+              </Button>
+              <Table
+                rowKey={"maNhanVien"}
+                columns={NhanVienMayChamCongColumns}
+                dataSource={dataSourceNhanVienMayChamCong}
+                pagination={{ pageSize: 5 }}
+                size="small"
+                scroll={{ y: 300 }}
+                locale={{ emptyText: "Không có dữ liệu nhân viên trên máy." }}
+              />
+            </Col>
+          </Row>
+          {selectedDbEmployees.length > 0 && (
+            <Alert
+              message={`Đã chọn ${selectedDbEmployees.length} nhân viên để gửi lên máy.`}
+              type="info"
+              showIcon
+              className="alertInfo"
+            />
+          )}
+        </Modal>
+      </div>
+    </Spin>
+  );
 };
 
 export default MayChamCong;

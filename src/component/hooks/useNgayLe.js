@@ -60,9 +60,17 @@ export const useNgayLe = () => {
       setLoadingNgayLe(false);
     }
   };
-
   useEffect(() => {
     getAllNgayLe();
+  }, []);
+  useEffect(() => {
+    if (isCreatedNgayLe || isUpdatedNgayLe || isDeletedNgayLe) {
+      getAllNgayLe();
+    }
+
+    setIsCreatedNgayLe(false);
+    setIsUpdatedNgayLe(false);
+    setIsDeletedNgayLe(false);
   }, [isCreatedNgayLe, isUpdatedNgayLe, isDeletedNgayLe]);
 
   return {

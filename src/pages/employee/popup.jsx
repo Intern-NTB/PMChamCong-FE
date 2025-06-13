@@ -8,6 +8,7 @@ import {
   Row,
   Col,
   Select,
+  InputNumber,
 } from "antd";
 import { useEffect } from "react";
 import { usePhongBan } from "../../component/hooks/usePhongBan";
@@ -49,7 +50,7 @@ const Popup = ({
     } else {
       form.resetFields();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const parseDate = (dateString) => {
@@ -173,7 +174,13 @@ const Popup = ({
         <Row gutter={16}>
           <Col span={12}>
             <Form.Item name="luongCoBan" label="Lương Cơ bản">
-              <Input type="number" />
+              <InputNumber
+                style={{ width: "100%" }}
+                formatter={(value) =>
+                  `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                }
+                parser={(value) => value?.replace(/\$\s?|(,*)/g, "")}
+              />
             </Form.Item>
           </Col>
           <Col span={12}>
@@ -226,7 +233,7 @@ const Popup = ({
               />
             </Form.Item>
             <Form.Item
-              name="CCCD"
+              name="cmnd"
               label="Căn cước công dân"
               rules={[
                 {

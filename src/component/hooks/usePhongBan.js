@@ -26,7 +26,7 @@ export const usePhongBan = () => {  // Bỏ async
             // Lấy lại dữ liệu mới
             await fetchPhongBan()
             setStatus(true)
-        } catch (error) {
+        } catch  {
             setStatus(false)
         } finally {
             setLoading(false)
@@ -40,7 +40,7 @@ export const usePhongBan = () => {  // Bỏ async
             // Lấy lại dữ liệu mới
             await fetchPhongBan()
             setStatus(true)
-        } catch (error) {
+        } catch  {
             setStatus(false)
         } finally {
             setLoading(false)
@@ -54,7 +54,7 @@ export const usePhongBan = () => {  // Bỏ async
             // Lấy lại dữ liệu mới
             await fetchPhongBan()
             setStatus(true)
-        } catch (error) {
+        } catch  {
             setStatus(false)
         } finally {
             setLoading(false)
