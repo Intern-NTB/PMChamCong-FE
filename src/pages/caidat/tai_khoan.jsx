@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Table, Button, Modal, Form, Input, TimePicker, Space, Card, Statistic, Row, Col, Typography, Tag, Popconfirm, message, Divider, Select } from 'antd';
+import { Table, Button, Modal, Form, Input, Space, Card, Row, Col, Typography, Tag, Popconfirm, message, Divider, Select } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, ClockCircleOutlined, TeamOutlined, SearchOutlined, EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons';
 import { useTaiKhoan } from '../../component/hooks/useTaiKhoan';
 import { useNhanVien } from '../../component/hooks/useNhanVien'
@@ -9,8 +9,8 @@ const { Title, Text } = Typography;
 const { Search } = Input;
 
 export default function TaiKhoanComponent() {
-    const { danhsachTaiKhoan, loadingTaiKhoan, getAllTaiKhoan, createTaiKhoan, deleteTaikhoan, updateTaiKhoan } = useTaiKhoan();
-    const { danhSachNhanVien, loading, fetchNhanVien } = useNhanVien();
+    const { danhsachTaiKhoan, loadingTaiKhoan, createTaiKhoan, deleteTaikhoan, updateTaiKhoan } = useTaiKhoan();
+    const { danhSachNhanVien, loading } = useNhanVien();
     const [editingId, setEditingId] = useState(null);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [visiblePasswords, setVisiblePasswords] = useState({});
@@ -45,18 +45,13 @@ export default function TaiKhoanComponent() {
                 message: 'Thành công!',
                 description: 'Xóa tài khoản làm thành công!'
             });
-        } catch (error) {
+        } catch  {
             apiNotification.error({
                 message: 'Lỗi!',
                 description: 'Xóa tài khoản không thành công!'
             });
         }
     };
-    // Load data on component mount
-      useEffect(() => {
-        getAllTaiKhoan();
-        fetchNhanVien();
-      }, []);
 
     const dataSource = Array.isArray(danhsachTaiKhoan) ? danhsachTaiKhoan.map(tk => {
         const nhanVien = danhSachNhanVien.find(nv => nv.maNhanVien === tk.maNhanVien);
@@ -86,7 +81,7 @@ export default function TaiKhoanComponent() {
         try {
             if (editingId) {
                 const updatedData = {
-                    maNhanVien: editingId,
+                    maNhanVien: Number(editingId),
                     ...values
                 };
                 updateTaiKhoan(updatedData)
@@ -109,7 +104,7 @@ export default function TaiKhoanComponent() {
                 description: 'Có lỗi xảy ra, vui lòng thử lại!'
             });
         }
-    }, [editingId, createTaiKhoan, updateTaiKhoan]);
+    }, []);
 
     const columns = [
         {
