@@ -70,8 +70,10 @@ export const syncFingerprintsToDBServices = async () => {
 export const uploadFingerprintsToMayChamCongServices = async (nhanViens) => {
   try {
     const data = {
-      nhanVienIds: nhanViens,
+      nhanVienIds: nhanViens.map(nv => nv.maNhanVien),
     };
+
+    console.log(data);
     await axiosInstance.post(`/device/upload/fingerprints`, data);
   } catch (error) {
     console.log("AXIOS Lỗi xoá vân tay: ", error);

@@ -35,13 +35,14 @@ import { useNhanVien } from "../../component/hooks/useNhanVien";
 import { useChamCong } from "../../component/hooks/useChamCong";
 import { usePhongBan } from "../../component/hooks/usePhongBan";
 import { useDuLieuQuetVanTay } from "../../component/hooks/useQuetVanTay";
-
+import { useTangCa } from "../../component/hooks/useTangCa";
 // ===== Context =====
 import { ReloadContext } from "../../context/reloadContext";
 
 // ===== Component nội bộ =====
 import MyAlert from "../../component/ui/alert";
 import ModalTangCa from "./tangca/modal_tangcang";
+import ModalThemTangCa from "./tangca/modal_them_tang_ca";
 
 // ===== Styles =====
 
@@ -59,6 +60,7 @@ export default function GiaLapChamCong() {
   const { danhSachNhanVien } = useNhanVien();
   const { danhSachPhongBan } = usePhongBan();
   const { setReload } = useContext(ReloadContext);
+  const { createTangCa } = useTangCa();
 
   // State
   const [pageSize, setPageSize] = useState(10);
@@ -78,6 +80,8 @@ export default function GiaLapChamCong() {
     phongBanValue: null,
   });
   const [isModalTangCaVisible, setIsModalTangCaVisible] = useState(false);
+  const [isModalThemTangCaVisible, setIsModalThemTangCaVisible] =
+    useState(false);
   const [filteredData, setFilteredData] = useState([]);
 
   // Component
@@ -145,28 +149,16 @@ export default function GiaLapChamCong() {
     setIsModalTangCaVisible(true);
   };
 
+  // Modal Them Tang Ca
+  const handleShowModalThemTangCa = () => {
+    setIsModalThemTangCaVisible(true);
+  };
+
   const onCancelModalTangCa = () => {
     setIsModalTangCaVisible(false);
     getAllChamCongDetail();
   };
 
-  // Tăng ca
-  const tangCa = useCallback(async () => {
-    if (!selectedDate.selected) {
-      showAlert("error", "Thiếu thông tin", "Vui lòng chọn ngày tăng ca!");
-      return;
-    }
-    if (!selectedPhongBan.selected) {
-      showAlert("error", "Thiếu thông tin", "Vui lòng chọn phòng ban!");
-      return;
-    }
-    try {
-      showAlert("success", "Thành công", "Thêm ngày tăng ca thành công");
-      await getAllChamCongDetail();
-    } catch  {
-      showAlert("error", "Lỗi", "Không thể tăng ca ! Vui lòng thử lại !");
-    }
-  }, [selectedDate, selectedPhongBan, showAlert, getAllChamCongDetail]);
 
   // Thêm bản ghi chấm công thủ công
   const handleAddRecord = useCallback(async () => {
@@ -449,7 +441,7 @@ export default function GiaLapChamCong() {
                   <Button
                     danger
                     icon={<LogoutOutlined />}
-                    onClick={tangCa}
+                    onClick={handleShowModalThemTangCa}
                     size="large"
                     block
                   >
@@ -569,24 +561,7 @@ export default function GiaLapChamCong() {
                   <label style={{}}>Chọn ngày tăng ca:</label>
 
                   <Row gutter={[8, 8]}>
-                    <Col span={12}>
-                      <DatePicker
-                        style={{ width: "100%", marginRight: 12 }}
-                        onChange={handleDateChange}
-                        placeholder="Chọn ngày tăng ca"
-                      />
-                    </Col>
-                    <Col span={12}>
-                      <Select
-                        placeholder="Chọn phòng ban"
-                        onChange={handlePhongBanChange}
-                        style={{ width: "100%" }}
-                        options={danhSachPhongBan.map((pb) => ({
-                          value: pb.maPhongBan,
-                          label: pb.tenPhongBan,
-                        }))}
-                      />
-                    </Col>
+                   
                   </Row>
                 </div>
                 {alert.visible && (
@@ -605,7 +580,7 @@ export default function GiaLapChamCong() {
                     <Button
                       danger
                       icon={<LogoutOutlined />}
-                      onClick={tangCa}
+                      onClick={handleShowModalThemTangCa}
                       size="large"
                       style={{ width: "100%" }}
                     >
@@ -700,6 +675,13 @@ export default function GiaLapChamCong() {
         </Row>
       )}
 
+      {/**Modal Cho thêm tăng ca */}
+      <ModalThemTangCa
+        isVisible={isModalThemTangCaVisible}
+        danhSachPhongBan={danhSachPhongBan}
+        createTangCa={createTangCa}
+        onCancel={() => setIsModalThemTangCaVisible(false)}
+      />
       {/* Modal Cho tăng ca */}
       <ModalTangCa
         isVisible={isModalTangCaVisible}

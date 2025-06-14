@@ -28,7 +28,6 @@ import "./maychamcong.css";
 import { useMayChamCong } from "../../component/hooks/useMayChamCong";
 import { useForm } from "antd/es/form/Form";
 import { useNhanVien } from "../../component/hooks/useNhanVien";
-import { useAppNotification } from "../../component/ui/notification";
 import { ModalDeleteEmployee } from "./modleHandleDeleteNhanVien";
 import { ModalDeleteFingerprints } from "./modleHandleDeleteVanTay";
 import { ModalUploadFingerPrintsToMayChamCong } from "./modleUploadFingerprintsToMayChamCong";
@@ -39,7 +38,6 @@ const MayChamCong = () => {
   const [progress, setProgress] = useState(0);
 
   const [form] = useForm();
-  const apiNotification = useAppNotification();
   const [logs, setLogs] = useState([]);
   const [isFunctionEnabled, setIsFunctionEnabled] = useState(false);
   const [

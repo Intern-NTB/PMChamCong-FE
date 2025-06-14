@@ -39,7 +39,7 @@ export default function ModalChinhSuaTangCa({
             // Chuẩn bị dữ liệu gửi lên API
             const payload = {
                 ...record,
-                ngayChamCongTangCa: values.ngayChamCongTangCa.format("YYYY-DD-MM"),
+                ngayChamCongTangCa: values.ngayChamCongTangCa.format("YYYY-MM-DD"),
                 gioTangCaBatDau: values.gioTangCaBatDau.format("HH:mm:ss"),
                 gioTangCaKetThuc: values.gioTangCaKetThuc.format("HH:mm:ss"),
                 maPhongBan: values.maPhongBan

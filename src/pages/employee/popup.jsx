@@ -233,7 +233,7 @@ const Popup = ({
               />
             </Form.Item>
             <Form.Item
-              name="cmnd"
+              name="CCCD"
               label="Căn cước công dân"
               rules={[
                 {
