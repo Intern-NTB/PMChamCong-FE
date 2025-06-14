@@ -33,7 +33,7 @@ export default function TaiKhoanComponent() {
         form.setFieldsValue({
             maNhanVien: data.maNhanVien,
             tenDangNhap: data.tenDangNhap,
-            matKhau: ''
+            matKhau: data.matKhau
         });
         setIsModalVisible(true);
     }, [form]);
@@ -89,9 +89,6 @@ export default function TaiKhoanComponent() {
                     maNhanVien: editingId,
                     ...values
                 };
-                if(!values.matKhau){
-                    updatedData.matKhau = 'Admin@123'
-                }
                 updateTaiKhoan(updatedData)
                 apiNotification.success({
                     message: 'Thành công!',
@@ -325,7 +322,7 @@ export default function TaiKhoanComponent() {
                             ]}
                         >
                             <Input.Password
-                                placeholder={editingId ? "Nhập mật khẩu mới, nếu không tự mặc định sẽ là Admin@123" : "Nhập mật khẩu"}
+                                placeholder={editingId ? "Nhập mật khẩu mới (nếu muốn đổi)" : "Nhập mật khẩu"}
                                 size="large"
                                 style={{ borderRadius: 8 }}
                             />
