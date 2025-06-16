@@ -30,6 +30,7 @@
 .search-filters .ant-picker {
   font-size: 16px;
   border-radius: 8px;
+  width: 100%; 
 }
 
 .search-filters .ant-btn-primary {
@@ -63,6 +64,20 @@
   text-align: center;
   padding: 12px 8px;
 }
+
+.ant-table-tbody > tr:nth-child(odd) {
+  background-color: #f8f8f8; 
+}
+
+.ant-table-tbody > tr:nth-child(even) {
+  background-color: #ffffff; 
+}
+
+.ant-table-tbody > tr:nth-child(odd):hover > td,
+.ant-table-tbody > tr:nth-child(even):hover > td {
+  background-color: #e6f7ff !important; 
+}
+
 
 .ant-table-pagination {
   margin-top: 20px;
@@ -136,4 +151,7 @@
 
 .ant-typography {
   color: #333;
+}
+.custom-header-table .ant-table-thead > tr > th {
+  font-size: 14px;
 }

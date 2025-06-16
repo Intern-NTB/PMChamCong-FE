@@ -14,7 +14,6 @@ export default function NhanVien() {
     const { danhSachNhanVien, loading, fetchNhanVien, addNhanVien, deleteNhanVien, updateNhanVien } = useNhanVien();
     const { setReload } = useContext(ReloadContext);
 
-    // States
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [isModalCreateNhanVienVisible, setIsModalCreateNhanVienVisible] = useState(false);
     const [currentRecord, setCurrentRecord] = useState(null);
@@ -28,7 +27,6 @@ export default function NhanVien() {
         description: ''
     });
 
-    // Search and filter states
     const [globalSearchValue, setGlobalSearchValue] = useState('');
     const [searchHistory, setSearchHistory] = useState([]);
     const [currentFilter, setCurrentFilter] = useState({
@@ -40,7 +38,6 @@ export default function NhanVien() {
 
     useEffect(() => {
         setReload(() => fetchNhanVien);
-        // Check screen size
         const checkScreenSize = () => {
             setIsMobile(window.innerWidth < 880);
         };
@@ -48,20 +45,16 @@ export default function NhanVien() {
         checkScreenSize();
         window.addEventListener('resize', checkScreenSize);
         return () => window.removeEventListener('resize', checkScreenSize);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // Load saved data from localStorage
     useEffect(() => {
         const savedSearchHistory = localStorage.getItem('employeeSearchHistory');
 
         if (savedSearchHistory) {
             setSearchHistory(JSON.parse(savedSearchHistory));
         }
-      
     }, []);
 
-    // Transform data with filtering and searching
     const processedData = useMemo(() => {
         if (!Array.isArray(danhSachNhanVien)) return [];
 
@@ -85,7 +78,6 @@ export default function NhanVien() {
             originalData: nhanVien
         }));
 
-        // Apply filters
         if (currentFilter.phongBan) {
             filtered = filtered.filter(item => item.tenPhongBan === currentFilter.phongBan);
         }
@@ -96,7 +88,6 @@ export default function NhanVien() {
             filtered = filtered.filter(item => item.trangThai === currentFilter.trangThai);
         }
 
-        // Apply global search
         if (globalSearchValue) {
             const searchLower = globalSearchValue.toLowerCase();
             filtered = filtered.filter(item =>
@@ -112,7 +103,6 @@ export default function NhanVien() {
         return filtered;
     }, [danhSachNhanVien, currentFilter, globalSearchValue]);
 
-    // Calculate statistics
     const statistics = useMemo(() => {
         if (!Array.isArray(danhSachNhanVien)) return {};
 
@@ -120,7 +110,6 @@ export default function NhanVien() {
         const active = danhSachNhanVien.filter(nv => nv.trangThai === 'Đang làm' || nv.trangThai === 'Mới đăng ký').length;
         const inactive = total - active;
 
-        // Group by department
         const byDepartment = danhSachNhanVien.reduce((acc, nv) => {
             const dept = nv.tenPhongBan || 'Chưa phân bổ';
             acc[dept] = (acc[dept] || 0) + 1;
@@ -135,7 +124,6 @@ export default function NhanVien() {
         };
     }, [danhSachNhanVien]);
 
-    // Get unique values for filters
     const filterOptions = useMemo(() => {
         if (!Array.isArray(danhSachNhanVien)) return { departments: [], roles: [], statuses: [] };
 
@@ -146,7 +134,6 @@ export default function NhanVien() {
         return { departments, roles, statuses };
     }, [danhSachNhanVien]);
 
-    // Highlight search text
     const highlightText = (text) => {
         if (!highlightedText || !text) return text;
 
@@ -160,7 +147,6 @@ export default function NhanVien() {
         );
     };
 
-    // Desktop columns
     const desktopColumns = [
         {
             title: 'Họ Tên',
@@ -244,7 +230,6 @@ export default function NhanVien() {
         },
     ];
 
-    // Mobile columns
     const mobileColumns = [
         {
             title: 'Thông tin nhân viên',
@@ -337,6 +322,7 @@ export default function NhanVien() {
             await fetchNhanVien();
         } catch (error) {
             console.error("Lỗi khi thêm nhân viên:", error);
+            showAlert('error', 'Lỗi', 'Thêm nhân viên thất bại. Vui lòng thử lại.');
         }
     };
 
@@ -352,6 +338,7 @@ export default function NhanVien() {
             await fetchNhanVien();
         } catch (error) {
             console.error('Lỗi khi xóa nhân viên:', error);
+            showAlert('error', 'Lỗi', 'Xoá nhân viên thất bại. Vui lòng thử lại.');
         }
     };
 
@@ -363,6 +350,7 @@ export default function NhanVien() {
             await fetchNhanVien();
         } catch (error) {
             console.error('Lỗi khi cập nhật:', error);
+            showAlert('error', 'Lỗi', 'Cập nhật nhân viên thất bại. Vui lòng thử lại.');
         }
     };
 
@@ -371,8 +359,10 @@ export default function NhanVien() {
             await Promise.all(selectedRowKeys.map(maNhanVien => deleteNhanVien(maNhanVien)));
             await fetchNhanVien();
             setSelectedRowKeys([]);
+            showAlert('success', 'Thành công', `Đã xoá ${selectedRowKeys.length} nhân viên.`);
         } catch (error) {
             console.error('Lỗi khi xóa nhiều nhân viên:', error);
+            showAlert('error', 'Lỗi', 'Xoá nhiều nhân viên thất bại. Vui lòng thử lại.');
         }
     };
 
@@ -383,7 +373,6 @@ export default function NhanVien() {
         },
     };
 
-    // Mobile Stats Component
     const MobileStats = () => (
         <Row gutter={[8, 8]}>
             <Col span={8}>
@@ -419,7 +408,6 @@ export default function NhanVien() {
         </Row>
     );
 
-    // Mobile Search and Actions Component
     const MobileSearchActions = () => (
         <Card title="Quản lý nhân viên" size="small" extra={<UserOutlined />}>
             <Space direction="vertical" style={{ width: '100%' }} size="middle">
@@ -429,6 +417,7 @@ export default function NhanVien() {
                     onSearch={handleGlobalSearch}
                     onSelect={handleGlobalSearch}
                     size="large"
+                    value={globalSearchValue}
                 >
                     <Input
                         placeholder="Tìm kiếm nhân viên..."
@@ -538,9 +527,10 @@ export default function NhanVien() {
             )}
 
             {isMobile ? (
-                // Mobile Layout
                 <Space direction="vertical" style={{ width: '100%' }} size="middle">
-                    <MobileSearchActions />
+                    <div style={{ position: 'sticky', top: 0, zIndex: 100, background: '#f0f2f5', paddingTop: '12px', paddingBottom: '12px' }}>
+                        <MobileSearchActions />
+                    </div>
                     <MobileStats />
 
                     <Card title="Danh sách nhân viên" size="small">
@@ -563,13 +553,12 @@ export default function NhanVien() {
                             }}
                             size="small"
                             scroll={{ x: 300 }}
+                            sticky={{ offsetHeader: 0 }} 
                         />
                     </Card>
                 </Space>
             ) : (
-                // Desktop Layout
                 <Row gutter={[16, 16]}>
-                    {/* Statistics Header */}
                     <Col span={24}>
                         <Row gutter={[16, 16]}>
                             <Col span={6}>
@@ -617,82 +606,84 @@ export default function NhanVien() {
 
                     {/* Search and Filter */}
                     <Col span={24}>
-                        <Card title="Tìm kiếm và lọc" extra={<FilterOutlined />}>
-                            <Row gutter={[16, 16]} wrap align="middle">
-                                <Col xs={24} sm={12} md={8} lg={6}>
-                                    <AutoComplete
-                                        style={{ width: '100%' }}
-                                        options={searchHistory.map(item => ({ value: item || '' }))}
-                                        onSearch={handleGlobalSearch}
-                                        onSelect={handleGlobalSearch}
-                                    >
-                                        <Input
-                                            placeholder="Tìm kiếm toàn bộ..."
-                                            prefix={<SearchOutlined />}
-                                        />
-                                    </AutoComplete>
-                                </Col>
-                                <Col xs={24} sm={12} md={8} lg={4}>
-                                    <Select
-                                        placeholder="Phòng ban"
-                                        style={{ width: '100%' }}
-                                        allowClear
-                                        value={currentFilter.phongBan}
-                                        onChange={(value) => handleFilterChange('phongBan', value)}
-                                    >
-                                        {filterOptions.departments.map(dept => (
-                                            <Option key={dept} value={dept}>{dept}</Option>
-                                        ))}
-                                    </Select>
-                                </Col>
-                                <Col xs={24} sm={12} md={8} lg={4}>
-                                    <Select
-                                        placeholder="Chức vụ"
-                                        style={{ width: '100%' }}
-                                        allowClear
-                                        value={currentFilter.vaiTro}
-                                        onChange={(value) => handleFilterChange('vaiTro', value)}
-                                    >
-                                        {filterOptions.roles.map(role => (
-                                            <Option key={role} value={role}>{role}</Option>
-                                        ))}
-                                    </Select>
-                                </Col>
-                                <Col xs={24} sm={12} md={8} lg={4}>
-                                    <Select
-                                        placeholder="Trạng thái"
-                                        style={{ width: '100%' }}
-                                        allowClear
-                                        value={currentFilter.trangThai}
-                                        onChange={(value) => handleFilterChange('trangThai', value)}
-                                    >
-                                        {filterOptions.statuses.map(status => (
-                                            <Option key={status} value={status}>{status}</Option>
-                                        ))}
-                                    </Select>
-                                </Col>
-                                <Col xs={24} sm={24} md={24} lg={6}>
-                                    <Space wrap>
-                                        <Button
-                                            type="primary"
-                                            icon={<PlusOutlined />}
-                                            onClick={() => setIsModalCreateNhanVienVisible(true)}
-                                            style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
+                        <div style={{ position: 'sticky', top: 0, zIndex: 100, background: '#f0f2f5', paddingTop: '0px', paddingBottom: '16px' }}> 
+                            <Card title="Tìm kiếm và lọc" extra={<FilterOutlined />}>
+                                <Row gutter={[16, 16]} wrap align="middle">
+                                    <Col xs={24} sm={12} md={8} lg={6}>
+                                        <AutoComplete
+                                            style={{ width: '100%' }}
+                                            options={searchHistory.map(item => ({ value: item || '' }))}
+                                            onSearch={handleGlobalSearch}
+                                            onSelect={handleGlobalSearch}
+                                            value={globalSearchValue} 
                                         >
-                                            Thêm nhân viên
-                                        </Button>
-                                        <Button onClick={clearFilters}>Xóa bộ lọc</Button>
-                                        {selectedRowKeys.length > 0 && (
-                                            <Badge count={selectedRowKeys.length}>
-                                                <Button danger onClick={handleDeleteMultiple}>Xóa nhiều</Button>
-                                            </Badge>
-                                        )}
-                                    </Space>
-                                </Col>
-                            </Row>
-                        </Card>
+                                            <Input
+                                                placeholder="Tìm kiếm toàn bộ..."
+                                                prefix={<SearchOutlined />}
+                                            />
+                                        </AutoComplete>
+                                    </Col>
+                                    <Col xs={24} sm={12} md={8} lg={4}>
+                                        <Select
+                                            placeholder="Phòng ban"
+                                            style={{ width: '100%' }}
+                                            allowClear
+                                            value={currentFilter.phongBan}
+                                            onChange={(value) => handleFilterChange('phongBan', value)}
+                                        >
+                                            {filterOptions.departments.map(dept => (
+                                                <Option key={dept} value={dept}>{dept}</Option>
+                                            ))}
+                                        </Select>
+                                    </Col>
+                                    <Col xs={24} sm={12} md={8} lg={4}>
+                                        <Select
+                                            placeholder="Chức vụ"
+                                            style={{ width: '100%' }}
+                                            allowClear
+                                            value={currentFilter.vaiTro}
+                                            onChange={(value) => handleFilterChange('vaiTro', value)}
+                                        >
+                                            {filterOptions.roles.map(role => (
+                                                <Option key={role} value={role}>{role}</Option>
+                                            ))}
+                                        </Select>
+                                    </Col>
+                                    <Col xs={24} sm={12} md={8} lg={4}>
+                                        <Select
+                                            placeholder="Trạng thái"
+                                            style={{ width: '100%' }}
+                                            allowClear
+                                            value={currentFilter.trangThai}
+                                            onChange={(value) => handleFilterChange('trangThai', value)}
+                                        >
+                                            {filterOptions.statuses.map(status => (
+                                                <Option key={status} value={status}>{status}</Option>
+                                            ))}
+                                        </Select>
+                                    </Col>
+                                    <Col xs={24} sm={24} md={24} lg={6}>
+                                        <Space wrap>
+                                            <Button
+                                                type="primary"
+                                                icon={<PlusOutlined />}
+                                                onClick={() => setIsModalCreateNhanVienVisible(true)}
+                                                style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
+                                            >
+                                                Thêm nhân viên
+                                            </Button>
+                                            <Button onClick={clearFilters}>Xóa bộ lọc</Button>
+                                            {selectedRowKeys.length > 0 && (
+                                                <Badge count={selectedRowKeys.length}>
+                                                    <Button danger onClick={handleDeleteMultiple}>Xóa nhiều</Button>
+                                                </Badge>
+                                            )}
+                                        </Space>
+                                    </Col>
+                                </Row>
+                            </Card>
+                        </div>
                     </Col>
-
 
                     {/* Table */}
                     <Col span={24}>
@@ -715,6 +706,7 @@ export default function NhanVien() {
                                         `${range[0]}-${range[1]} trong ${total} nhân viên`,
                                 }}
                                 scroll={{ x: 1000 }}
+                                sticky={{ offsetHeader: 0 }} 
                             />
                         </Card>
                     </Col>
