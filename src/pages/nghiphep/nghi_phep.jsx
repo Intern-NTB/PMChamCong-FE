@@ -1,11 +1,14 @@
 // ===== REACT & Thư viện ngoài =====
 import React, { useState, useMemo, useEffect, useContext } from "react";
+import { ConfigProvider } from "antd";
 import dayjs from "dayjs";
-import customParseFormat from "dayjs/plugin/customParseFormat"; // Thêm plugin này
-
+import "dayjs/locale/vi";
+import viVN from "antd/locale/vi_VN";
+import customParseFormat from "dayjs/plugin/customParseFormat";
+import isBetween from "dayjs/plugin/isBetween";
 // Thêm plugin để parse custom format
 dayjs.extend(customParseFormat);
-
+dayjs.extend(isBetween);
 // ===== ANT DESIGN =====
 import {
   Card,
@@ -51,21 +54,28 @@ import { NghiPhepPermissions } from "../../config/utils/user_permission";
 
 const { RangePicker } = DatePicker;
 
-// Hàm helper để parse ngày từ backend
+// Hàm helper để parse ngày từ backend - FIX
 const parseDate = (dateString) => {
   if (!dateString) return null;
-  // Nếu là string với format DD/MM/YYYY từ backend
-  if (typeof dateString === "string" && dateString.includes("/")) {
-    return dayjs(dateString, "DD/MM/YYYY");
-  }
-  // Nếu đã là dayjs object hoặc format khác
-  return dayjs(dateString);
-};
 
-const formatDateDisplay = (dateString) => {
-  if (!dateString) return "";
-  const parsed = parseDate(dateString);
-  return parsed.isValid() ? parsed.format("DD/MM/YYYY") : dateString;
+  // Thử parse với nhiều format khác nhau
+  const formats = [
+    "DD/MM/YYYY HH:mm:ss",
+    "DD/MM/YYYY",
+    "YYYY-MM-DD HH:mm:ss",
+    "YYYY-MM-DD",
+  ];
+
+  for (const format of formats) {
+    const parsed = dayjs(dateString, format, true); // strict mode
+    if (parsed.isValid()) {
+      return parsed;
+    }
+  }
+
+  // Fallback - parse thông thường
+  const fallback = dayjs(dateString);
+  return fallback.isValid() ? fallback : null;
 };
 
 export default function NghiPhep() {
@@ -81,6 +91,13 @@ export default function NghiPhep() {
 
   // STATE
   const api = useAppNotification();
+  const [selectedMonth, setSelectedMonth] = useState(null); // FIX: đặt null để không filter theo tháng mặc định
+  const [searchValue, setSearchValue] = useState("");
+  const [dateRange, setDateRange] = useState([null, null]);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [editingRecord, setEditingRecord] = useState(null);
+  const [disableTinhLuong, setDisableTinhLuong] = useState(false);
+  const [isPartialDay, setIsPartialDay] = useState(false);
 
   // CONTEXT
   const { setReload } = useContext(ReloadContext);
@@ -110,11 +127,6 @@ export default function NghiPhep() {
     };
   });
 
-  const [searchValue, setSearchValue] = useState("");
-  const [dateRange, setDateRange] = useState([null, null]);
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [editingRecord, setEditingRecord] = useState(null);
-
   const [form] = Form.useForm();
 
   // hàm thống kê - Fix date parsing
@@ -128,7 +140,7 @@ export default function NghiPhep() {
       const end = parseDate(item.ngayKetThuc);
 
       // Kiểm tra validity trước khi so sánh
-      if (!start.isValid() || !end.isValid()) return false;
+      if (!start || !end || !start.isValid() || !end.isValid()) return false;
 
       return (
         start.isBefore(dateRange[1].endOf("day")) &&
@@ -141,29 +153,80 @@ export default function NghiPhep() {
       tinhPhep: filtered.filter((i) => i.tinhPhep).length,
     };
   }, [dataSourceNghiPhep, dateRange]);
+  // Xử lý khi thay đổi checkbox "Nghỉ giữa ngày"
+  const handlePartialDayChange = (e) => {
+    const checked = e.target.checked;
+    setIsPartialDay(checked);
 
-  // Filter list - Fix date parsing
+    if (!checked) {
+      // Nếu bỏ tick "nghỉ giữa ngày", set về thời gian mặc định
+      const currentValues = form.getFieldsValue();
+      if (currentValues.ngayBatDau) {
+        form.setFieldsValue({
+          ngayBatDau: dayjs(currentValues.ngayBatDau).startOf("day"), // 00:00:00
+        });
+      }
+      if (currentValues.ngayKetThuc) {
+        form.setFieldsValue({
+          ngayKetThuc: dayjs(currentValues.ngayKetThuc).endOf("day"), // 23:59:59
+        });
+      }
+    }
+  };
+  const onMonthChange = (value) => {
+    setSelectedMonth(value);
+    console.log("Chọn tháng:", value ? value.format("MM/YYYY") : "Tất cả");
+  };
+
+  // Filter list - FIX logic lọc
   const filteredList = useMemo(() => {
     return dataSourceNghiPhep.filter((item) => {
       const maNhanVien = item.maNhanVien
         ? String(item.maNhanVien).toLowerCase()
         : "";
-      const matchesSearch = maNhanVien.includes(searchValue.toLowerCase());
+
+      const hoTen = item.hoTen ? String(item.hoTen).toLowerCase() : "";
+
+      const matchesSearch =
+        maNhanVien.includes(searchValue.toLowerCase()) ||
+        hoTen.includes(searchValue.toLowerCase());
+
       if (!matchesSearch) return false;
-      if (!dateRange[0] || !dateRange[1]) return true;
+
+      // Nếu không có ngày bắt đầu/kết thúc => bỏ qua dòng này
+      if (!item.ngayBatDau || !item.ngayKetThuc) return false;
 
       const start = parseDate(item.ngayBatDau);
       const end = parseDate(item.ngayKetThuc);
 
-      // Kiểm tra validity trước khi so sánh
-      if (!start.isValid() || !end.isValid()) return false;
+      if (!start || !end || !start.isValid() || !end.isValid()) return false;
 
-      return (
-        start.isBefore(dateRange[1].endOf("day")) &&
-        end.isAfter(dateRange[0].startOf("day"))
-      );
+      // Lọc theo khoảng ngày nếu có - PRIORITY CAO HỠN
+      if (dateRange?.[0] && dateRange?.[1]) {
+        const isInDateRange =
+          start.isBetween(dateRange[0], dateRange[1], "day", "[]") ||
+          end.isBetween(dateRange[0], dateRange[1], "day", "[]") ||
+          (start.isBefore(dateRange[0]) && end.isAfter(dateRange[1]));
+
+        if (!isInDateRange) return false;
+      }
+
+      // Lọc theo tháng chỉ khi KHÔNG có date range
+      if (selectedMonth && (!dateRange?.[0] || !dateRange?.[1])) {
+        const startOfMonth = selectedMonth.clone().startOf("month");
+        const endOfMonth = selectedMonth.clone().endOf("month");
+
+        const isInSelectedMonth =
+          start.isBetween(startOfMonth, endOfMonth, "day", "[]") ||
+          end.isBetween(startOfMonth, endOfMonth, "day", "[]") ||
+          (start.isBefore(startOfMonth) && end.isAfter(endOfMonth));
+
+        if (!isInSelectedMonth) return false;
+      }
+
+      return true;
     });
-  }, [dataSourceNghiPhep, searchValue, dateRange]);
+  }, [dataSourceNghiPhep, searchValue, dateRange, selectedMonth]);
 
   //thêm/sửa
   const showAddModal = () => {
@@ -206,7 +269,7 @@ export default function NghiPhep() {
           api.success({
             message: "Cập nhật nghỉ phép thành công",
           });
-          setIsModalVisible(false)
+          setIsModalVisible(false);
         } catch {
           api.error({
             message: "Cập nhật nghỉ phép không thành công",
@@ -242,7 +305,7 @@ export default function NghiPhep() {
         message: "Xoá dữ liệu không thành công",
         description: "Xoá thất bại",
       });
-    } 
+    }
   };
 
   const columns = [
@@ -258,14 +321,24 @@ export default function NghiPhep() {
       dataIndex: "ngayBatDau",
       key: "ngayBatDau",
       width: 120,
-      render: (date) => formatDateDisplay(date), // Format hiển thị
+      render: (text) => {
+        const parsed = parseDate(text);
+        return parsed && parsed.isValid()
+          ? parsed.format("DD/MM/YYYY HH:mm:ss")
+          : text;
+      },
     },
     {
       title: "Ngày kết thúc",
       dataIndex: "ngayKetThuc",
       key: "ngayKetThuc",
       width: 120,
-      render: (date) => formatDateDisplay(date), // Format hiển thị
+      render: (text) => {
+        const parsed = parseDate(text);
+        return parsed && parsed.isValid()
+          ? parsed.format("DD/MM/YYYY HH:mm:ss")
+          : text;
+      },
     },
     { title: "Lý do nghỉ", dataIndex: "liDo", key: "liDo", width: 180 },
     {
@@ -291,15 +364,27 @@ export default function NghiPhep() {
         value ? (
           <CheckCircleOutlined style={{ color: "#1890ff", fontSize: 20 }} />
         ) : (
-          <CloseCircleOutlined style={{ color: "#1890ff", fontSize: 20 }} />
+          <CloseCircleOutlined style={{ color: "red", fontSize: 20 }} />
         ),
     },
     {
-      title: "Trang thái phê duyệt",
+      title: "Trạng thái phê duyệt",
       dataIndex: "trangThaiPheDuyet",
       key: "trangThaiPheDuyet",
       width: 100,
       align: "center",
+      defaultSortOrder: "ascend", // mặc định sort theo chiều tăng dần
+      sorter: (a, b) => {
+        const order = {
+          "Chờ duyệt": 0,
+          "Đã duyệt": 1,
+          "Từ chối": 2,
+        };
+        return (
+          (order[a.trangThaiPheDuyet] ?? 99) -
+          (order[b.trangThaiPheDuyet] ?? 99)
+        );
+      },
       render: (status) => {
         const color =
           status === "Đã duyệt"
@@ -348,7 +433,7 @@ export default function NghiPhep() {
         <Col xs={24} sm={8}>
           <Card>
             <Statistic
-              title="Nhân viên nghỉ"
+              title="Tổng số phép"
               value={statistics.total}
               prefix={<UserOutlined />}
               valueStyle={{ color: "#3f8600" }}
@@ -362,7 +447,7 @@ export default function NghiPhep() {
               title="Tính lương"
               value={statistics.tinhLuong}
               prefix={<DollarOutlined />}
-              valueStyle={{ color: "#cf1322" }}
+              valueStyle={{ color: "#52c41a" }}
             />
           </Card>
         </Col>
@@ -385,7 +470,7 @@ export default function NghiPhep() {
         <Row gutter={16} style={{ marginBottom: 20, alignItems: "center" }}>
           <Col xs={24} sm={12} md={8}>
             <Input.Search
-              placeholder="Tìm mã nhân viên..."
+              placeholder="Tìm kiếm Mã nhân viên, Tên nhân viên..."
               allowClear
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
@@ -394,14 +479,36 @@ export default function NghiPhep() {
           </Col>
           <Col xs={24} sm={12} md={12}>
             <RangePicker
-              style={{ width: "320px" }}
               value={dateRange}
-              onChange={setDateRange}
+              onChange={(values) => {
+                // Nếu clear, values sẽ là null → set lại về [null, null] để tránh lỗi
+                if (!Array.isArray(values)) {
+                  setDateRange([null, null]);
+                } else {
+                  setDateRange(values);
+                }
+              }}
               format="DD/MM/YYYY"
               allowClear
+              placeholder={["Từ ngày", "Đến ngày"]}
             />
           </Col>
+        </Row>
+        <Row gutter={16}>
           <Col xs={24} sm={24} md={4}>
+            <ConfigProvider locale={viVN}>
+              <DatePicker
+                picker="month"
+                onChange={onMonthChange}
+                value={selectedMonth}
+                style={{ width: "100%" }}
+                format="MM/YYYY"
+                placeholder="Chọn tháng"
+                allowClear
+              />
+            </ConfigProvider>
+          </Col>
+          <Col xs={24} sm={24} md={8}>
             <Button
               type="primary"
               icon={<PlusOutlined />}
@@ -435,6 +542,7 @@ export default function NghiPhep() {
           initialValues={{
             tinhLuong: false,
             tinhPhep: false,
+            nghiGiuaNgay: false,
           }}
         >
           <Form.Item
@@ -450,13 +558,34 @@ export default function NghiPhep() {
               }))}
             />
           </Form.Item>
+
+          {/* Checkbox nghỉ giữa ngày */}
+          <Form.Item name="nghiGiuaNgay" valuePropName="checked">
+            <Checkbox onChange={handlePartialDayChange}>
+              Nghỉ giữa ngày (cho phép chọn giờ cụ thể)
+            </Checkbox>
+          </Form.Item>
+
           <Form.Item
             name="ngayBatDau"
             label="Ngày bắt đầu"
             rules={[{ required: true, message: "Vui lòng chọn ngày bắt đầu!" }]}
           >
-            <DatePicker format="DD/MM/YYYY" style={{ width: "100%" }} />
+            <DatePicker
+              placeholder="Chọn ngày bắt đầu"
+              format={isPartialDay ? "DD/MM/YYYY HH:mm:ss" : "DD/MM/YYYY"}
+              style={{ width: "100%" }}
+              showTime={isPartialDay ? { format: "HH:mm:ss" } : false}
+              onChange={(date) => {
+                if (date && !isPartialDay) {
+                  // Nếu không phải nghỉ giữa ngày, tự động set thời gian là 00:00:00
+                  const startOfDay = dayjs(date).startOf("day");
+                  form.setFieldsValue({ ngayBatDau: startOfDay });
+                }
+              }}
+            />
           </Form.Item>
+
           <Form.Item
             name="ngayKetThuc"
             label="Ngày kết thúc"
@@ -464,8 +593,21 @@ export default function NghiPhep() {
               { required: true, message: "Vui lòng chọn ngày kết thúc!" },
             ]}
           >
-            <DatePicker format="DD/MM/YYYY" style={{ width: "100%" }} />
+            <DatePicker
+              placeholder="Chọn ngày kết thúc"
+              format={isPartialDay ? "DD/MM/YYYY HH:mm:ss" : "DD/MM/YYYY"}
+              style={{ width: "100%" }}
+              showTime={isPartialDay ? { format: "HH:mm:ss" } : false}
+              onChange={(date) => {
+                if (date && !isPartialDay) {
+                  // Nếu không phải nghỉ giữa ngày, tự động set thời gian là 23:59:59
+                  const endOfDay = dayjs(date).endOf("day");
+                  form.setFieldsValue({ ngayKetThuc: endOfDay });
+                }
+              }}
+            />
           </Form.Item>
+
           <Form.Item
             name="liDo"
             label="Lý do nghỉ"
@@ -473,6 +615,7 @@ export default function NghiPhep() {
           >
             <Input.TextArea rows={3} />
           </Form.Item>
+
           {canEditStatus && editingRecord && (
             <Form.Item name="trangThaiPheDuyet">
               <Select
@@ -482,15 +625,30 @@ export default function NghiPhep() {
                   { value: "Từ chối", label: "Từ chối" },
                   { value: "Đã duyệt", label: "Đã duyệt" },
                 ]}
-              ></Select>
+              />
             </Form.Item>
           )}
 
           <Form.Item name="tinhLuong" valuePropName="checked">
-            <Checkbox>Tính lương</Checkbox>
+            <Checkbox disabled={disableTinhLuong}>Tính lương</Checkbox>
           </Form.Item>
+
           <Form.Item name="tinhPhep" valuePropName="checked">
-            <Checkbox>Có phép</Checkbox>
+            <Checkbox
+              onChange={(e) => {
+                const checked = e.target.checked;
+                if (checked) {
+                  form.setFieldsValue({ tinhLuong: true });
+                  setDisableTinhLuong(true);
+                } else {
+                  form.setFieldsValue({ tinhLuong: false });
+                  setDisableTinhLuong(false);
+                }
+              }}
+            >
+              Có phép{" "}
+              <Tag color="success">Số ngày phép còn lại trong năm : {}</Tag>
+            </Checkbox>
           </Form.Item>
         </Form>
       </Modal>

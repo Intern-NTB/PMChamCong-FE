@@ -28,6 +28,7 @@ import {
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import locale from "antd/locale/vi_VN";
+dayjs.locale("vi");
 import { useLuong } from "../../component/hooks/useLuong";
 import { useNhanVien } from "../../component/hooks/useNhanVien";
 import { usePhongBan } from "../../component/hooks/usePhongBan";
@@ -49,7 +50,7 @@ import {
 import "./luong.css";
 const { Title } = Typography;
 const { Option } = Select;
-dayjs.locale("vi");
+
 
 export default function Luong() {
   const [selectedMonthYear, setSelectedMonthYear] = useState(dayjs());
