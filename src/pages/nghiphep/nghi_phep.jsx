@@ -35,11 +35,11 @@ import {
   UserOutlined,
   DollarOutlined,
   CheckCircleOutlined,
-  ExclamationCircleOutlined,
+  ExclamationCircleOutlined, // Import for Modal.confirm
 } from "@ant-design/icons";
 
 // ===== STYLES ======
-import "./nghi_phep.css";
+import "./nghi_phep.css"; // Đảm bảo file CSS này tồn tại và được cập nhật
 
 // ===== HOOK Tuỳ Chỉnh ======
 import { useNghiPhep } from "../../component/hooks/useNghiPhep";
@@ -79,7 +79,6 @@ const parseDate = (dateString) => {
 };
 
 export default function NghiPhep() {
-  // HOOK
   const {
     danhSachNghiPhep,
     getAllNghiPhep,
@@ -89,9 +88,8 @@ export default function NghiPhep() {
   } = useNghiPhep();
   const { danhSachNhanVien } = useNhanVien();
 
-  // STATE
   const api = useAppNotification();
-  const [selectedMonth, setSelectedMonth] = useState(null); // FIX: đặt null để không filter theo tháng mặc định
+  const [selectedMonth, setSelectedMonth] = useState(null);
   const [searchValue, setSearchValue] = useState("");
   const [dateRange, setDateRange] = useState([null, null]);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -102,7 +100,6 @@ export default function NghiPhep() {
   // CONTEXT
   const { setReload } = useContext(ReloadContext);
 
-  // PHÂN QUYỀN - Sử dụng utility functions
   const canEditStatus = NghiPhepPermissions.canEditStatus();
   const canDelete = NghiPhepPermissions.canDelete();
 
@@ -129,24 +126,31 @@ export default function NghiPhep() {
 
   const [form] = Form.useForm();
 
-  // hàm thống kê - Fix date parsing
   const statistics = useMemo(() => {
     if (!dataSourceNghiPhep.length)
       return { total: 0, tinhLuong: 0, tinhPhep: 0 };
-    const filtered = dataSourceNghiPhep.filter((item) => {
-      if (!dateRange[0] || !dateRange[1]) return true;
 
+    const filtered = dataSourceNghiPhep.filter((item) => {
       const start = parseDate(item.ngayBatDau);
       const end = parseDate(item.ngayKetThuc);
 
       // Kiểm tra validity trước khi so sánh
       if (!start || !end || !start.isValid() || !end.isValid()) return false;
 
-      return (
-        start.isBefore(dateRange[1].endOf("day")) &&
-        end.isAfter(dateRange[0].startOf("day"))
-      );
+      if (dateRange && dateRange[0] && dateRange[1]) {
+        return (
+          start.isBefore(dateRange[1].endOf("day")) &&
+          end.isAfter(dateRange[0].startOf("day"))
+        );
+      } else if (selectedMonth) {
+
+        const itemStartDate = parseDate(item.ngayBatDau);
+        return itemStartDate.isSame(selectedMonth, 'month');
+      }
+
+      return true;
     });
+
     return {
       total: filtered.length,
       tinhLuong: filtered.filter((i) => i.tinhLuong).length,
@@ -173,6 +177,7 @@ export default function NghiPhep() {
       }
     }
   };
+  
   const onMonthChange = (value) => {
     setSelectedMonth(value);
     console.log("Chọn tháng:", value ? value.format("MM/YYYY") : "Tất cả");
@@ -180,6 +185,7 @@ export default function NghiPhep() {
 
   // Filter list - FIX logic lọc
   const filteredList = useMemo(() => {
+
     return dataSourceNghiPhep.filter((item) => {
       const maNhanVien = item.maNhanVien
         ? String(item.maNhanVien).toLowerCase()
@@ -228,7 +234,6 @@ export default function NghiPhep() {
     });
   }, [dataSourceNghiPhep, searchValue, dateRange, selectedMonth]);
 
-  //thêm/sửa
   const showAddModal = () => {
     setEditingRecord(null);
     form.resetFields();
@@ -239,18 +244,16 @@ export default function NghiPhep() {
     setEditingRecord(record.maNghiPhep);
     form.setFieldsValue({
       ...record,
-      // Fix date parsing khi set vào form
       ngayBatDau: parseDate(record.ngayBatDau),
       ngayKetThuc: parseDate(record.ngayKetThuc),
     });
     setIsModalVisible(true);
   };
 
-  // form
   const handleOk = async () => {
     try {
-      await form.validateFields(); // Chờ xác thực các trường
-      const values = form.getFieldsValue(); // Lấy tất cả giá trị từ form
+      await form.validateFields(); 
+      const values = form.getFieldsValue(); 
 
       const dataToSave = {
         ngayBatDau: values.ngayBatDau.format("YYYY-MM-DD"),
@@ -263,7 +266,6 @@ export default function NghiPhep() {
       };
 
       if (editingRecord) {
-        // Cập nhật
         try {
           await updateNghiPhep(editingRecord, dataToSave);
           api.success({
@@ -277,17 +279,26 @@ export default function NghiPhep() {
         }
       } else {
         // Tạo mới
-        await createNghiPhep(dataToSave);
-        api.success({
-          message: "Thành công",
-          description: "Đã thêm thành công đơn nghỉ phép",
-        });
-        setIsModalVisible(false);
+        try {
+          await createNghiPhep(dataToSave);
+          api.success({
+            message: "Thành công",
+            description: "Đã thêm thành công đơn nghỉ phép",
+          });
+          setIsModalVisible(false);
+        } catch (error) {
+          api.error({
+            message: "Có lỗi xảy ra",
+            description: error.message || "Đã xảy ra lỗi khi tạo mới",
+          });
+        }
       }
-    } catch (error) {
+    }
+    // eslint-disable-next-line no-unused-vars
+    catch (errorInfo) { 
       api.error({
-        message: "Có lỗi xảy ra",
-        description: error.message,
+        message: "Lỗi xác thực",
+        description: "Vui lòng kiểm tra lại các trường đã nhập.",
       });
     }
   };
@@ -468,7 +479,7 @@ export default function NghiPhep() {
         }}
       >
         <Row gutter={16} style={{ marginBottom: 20, alignItems: "center" }}>
-          <Col xs={24} sm={12} md={8}>
+          <Col xs={24} sm={24} md={8}>
             <Input.Search
               placeholder="Tìm kiếm Mã nhân viên, Tên nhân viên..."
               allowClear
@@ -477,7 +488,7 @@ export default function NghiPhep() {
               enterButton
             />
           </Col>
-          <Col xs={24} sm={12} md={12}>
+          <Col xs={24} sm={12} md={6}>
             <RangePicker
               value={dateRange}
               onChange={(values) => {
@@ -525,8 +536,9 @@ export default function NghiPhep() {
         columns={columns}
         dataSource={filteredList}
         rowKey={(record) => record.maNghiPhep}
-        scroll={{ x: 900 }}
         pagination={{ pageSize: 10 }}
+        sticky
+        className="custom-header-table"
       />
       <Modal
         title={editingRecord ? "Sửa đơn nghỉ phép" : "Tạo đơn xin nghỉ"}

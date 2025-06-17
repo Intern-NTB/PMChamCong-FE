@@ -1,11 +1,20 @@
-/* Enhanced Employee Management Styles */
-
 .container-column {
   background-color: #f5f5f5;
   min-height: 100vh;
+
 }
 
-/* Statistics Cards */
+.filter-section-sticky {
+  position: sticky;
+  top: 0; 
+  z-index: 1000; 
+  background: #f0f2f5; 
+  padding-top: 12px; 
+  padding-bottom: 16px; 
+  margin-bottom: -16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); 
+}
+
 .ant-card .ant-statistic {
   text-align: center;
 }
@@ -21,7 +30,6 @@
   font-weight: bold;
 }
 
-/* Search and Filter Section */
 .ant-input-group-wrapper,
 .ant-select {
   border-radius: 6px;
@@ -35,7 +43,6 @@
   color: #bfbfbf;
 }
 
-/* Table Enhancements */
 .ant-table-thead > tr > th {
   text-align: center !important;
   background-color: var(--color-primary) !important;
@@ -52,7 +59,6 @@
 }
 
 
-/* Status Tags */
 .ant-tag {
   border-radius: 16px;
   padding: 4px 12px;
@@ -61,7 +67,6 @@
   border: none;
 }
 
-/* Action Dropdown */
 .ant-dropdown-menu {
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
@@ -76,7 +81,6 @@
   background-color: #f5f5f5;
 }
 
-/* Highlighted Search Text */
 .search-highlight {
   background-color: #fff566;
   font-weight: bold;
@@ -84,7 +88,6 @@
   border-radius: 3px;
 }
 
-/* Mobile Responsive */
 @media (max-width: 768px) {
   .container-column {
     padding: 12px !important;
@@ -110,6 +113,10 @@
   .ant-table-pagination {
     text-align: center;
   }
+  .filter-section-sticky {
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
 }
 
 @media (max-width: 576px) {
@@ -126,7 +133,6 @@
   }
 }
 
-/* Custom Button Styles */
 .ant-btn-primary {
   background: linear-gradient(135deg, #1890ff 0%, #40a9ff 100%);
   border: none;
@@ -152,7 +158,6 @@
   box-shadow: 0 4px 12px rgba(255, 77, 79, 0.4);
 }
 
-/* Loading Animation */
 .ant-spin-container {
   transition: opacity 0.3s;
 }
@@ -163,7 +168,6 @@
   color: #666;
 }
 
-/* Badge for bulk actions */
 .ant-badge {
   .ant-badge-count {
     font-size: 10px;
@@ -174,7 +178,6 @@
   }
 }
 
-/* AutoComplete Dropdown */
 .ant-select-dropdown {
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
@@ -189,7 +192,6 @@
   background-color: #f5f5f5;
 }
 
-/* Card Hover Effects */
 .ant-card {
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -201,16 +203,6 @@
   transform: translateY(-2px);
 }
 
-/* Filter Section Styling */
-.filter-section {
-  background: white;
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-}
-
-/* Pagination Styling */
 .ant-pagination {
   text-align: center;
   margin-top: 24px;
@@ -225,7 +217,6 @@
   color: white;
 }
 
-/* Scroll Bar Styling */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -245,7 +236,6 @@
   background: #a8a8a8;
 }
 
-/* Animation for new features */
 @keyframes slideInRight {
   from {
     opacity: 0;
@@ -258,4 +248,5 @@
 }
 
 .slide-in-right {
-  animation: slideInRight 0.3s ease-out}
+  animation: slideInRight 0.3s ease-out
+}

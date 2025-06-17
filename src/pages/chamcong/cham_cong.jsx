@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 // ===== Thư viện bên ngoài =====
 import { useState, useEffect, useCallback, useMemo, useContext } from "react";
 import dayjs from "dayjs";
@@ -6,6 +7,7 @@ import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 
 // ===== Ant Design =====
 import {
+  ConfigProvider,
   Card,
   Button,
   Table,
@@ -16,26 +18,24 @@ import {
   Statistic,
   Tag,
   Space,
-  Modal,
   Form,
+  Typography,
   Input,
-  message,
-  Calendar,
 } from "antd";
 import {
   ClockCircleOutlined,
-  LoginOutlined,
   LogoutOutlined,
   CalendarOutlined,
   UserOutlined,
 } from "@ant-design/icons";
+import "dayjs/locale/vi";
+import viVN from "antd/locale/vi_VN";
 
 // ===== Hook tùy chỉnh =====
-import { useNhanVien } from "../../component/hooks/useNhanVien";
 import { useChamCong } from "../../component/hooks/useChamCong";
 import { usePhongBan } from "../../component/hooks/usePhongBan";
-import { useDuLieuQuetVanTay } from "../../component/hooks/useQuetVanTay";
 import { useTangCa } from "../../component/hooks/useTangCa";
+import { useNhanVien } from "../../component/hooks/useNhanVien";
 // ===== Context =====
 import { ReloadContext } from "../../context/reloadContext";
 
@@ -49,18 +49,24 @@ import ModalThemTangCa from "./tangca/modal_them_tang_ca";
 // ===== Cấu hình Day.js =====
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
-
+dayjs.locale("vi");
 const { RangePicker } = DatePicker;
 const { Option } = Select;
+const { Text } = Typography;
 
 export default function GiaLapChamCong() {
   // Hooks
-  const { createDuLieuQuetVanTay } = useDuLieuQuetVanTay();
   const { danhSachChamCongChiTiet, getAllChamCongDetail } = useChamCong();
-  const { danhSachNhanVien } = useNhanVien();
   const { danhSachPhongBan } = usePhongBan();
+  const { danhSachNhanVien } = useNhanVien();
   const { setReload } = useContext(ReloadContext);
-  const { createTangCa } = useTangCa();
+  const {
+    danhSachTangCa,
+    createTangCa,
+    getAllTangCa,
+    updateTangCa,
+    deleteTangCa,
+  } = useTangCa();
 
   // State
   const [pageSize, setPageSize] = useState(10);
@@ -69,12 +75,14 @@ export default function GiaLapChamCong() {
     dayjs().startOf("day"),
     dayjs().endOf("day"),
   ]);
-  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState(null); // State mới cho tháng
+
   const [isMobile, setIsMobile] = useState(false);
   const [selectedDate, setSelectedDate] = useState({
     selected: false,
     dateValue: null,
   });
+  const [searchText, setSearchText] = useState("");
   const [selectedPhongBan, setSelectedPhongBan] = useState({
     selected: false,
     phongBanValue: null,
@@ -97,12 +105,6 @@ export default function GiaLapChamCong() {
     setReload(() => getAllChamCongDetail);
   }, []);
 
-  const showAlert = useCallback((type, message, description) => {
-    setAlert({ visible: true, type, message, description });
-    setTimeout(() => setAlert((prev) => ({ ...prev, visible: false })), 3000);
-  }, []);
-
-  // Kiểm tra kích thước màn hình -
   useEffect(() => {
     const checkScreenSize = () => {
       setIsMobile(window.innerWidth < 900);
@@ -113,7 +115,6 @@ export default function GiaLapChamCong() {
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
 
-  // Cập nhật thời gian hiện tại mỗi giây
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(dayjs());
@@ -121,35 +122,52 @@ export default function GiaLapChamCong() {
     return () => clearInterval(timer);
   }, []);
 
-  // Load dữ liệu chấm công từ Hooks
   useEffect(() => {
-    getAllChamCongDetail();
-  }, []);
+    let tempFilteredData = danhSachChamCongChiTiet;
 
-  // Lọc dữ liệu theo khoảng thời gian
-  useEffect(() => {
+    // Lọc theo khoảng thời gian
     if (dateRange && dateRange[0] && dateRange[1]) {
-      const filtered = danhSachChamCongChiTiet.filter((item) => {
+      const startDate = dayjs(dateRange[0]).startOf("day");
+      const endDate = dayjs(dateRange[1]).endOf("day");
+      tempFilteredData = tempFilteredData.filter((item) => {
         const itemDate = dayjs(item.ngayChamCong);
-        const startDate = dayjs(dateRange[0]).startOf("day");
-        const endDate = dayjs(dateRange[1]).endOf("day");
-
         return (
           itemDate.isSameOrAfter(startDate) && itemDate.isSameOrBefore(endDate)
         );
       });
-      setFilteredData(filtered);
-    } else {
-      setFilteredData(danhSachChamCongChiTiet);
     }
-  }, [danhSachChamCongChiTiet, dateRange]);
 
-  // ModalTangCa
+    // Lọc theo tháng
+    if (selectedMonth) {
+      tempFilteredData = tempFilteredData.filter((item) => {
+        const itemDate = dayjs(item.ngayChamCong);
+        return (
+          itemDate.month() === selectedMonth.month() &&
+          itemDate.year() === selectedMonth.year()
+        );
+      });
+    }
+
+    // Lọc theo tìm kiếm (mã nhân viên và tên)
+    if (searchText.trim()) {
+      tempFilteredData = tempFilteredData.filter(
+        (item) =>
+          item.hoTen.toLowerCase().includes(searchText.toLowerCase()) ||
+          String(item.maNhanVien).toLowerCase().includes(searchText.toLowerCase())
+      );
+    }
+
+    setFilteredData(tempFilteredData);
+  }, [danhSachChamCongChiTiet, dateRange, selectedMonth, searchText]);
+
+  const handleSearch = useCallback((value) => {
+    setSearchText(value);
+  }, []);
+
   const handleShowModalTangCa = () => {
     setIsModalTangCaVisible(true);
   };
 
-  // Modal Them Tang Ca
   const handleShowModalThemTangCa = () => {
     setIsModalThemTangCaVisible(true);
   };
@@ -159,29 +177,6 @@ export default function GiaLapChamCong() {
     getAllChamCongDetail();
   };
 
-
-  // Thêm bản ghi chấm công thủ công
-  const handleAddRecord = useCallback(async () => {
-    try {
-      const values = await form.validateFields();
-      const thoiGian = `${dayjs(values.ngayChamCong).format("YYYY-MM-DD")}T${
-        values.gioVao
-      }Z`;
-      values.thoiGian = thoiGian;
-      console.log("Payload:", JSON.stringify(values), "Thời gian:", thoiGian);
-
-      await createDuLieuQuetVanTay(values);
-      await getAllChamCongDetail();
-      setIsModalVisible(false);
-      form.resetFields();
-      message.success("Thêm bản ghi thành công!");
-    } catch (error) {
-      console.error("Lỗi thêm bản ghi:", error);
-      message.error("Thêm bản ghi thất bại!");
-    }
-  }, [form, createDuLieuQuetVanTay, getAllChamCongDetail]);
-
-  //  render function cho time
   const formatTime = useCallback((text) => {
     if (!text || text === "N/A") return text;
     if (typeof text === "string" && text.includes("T")) {
@@ -191,7 +186,6 @@ export default function GiaLapChamCong() {
     return text;
   }, []);
 
-  // Cột của bảng cho desktop -  render
   const columns = useMemo(
     () => [
       {
@@ -227,7 +221,12 @@ export default function GiaLapChamCong() {
         title: "Phòng ban",
         dataIndex: "tenPhongBan",
         key: "tenPhongBan",
-        responsive: ["lg"],
+        filters: danhSachPhongBan.map((pb) => ({
+          text: pb.tenPhongBan,
+          value: pb.tenPhongBan,
+        })),
+        onFilter: (value, record) => record.tenPhongBan === value,
+        sorter: (a, b) => a.tenPhongBan.localeCompare(b.tenPhongBan),
       },
       {
         title: "Giờ vào",
@@ -252,6 +251,7 @@ export default function GiaLapChamCong() {
         dataIndex: "cong",
         key: "cong",
         responsive: ["md"],
+        width: 80,
       },
       {
         title: "Trạng thái",
@@ -270,19 +270,29 @@ export default function GiaLapChamCong() {
             </Tag>
           );
         },
+        sorter: (a, b) => {
+          const priority = {
+            "Chưa hoàn tất": 1,
+            "Tăng ca": 2,
+            "Hoàn tất": 3,
+            "Tăng ca hoàn tất": 4,
+          };
+          return priority[a.trangThai] - priority[b.trangThai];
+        },
+
         filters: [
-          { text: "Hoàn tất", value: "Hoàn tất" },
           { text: "Chưa hoàn tất", value: "Chưa hoàn tất" },
           { text: "Tăng ca", value: "Tăng ca" },
+          { text: "Hoàn tất", value: "Hoàn tất" },
           { text: "Tăng ca hoàn tất", value: "Tăng ca hoàn tất" },
         ],
+
         onFilter: (value, record) => record.trangThai === value,
       },
     ],
     [formatTime, isMobile]
   );
 
-  // Cột cho mobile -
   const mobileColumns = useMemo(
     () => [
       {
@@ -305,6 +315,10 @@ export default function GiaLapChamCong() {
                 <span style={{ fontSize: "12px" }}>
                   Ra: {formatTime(record.thoiGianRa)}
                 </span>
+                <span style={{ fontSize: "12px" }}>
+                  Giờ: {record.soGioThucTe}
+                </span>
+                <span style={{ fontSize: "12px" }}>Công: {record.cong}</span>
               </Space>
             </div>
             <div style={{ marginTop: "4px" }}>
@@ -324,6 +338,8 @@ export default function GiaLapChamCong() {
             </div>
           </div>
         ),
+        sorter: (a, b) =>
+          dayjs(a.ngayChamCong).unix() - dayjs(b.ngayChamCong).unix(),
         filters: [
           { text: "Hoàn tất", value: "Hoàn tất" },
           { text: "Chưa hoàn tất", value: "Chưa hoàn tất" },
@@ -336,27 +352,86 @@ export default function GiaLapChamCong() {
     [formatTime]
   );
 
-  // Thống kê -  với useMemo
   const statistics = useMemo(() => {
     const today = dayjs().format("DD/MM/YYYY");
-    const totalRecords = danhSachChamCongChiTiet.length;
-    const workingNow = danhSachChamCongChiTiet.filter(
+
+    // Lọc lại nhân viên & chấm công theo phòng ban nếu có chọn
+    const nhanVienTheoPhongBan =
+      selectedPhongBan && selectedPhongBan.phongBanValue
+        ? danhSachNhanVien.filter(
+            (nv) => nv.tenPhongBan === selectedPhongBan.phongBanValue
+          )
+        : danhSachNhanVien;
+
+    const chamCongTheoPhongBan =
+      selectedPhongBan && selectedPhongBan.phongBanValue
+        ? danhSachChamCongChiTiet.filter(
+            (cc) => cc.tenPhongBan === selectedPhongBan.phongBanValue
+          )
+        : danhSachChamCongChiTiet;
+
+    const totalRecords = chamCongTheoPhongBan.filter(
+      (item) => dayjs(item.ngayChamCong).format("DD/MM/YYYY") === today
+    ).length;
+
+    const workingNow = chamCongTheoPhongBan.filter(
       (item) =>
         dayjs(item.ngayChamCong).format("DD/MM/YYYY") === today &&
         (item.trangThai === "Chưa hoàn tất" || item.trangThai === "Tăng ca")
     ).length;
-    const completedToday = danhSachChamCongChiTiet.filter(
+
+    const completedToday = chamCongTheoPhongBan.filter(
       (item) =>
         dayjs(item.ngayChamCong).format("DD/MM/YYYY") === today &&
-        (item.trangThai === "Hoàn tất" ||
-          item.trangThai === "Tăng ca hoàn tất" ||
-          item.trangThai === "Không tăng ca")
+        ["Hoàn tất", "Tăng ca hoàn tất", "Không tăng ca"].includes(
+          item.trangThai
+        )
     ).length;
 
-    return { totalRecords, workingNow, completedToday };
-  }, [danhSachChamCongChiTiet]);
+    const vangMatCount = nhanVienTheoPhongBan.filter(
+      (nv) =>
+        !chamCongTheoPhongBan.some(
+          (cc) =>
+            cc.maNhanVien === nv.maNhanVien &&
+            dayjs(cc.ngayChamCong).format("DD/MM/YYYY") === today
+        )
+    ).length;
 
-  //  handlers
+    // Lọc tổng số giờ tăng ca của tháng
+    const tongSoGioTangCaThang = danhSachTangCa.reduce((total, tc) => {
+      const ngayTangCa = dayjs(tc.ngayChamCongTangCa);
+      const thang = ngayTangCa.month(); // 0-11
+      const nam = ngayTangCa.year();
+
+      const thangHienTai = (selectedMonth ?? dayjs()).month();
+      const namHienTai = (selectedMonth ?? dayjs()).year();
+
+      if (thang === thangHienTai && nam === namHienTai) {
+        const gioBatDau = dayjs(tc.gioTangCaBatDau, "HH:mm");
+        const gioKetThuc = dayjs(tc.gioTangCaKetThuc, "HH:mm");
+
+        const soPhutTangCa = gioKetThuc.diff(gioBatDau, "minute");
+        return total + (soPhutTangCa / 60 || 0);
+      }
+
+      return total;
+    }, 0);
+
+    return {
+      totalRecords,
+      workingNow,
+      completedToday,
+      vangMatCount,
+      tongSoGioTangCaThang,
+    };
+  }, [
+    selectedPhongBan,
+    selectedMonth,
+    danhSachNhanVien,
+    danhSachChamCongChiTiet,
+    danhSachTangCa,
+  ]);
+
   const handleDateChange = useCallback((value) => {
     setSelectedDate({
       selected: true,
@@ -373,6 +448,12 @@ export default function GiaLapChamCong() {
 
   const handleDateRangeChange = useCallback((dates) => {
     setDateRange(dates);
+    setSelectedMonth(null);
+  }, []);
+
+  const handleMonthChange = useCallback((month) => {
+    setSelectedMonth(month);
+    setDateRange([null, null]);
   }, []);
 
   const handlePageSizeChange = useCallback((current, size) => {
@@ -387,7 +468,6 @@ export default function GiaLapChamCong() {
         minHeight: "100vh",
       }}
     >
-      {/* Header với thời gian */}
       <Card style={{ marginBottom: "16px" }}>
         <div style={{ textAlign: "center" }}>
           <ClockCircleOutlined
@@ -403,25 +483,17 @@ export default function GiaLapChamCong() {
             }}
           >
             {isMobile
-              ? currentTime.format("DD/MM/YYYY\nHH:mm:ss")
+              ? currentTime.format("DD/MM/YYYY HH:mm:ss")
               : currentTime.format("dddd, DD/MM/YYYY - HH:mm:ss")}
           </span>
         </div>
       </Card>
 
       {isMobile ? (
-        // Layout cho mobile
         <Space direction="vertical" style={{ width: "100%" }} size="middle">
           <Card title="Chấm công" size="small" extra={<CalendarOutlined />}>
             <Space direction="vertical" style={{ width: "100%" }} size="middle">
               <Row gutter={[8, 8]}>
-                <Col span={12}>
-                  <DatePicker
-                    style={{ width: "100%" }}
-                    onChange={handleDateChange}
-                    placeholder="Chọn ngày"
-                  />
-                </Col>
                 <Col span={12}>
                   <Select
                     placeholder="Chọn phòng ban"
@@ -429,7 +501,7 @@ export default function GiaLapChamCong() {
                     onChange={handlePhongBanChange}
                     getPopupContainer={() => document.body}
                     options={danhSachPhongBan.map((pb) => ({
-                      value: pb.maPhongBan,
+                      value: pb.tenPhongBan,
                       label: pb.tenPhongBan,
                     }))}
                   />
@@ -459,48 +531,56 @@ export default function GiaLapChamCong() {
                     Xem ngày tăng ca
                   </Button>
                 </Col>
-
-                <Col span={24}>
-                  <Button
-                    onClick={() => setIsModalVisible(true)}
-                    size="large"
-                    block
-                  >
-                    Thêm bản ghi
-                  </Button>
-                </Col>
               </Row>
             </Space>
           </Card>
-          <Row gutter={[8, 8]}>
-            <Col span={8}>
-              <Card size="small">
-                <Statistic
-                  title="Tổng"
-                  value={statistics.totalRecords}
-                  valueStyle={{ fontSize: "18px" }}
-                />
-              </Card>
-            </Col>
-            <Col span={8}>
-              <Card size="small">
-                <Statistic
-                  title="Đang làm"
-                  value={statistics.workingNow}
-                  valueStyle={{ color: "#1890ff", fontSize: "18px" }}
-                />
-              </Card>
-            </Col>
-            <Col span={8}>
-              <Card size="small">
-                <Statistic
-                  title="Hoàn thành"
-                  value={statistics.completedToday}
-                  valueStyle={{ color: "#52c41a", fontSize: "18px" }}
-                />
-              </Card>
-            </Col>
-          </Row>
+
+          {/* Thống kê - Mobile */}
+          <Card
+            title={`Thống kê hôm nay (${dayjs().format("DD/MM/YYYY")})`}
+            size="small"
+          >
+            <Row gutter={[8, 8]}>
+              <Col span={12}>
+                <Card size="small">
+                  <Statistic
+                    title="Tổng bản ghi"
+                    value={statistics.totalRecords}
+                    prefix={<UserOutlined />}
+                    valueStyle={{ fontSize: "16px" }}
+                  />
+                </Card>
+              </Col>
+              <Col span={12}>
+                <Card size="small">
+                  <Statistic
+                    title="Đang làm việc"
+                    value={statistics.workingNow}
+                    valueStyle={{ color: "#1890ff", fontSize: "16px" }}
+                  />
+                </Card>
+              </Col>
+              <Col span={12}>
+                <Card size="small">
+                  <Statistic
+                    title="Hoàn thành hôm nay"
+                    value={statistics.completedToday}
+                    valueStyle={{ color: "#52c41a", fontSize: "16px" }}
+                  />
+                </Card>
+              </Col>
+              <Col span={12}>
+                <Card size="small">
+                  <Statistic
+                    title="Nhân viên vắng"
+                    value={statistics.vangMatCount}
+                    valueStyle={{ color: "red", fontSize: "16px" }}
+                  />
+                </Card>
+              </Col>
+            </Row>
+          </Card>
+
           {alert.visible && (
             <MyAlert
               type={alert.type}
@@ -509,17 +589,39 @@ export default function GiaLapChamCong() {
               onClose={() => setAlert((prev) => ({ ...prev, visible: false }))}
             />
           )}
+
           <Card title="Lịch sử chấm công" size="small">
             <Space
               direction="vertical"
               style={{ width: "100%", marginBottom: "16px" }}
             >
+              <span>Chọn khoảng thời gian:</span>
               <RangePicker
                 value={dateRange}
                 onChange={handleDateRangeChange}
                 format="DD/MM/YYYY"
+                style={{ width: "100%", marginBottom: "8px" }}
+                size="large"
+              />
+              <ConfigProvider locale={viVN}>
+                <DatePicker
+                  placeholder="Chọn tháng"
+                  picker="month"
+                  value={selectedMonth}
+                  onChange={handleMonthChange}
+                  format="MM/YYYY"
+                  style={{ width: "100%" }}
+                  size="large"
+                />
+              </ConfigProvider>
+              <Input.Search
+                placeholder="Tìm kiếm theo tên hoặc mã nhân viên"
+                onSearch={handleSearch}
+                onChange={(e) => setSearchText(e.target.value)}
+                value={searchText}
                 style={{ width: "100%" }}
                 size="large"
+                allowClear
               />
             </Space>
 
@@ -537,33 +639,75 @@ export default function GiaLapChamCong() {
                 showTotal: (total, range) => `${range[0]}-${range[1]}/${total}`,
               }}
               size="small"
-              scroll={{ x: 300 }}
+              scroll={{ y: "calc(100vh - 300px)", sticky: true }}
+              onChange={(pagination, filters) => {
+                const pb = filters.tenPhongBan?.[0]; // Lấy phòng ban đầu tiên được chọn
+                setSelectedPhongBan({
+                  selected: true,
+                  phongBanValue: pb || null,
+                });
+              }}
             />
           </Card>
         </Space>
       ) : (
-        // Layout cho desktop
         <Row gutter={[16, 16]}>
           <Col span={16}>
             <Card
               style={{
                 width: "100%",
                 height: "100%",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-evenly",
+                borderRadius: "12px",
+                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+                border: "1px solid #f0f0f0",
               }}
-              title="Chấm công"
-              extra={<CalendarOutlined />}
-            >
-              <Space direction="vertical" style={{ width: "100%" }}>
-                <div>
-                  <label style={{}}>Chọn ngày tăng ca:</label>
-
-                  <Row gutter={[8, 8]}>
-                   
-                  </Row>
+              title={
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    fontSize: "18px",
+                    fontWeight: "600",
+                    color: "#1f2937",
+                  }}
+                >
+                  <CalendarOutlined style={{ color: "#1890ff" }} />
+                  Chấm công
                 </div>
+              }
+              bodyStyle={{ padding: "24px" }}
+            >
+              <Space
+                direction="vertical"
+                size="large"
+                style={{ width: "100%" }}
+              >
+                {/* Header Section */}
+                <div>
+                  <Text
+                    style={{
+                      fontSize: "16px",
+                      fontWeight: "500",
+                      color: "#374151",
+                      marginBottom: "16px",
+                      display: "block",
+                    }}
+                  >
+                    Quản lý thời gian làm việc
+                  </Text>
+                  <Text
+                    type="secondary"
+                    style={{
+                      fontSize: "14px",
+                      lineHeight: "1.5",
+                    }}
+                  >
+                    Chọn ngày tăng ca và theo dõi lịch làm việc của bạn
+                  </Text>
+                </div>
+
+                {/* Alert Section */}
                 {alert.visible && (
                   <MyAlert
                     type={alert.type}
@@ -572,50 +716,87 @@ export default function GiaLapChamCong() {
                     onClose={() =>
                       setAlert((prev) => ({ ...prev, visible: false }))
                     }
+                    style={{ marginBottom: "8px" }}
                   />
                 )}
-                <Row gutter={[8, 8]}>
+
+                {/* Action Buttons */}
+                <Row gutter={[16, 16]}>
                   <Col span={12}>
-                    {" "}
                     <Button
                       danger
                       icon={<LogoutOutlined />}
                       onClick={handleShowModalThemTangCa}
                       size="large"
-                      style={{ width: "100%" }}
+                      style={{
+                        width: "100%",
+                        height: "50px",
+                        borderRadius: "8px",
+                        fontWeight: "500",
+                        fontSize: "15px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "8px",
+                      }}
+                      ghost
                     >
-                      Tăng ca
+                      Đăng ký tăng ca
                     </Button>
                   </Col>
                   <Col span={12}>
-                    {" "}
                     <Button
                       type="primary"
                       icon={<CalendarOutlined />}
                       onClick={handleShowModalTangCa}
                       size="large"
-                      style={{ width: "100%" }}
+                      style={{
+                        width: "100%",
+                        height: "50px",
+                        borderRadius: "8px",
+                        fontWeight: "500",
+                        fontSize: "15px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "8px",
+                        background:
+                          "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+                        border: "none",
+                      }}
                     >
-                      Xem ngày tăng ca
-                    </Button>
-                  </Col>
-
-                  <Col span={24}>
-                    {" "}
-                    <Button
-                      onClick={() => setIsModalVisible(true)}
-                      style={{ width: "100%" }}
-                    >
-                      Thêm bản ghi
+                      Xem lịch tăng ca
                     </Button>
                   </Col>
                 </Row>
+
+                {/* Quick Stats (Optional) */}
+                <div
+                  style={{
+                    background: "#f8fafc",
+                    padding: "16px",
+                    borderRadius: "8px",
+                    border: "1px solid #e2e8f0",
+                  }}
+                >
+                  <Row gutter={[16, 8]} justify={"center"}>
+                    <Col span={12}>
+                      <div style={{ textAlign: "center" }}>
+                        <Statistic
+                          title="Giờ tăng ca tháng này"
+                          value={statistics.tongSoGioTangCaThang}
+                          valueStyle={{ color: "green", fontSize: "24px" }}
+                        />
+                      </div>
+                    </Col>
+                  </Row>
+                </div>
               </Space>
             </Card>
           </Col>
 
           <Col span={8}>
-            <Card title="Thống kê">
+            <Card title={`Thống kê hôm nay (${dayjs().format("DD/MM/YYYY")})`}>
               <Row gutter={16}>
                 <Col span={24}>
                   <Statistic
@@ -638,6 +819,13 @@ export default function GiaLapChamCong() {
                     valueStyle={{ color: "#52c41a" }}
                   />
                 </Col>
+                <Col span={24} style={{ marginTop: "16px" }}>
+                  <Statistic
+                    title="Nhân viên vắng trong ngày"
+                    value={statistics.vangMatCount}
+                    valueStyle={{ color: "red" }}
+                  />
+                </Col>
               </Row>
             </Card>
           </Col>
@@ -650,6 +838,26 @@ export default function GiaLapChamCong() {
                   value={dateRange}
                   onChange={handleDateRangeChange}
                   format="DD/MM/YYYY"
+                />
+                <span style={{ marginLeft: "16px" }}>Chọn tháng:</span>
+                <ConfigProvider locale={viVN}>
+                  {" "}
+                  <DatePicker
+                    placeholder="Chọn tháng"
+                    picker="month"
+                    value={selectedMonth}
+                    onChange={handleMonthChange}
+                    format="MM/YYYY"
+                  />
+                </ConfigProvider>
+
+                <Input.Search
+                  placeholder="Tìm kiếm theo mã nhân viên hoặc tên"
+                  onSearch={handleSearch}
+                  onChange={(e) => setSearchText(e.target.value)}
+                  value={searchText}
+                  style={{ width: "250px" }}
+                  allowClear
                 />
               </Space>
 
@@ -668,80 +876,36 @@ export default function GiaLapChamCong() {
                   showTotal: (total, range) =>
                     `${range[0]}-${range[1]} của ${total} bản ghi`,
                 }}
-                scroll={{ x: 800 }}
+                scroll={{ y: "calc(100vh - 300px)", sticky: true }}
+                onChange={(pagination, filters) => {
+                  const pb = filters.tenPhongBan?.[0]; // Lấy phòng ban đầu tiên được chọn
+                  setSelectedPhongBan({
+                    selected: true,
+                    phongBanValue: pb.tenPhongBan || null,
+                  });
+                }}
               />
             </Card>
           </Col>
         </Row>
       )}
 
-      {/**Modal Cho thêm tăng ca */}
       <ModalThemTangCa
         isVisible={isModalThemTangCaVisible}
         danhSachPhongBan={danhSachPhongBan}
         createTangCa={createTangCa}
         onCancel={() => setIsModalThemTangCaVisible(false)}
+        getAllChamCongDetail={getAllChamCongDetail}
+        getAllTangCa={getAllTangCa}
       />
-      {/* Modal Cho tăng ca */}
       <ModalTangCa
         isVisible={isModalTangCaVisible}
         onCancel={onCancelModalTangCa}
+        danhSachTangCa={danhSachTangCa}
+        updateTangCa={updateTangCa}
+        deleteTangCa={deleteTangCa}
+        danhSachPhongBan={danhSachPhongBan}
       />
-
-      {/* Modal thêm bản ghi */}
-      <Modal
-        title="Thêm bản ghi chấm công"
-        open={isModalVisible}
-        onOk={handleAddRecord}
-        onCancel={() => {
-          setIsModalVisible(false);
-          form.resetFields();
-        }}
-        width={isMobile ? "90%" : 520}
-      >
-        <Form form={form} layout="vertical">
-          <Form.Item
-            name="maNhanVien"
-            label="Nhân viên"
-            rules={[{ required: true, message: "Vui lòng chọn nhân viên!" }]}
-          >
-            <Select
-              placeholder="Chọn nhân viên"
-              size={isMobile ? "large" : "middle"}
-            >
-              {danhSachNhanVien.map((nv) => (
-                <Option key={nv.maNhanVien} value={nv.maNhanVien}>
-                  {nv.hoTen} - {nv.tenPhongBan}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            name="ngayChamCong"
-            label="Ngày chấm công"
-            rules={[{ required: true, message: "Vui lòng chọn ngày!" }]}
-          >
-            <DatePicker
-              style={{ width: "100%" }}
-              format="DD/MM/YYYY"
-              size={isMobile ? "large" : "middle"}
-              placeholder="Chọn ngày chấm công"
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="gioVao"
-            label="Giờ"
-            rules={[{ required: true, message: "Vui lòng nhập giờ vào!" }]}
-          >
-            <Input
-              placeholder="VD: 08:00:00"
-              size={isMobile ? "large" : "middle"}
-            />
-          </Form.Item>
-        </Form>
-      </Modal>
     </div>
   );
 }

@@ -10,7 +10,7 @@ import './tangca.css'
 
 const { Option } = Select;
 
-export default function ModalThemTangCa({ onCancel, isVisible, createTangCa, danhSachPhongBan }) {
+export default function ModalThemTangCa({ onCancel, isVisible, createTangCa, danhSachPhongBan,getAllTangCa,getAllChamCongDetail }) {
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
 
@@ -39,7 +39,8 @@ export default function ModalThemTangCa({ onCancel, isVisible, createTangCa, dan
             }
 
             await createTangCa(tangCaData);
-            message.success('Thêm tăng ca thành công!');
+            await getAllTangCa();
+            await getAllChamCongDetail();
             form.resetFields();
             onCancel();
         } catch (error) {
@@ -64,7 +65,6 @@ export default function ModalThemTangCa({ onCancel, isVisible, createTangCa, dan
             centered={true}
             maskClosable={false}
             width={600}
-            destroyOnClose={true}
         >
             <Form
                 form={form}

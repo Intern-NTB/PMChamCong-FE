@@ -1,36 +1,34 @@
 import axiosInstance from "../config/axiosInstance";
 
-export const getAllNgayLeServices = async () => {
-    try{
-        const res = await axiosInstance.get('/ngayle')
-        return res.data
-    } catch {
-        console.log('Lỗi, không lấy được dữ liệu ngày lễ')
-    }
-}
+export const getAllNghiPhepServices = async () => {
+  try {
+    const res = await axiosInstance.get("/ngaynghi");
+    return res.data;
+  } catch {
+    console.log("AXIOS! Lỗi lấy dữ liệu nghỉ phép");
+  }
+};
 
-export const createNgayLeServices = async (duLieuNgayLe) => {
-    try{
-        await axiosInstance.post('/ngayle', duLieuNgayLe)
-    } catch  {
-        console.log('Lỗi, không lấy được dữ liệu')
-    }
-}
+export const createNghiPhepServices = async (duLieuNghiPhep) => {
+  try {
+    await axiosInstance.post("/ngaynghi", duLieuNghiPhep);
+  } catch {
+    console.log("AXIOS! Lỗi lấy dữ liệu nghỉ phép");
+  }
+};
 
-export const deleteNgayLeServices = async (maNgayLe) => {
-    try{
-        await axiosInstance.delete(`/ngayle/${maNgayLe}`)
-    } catch  {
-        console.log('Lỗi, không lấy được dữ liệu')
-    }
-}
+export const deleteNghiPhepServices = async (maNghiPhep) => {
+  try {
+    await axiosInstance.delete(`/ngaynghi/${maNghiPhep}`);
+  } catch {
+    console.log("AXIOS! Lỗi xoá dữ liệu nghỉ phép");
+  }
+};
 
-export const updateNgayLeServices = async (duLieuNgayLe) => {
-    try {
-        const { maNgayLe, ...resDuLieuNgayLe } = duLieuNgayLe
-        await axiosInstance.put(`/ngayle/${maNgayLe}`, resDuLieuNgayLe)
-
-    } catch {
-        console.log('Lỗi, không tìm thấy dữ liệu')
-    }
-}
+export const updateNghiPhepServices = async (maNghiPhep, duLieuNghiPhep) => {
+  try {
+    await axiosInstance.put(`/ngaynghi/${maNghiPhep}`, duLieuNghiPhep);
+  } catch {
+    console.log("AXIOS! Lỗi cập nhật dữ liệu nghỉ phép");
+  }
+};

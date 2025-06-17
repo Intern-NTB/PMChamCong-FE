@@ -31,6 +31,7 @@ export const useChamCong = () => {
 
     useEffect(() => {
         getAllChamCong()
+        getAllChamCongDetail()
     }, []);
 
     return {

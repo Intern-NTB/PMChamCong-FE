@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getAllNghiPhepServices, updateNghiPhepServices, deleteNghiPhepServices, createNghiPhepServices } from "../../services/nghiphepServices";
+import { getAllNghiPhepServices, updateNghiPhepServices, deleteNghiPhepServices, createNghiPhepServices } from "../../services/ngaynghiServices";
 
 export const useNghiPhep = () => {
     const [danhSachNghiPhep, setDanhSachNghiPhep] = useState([])
