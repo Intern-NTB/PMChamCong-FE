@@ -88,8 +88,8 @@ export default function DoiTuongUuTienComponent() {
   const dataSource = danhSachDoiTuongUuTien.map((item) => ({
     maUuTien: item.maUuTien,
     tenUuTien: item.tenUuTien,
-    thoiGianVaoMuon: item.thoiGianVaoMuon,
-    thoiGianVeSom: item.thoiGianVeSom,
+    thoiGianBatDauCa: item.thoiGianBatDauCa,
+    thoiGianKetThucCa: item.thoiGianBatDauCa,
     thoiGianHieuLuc: item.thoiGianHieuLuc,
   }));
 
@@ -745,7 +745,7 @@ export default function DoiTuongUuTienComponent() {
               <Col xs={24} sm={12}>
                 <Form.Item
                   label="Thời gian vào ca"
-                  name="thoiGianVaoMuon"
+                  name="thoiGianBatDauCa"
                   rules={[
                     {
                       required: true,
@@ -763,7 +763,7 @@ export default function DoiTuongUuTienComponent() {
               <Col xs={24} sm={12}>
                 <Form.Item
                   label="Thời gian ra ca"
-                  name="thoiGianVeSom"
+                  name="thoiGianKetThucCa"
                   rules={[
                     {
                       required: true,
