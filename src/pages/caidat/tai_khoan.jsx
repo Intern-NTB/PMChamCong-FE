@@ -177,31 +177,6 @@ export default function TaiKhoanComponent() {
       render: (text) => <Text strong>{text}</Text>,
     },
     {
-      title: "Mật khẩu",
-      dataIndex: "matKhau",
-      key: "matKhau",
-      width: 150,
-      render: (text, record) => {
-        const isVisible = visiblePasswords[record.maNhanVien];
-        return (
-          <span>
-            <Text strong>{isVisible ? text : "••••••••"}</Text>
-            {isVisible ? (
-              <EyeInvisibleOutlined
-                style={{ marginLeft: 8, cursor: "pointer" }}
-                onClick={() => togglePasswordVisibility(record.maNhanVien)}
-              />
-            ) : (
-              <EyeOutlined
-                style={{ marginLeft: 8, cursor: "pointer" }}
-                onClick={() => togglePasswordVisibility(record.maNhanVien)}
-              />
-            )}
-          </span>
-        );
-      },
-    },
-    {
       title: "Thao Tác",
       key: "action",
       width: 120,
