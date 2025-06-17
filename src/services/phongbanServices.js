@@ -73,3 +73,13 @@ export const deletePhongBanServices = async (maPhongBan) => {
         throw error;
     }
 };
+
+export const getAllPhongBanDieuChinhServices = async () => {
+    try{
+        const response = await axiosInstance.get(`/phongban/dieuchinh`);
+        return response.data;
+    } catch (error) {
+        console.error('Lỗi khi lấy dữ liệu', error);
+        throw error;
+    }
+}
