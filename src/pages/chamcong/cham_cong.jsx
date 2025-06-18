@@ -44,6 +44,7 @@ import MyAlert from "../../component/ui/alert";
 import ModalTangCa from "./tangca/modal_tangcang";
 import ModalThemTangCa from "./tangca/modal_them_tang_ca";
 import ModalChinhSuaTangCa from "./tangca/modal_chinh_sua_tangca";
+import ModalChiTietChamCong from "./modal_chi_tiet_cham_cong";
 
 // ===== Styles =====
 
@@ -76,7 +77,7 @@ export default function GiaLapChamCong() {
     dayjs().startOf("day"),
     dayjs().endOf("day"),
   ]);
-  const [selectedMonth, setSelectedMonth] = useState(null); // State mới cho tháng
+  const [selectedMonth, setSelectedMonth] = useState(null);
 
   const [isMobile, setIsMobile] = useState(false);
   const [selectedDate, setSelectedDate] = useState({
@@ -93,6 +94,9 @@ export default function GiaLapChamCong() {
     useState(false);
   const [filteredData, setFilteredData] = useState([]);
 
+  const [isModalChiTietVisible, setIsModalChiTietVisible] = useState(false);
+  const [selectedNhanVien, setSelectedNhanVien] = useState(null);
+
   // Component
   const [alert, setAlert] = useState({
     visible: false,
@@ -100,7 +104,7 @@ export default function GiaLapChamCong() {
     message: "",
     description: "",
   });
-  const [form] = Form.useForm(); // Khởi tạo form ở đây nếu bạn định sử dụng nó trong component này
+  const [form] = Form.useForm();
 
   useEffect(() => {
     setReload(() => getAllChamCongDetail);
@@ -149,7 +153,6 @@ export default function GiaLapChamCong() {
       });
     }
 
-    // Lọc theo tìm kiếm (mã nhân viên và tên)
     if (searchText.trim()) {
       tempFilteredData = tempFilteredData.filter(
         (item) =>
@@ -283,18 +286,16 @@ export default function GiaLapChamCong() {
           };
           return priority[a.trangThai] - priority[b.trangThai];
         },
-
         filters: [
           { text: "Chưa hoàn tất", value: "Chưa hoàn tất" },
           { text: "Tăng ca", value: "Tăng ca" },
           { text: "Hoàn tất", value: "Hoàn tất" },
           { text: "Tăng ca hoàn tất", value: "Tăng ca hoàn tất" },
         ],
-
         onFilter: (value, record) => record.trangThai === value,
       },
     ],
-    [formatTime, isMobile]
+    [formatTime, isMobile, danhSachPhongBan]
   );
 
   const mobileColumns = useMemo(
@@ -303,11 +304,19 @@ export default function GiaLapChamCong() {
         title: "Thông tin",
         key: "info",
         render: (_, record) => (
-          <div style={{ padding: "8px 0" }}>
+          <div
+            style={{ padding: "8px 0" }}
+            onClick={() => {
+              setSelectedNhanVien(record);
+              setIsModalChiTietVisible(true);
+            }}
+          >
             <div style={{ fontWeight: "bold", marginBottom: "4px" }}>
               {dayjs(record.ngayChamCong).format("DD/MM/YYYY")}
             </div>
-            <div style={{ marginBottom: "4px" }}>{record.hoTen}</div>
+            <div style={{ marginBottom: "4px" }}>
+              {record.hoTen}
+            </div>
             <div style={{ fontSize: "12px", color: "#666" }}>
               {record.tenPhongBan}
             </div>
@@ -359,7 +368,6 @@ export default function GiaLapChamCong() {
   const statistics = useMemo(() => {
     const today = dayjs().format("DD/MM/YYYY");
 
-    // Lọc lại nhân viên & chấm công theo phòng ban nếu có chọn
     const nhanVienTheoPhongBan =
       selectedPhongBan && selectedPhongBan.phongBanValue
         ? danhSachNhanVien.filter(
@@ -401,10 +409,9 @@ export default function GiaLapChamCong() {
         )
     ).length;
 
-    // Lọc tổng số giờ tăng ca của tháng
     const tongSoGioTangCaThang = danhSachTangCa.reduce((total, tc) => {
       const ngayTangCa = dayjs(tc.ngayChamCongTangCa);
-      const thang = ngayTangCa.month(); // 0-11
+      const thang = ngayTangCa.month(); 
       const nam = ngayTangCa.year();
 
       const thangHienTai = (selectedMonth ?? dayjs()).month();
@@ -412,9 +419,9 @@ export default function GiaLapChamCong() {
 
       if (thang === thangHienTai && nam === namHienTai) {
         const gioBatDau = dayjs(tc.gioTangCaBatDau, "HH:mm");
-        const gioKetThuc = dayjs(tc.gioTangCaKetThuc, "HH:mm"); // Đã sửa lỗi chính tả
+        const gioKetThuc = dayjs(tc.gioTangCaKetThuc, "HH:mm");
 
-        const soPhutTangCa = gioKetThuc.diff(gioBatDau, "minute"); // Đã sửa lỗi chính tả
+        const soPhutTangCa = gioKetThuc.diff(gioBatDau, "minute");
         return total + (soPhutTangCa / 60 || 0);
       }
 
@@ -543,7 +550,6 @@ export default function GiaLapChamCong() {
             </Space>
           </Card>
 
-          {/* Thống kê - Mobile */}
           <Card
             title={`Thống kê hôm nay (${dayjs().format("DD/MM/YYYY")})`}
             size="small"
@@ -649,7 +655,7 @@ export default function GiaLapChamCong() {
               size="small"
               scroll={{ y: "calc(100vh - 300px)", sticky: true }}
               onChange={(pagination, filters) => {
-                const pb = filters.tenPhongBan?.[0]; // Lấy phòng ban đầu tiên được chọn
+                const pb = filters.tenPhongBan?.[0]; 
                 setSelectedPhongBan({
                   selected: true,
                   phongBanValue: pb.tenPhongBan || null,
@@ -666,10 +672,10 @@ export default function GiaLapChamCong() {
                 width: "100%",
                 height: "100%",
                 borderRadius: "12px",
-                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+                boxShadow: "0 4px 12px rgba",
                 border: "1px solid #f0f0f0",
               }}
-              styles={{ body: { padding: "24px" } }} // Đã sửa từ bodyStyle
+              styles={{ body: { padding: "24px" } }}
               title={
                 <div
                   style={{
@@ -728,7 +734,6 @@ export default function GiaLapChamCong() {
                   />
                 )}
 
-                {/* Action Buttons */}
                 <Row gutter={[16, 16]}>
                   <Col span={12}>
                     <Button
@@ -778,7 +783,6 @@ export default function GiaLapChamCong() {
                   </Col>
                 </Row>
 
-                {/* Quick Stats (Optional) */}
                 <div
                   style={{
                     background: "#f8fafc",
@@ -885,11 +889,19 @@ export default function GiaLapChamCong() {
                 }}
                 scroll={{ y: "calc(100vh - 300px)", sticky: true }}
                 onChange={(pagination, filters) => {
-                  const pb = filters.tenPhongBan?.[0]; // Lấy phòng ban đầu tiên được chọn
+                  const pb = filters.tenPhongBan?.[0]; 
                   setSelectedPhongBan({
                     selected: true,
                     phongBanValue: pb || null,
                   });
+                }}
+                onRow={(record, rowIndex) => {
+                  return {
+                    onClick: (event) => {
+                      setSelectedNhanVien(record); 
+                      setIsModalChiTietVisible(true); 
+                    },
+                  };
                 }}
               />
             </Card>
@@ -912,7 +924,17 @@ export default function GiaLapChamCong() {
         updateTangCa={updateTangCa}
         deleteTangCa={deleteTangCa}
         danhSachPhongBan={danhSachPhongBan}
-        formInstance={form} 
+        formInstance={form}
+      />
+
+      <ModalChiTietChamCong
+        isVisible={isModalChiTietVisible}
+        onCancel={() => {
+          setIsModalChiTietVisible(false);
+          setSelectedNhanVien(null);
+        }}
+        selectedNhanVien={selectedNhanVien}
+        danhSachChamCongChiTiet={danhSachChamCongChiTiet}
       />
     </div>
   );
