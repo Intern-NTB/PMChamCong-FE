@@ -64,7 +64,7 @@ export default function DoiTuongUuTienComponent() {
 
   const api = useAppNotification();
   const { danhSachNhanVien, updateNhanVien } = useNhanVien();
-  const { danhSachPhongBan } = usePhongBan();
+  const { danhSachPhongBan, loading } = usePhongBan();
   const { danhSachLichSuUuTien, updateLichSuUuTien, deleteLichSuUuTien } =
     useLichSuUuTien();
   const dataSourceLichSuUuTien = danhSachLichSuUuTien.map((lsut) => {
@@ -85,12 +85,21 @@ export default function DoiTuongUuTienComponent() {
     };
   });
   // Data source mapping cho đối tượng ưu tiên
-  const dataSource = danhSachDoiTuongUuTien.map((item) => ({
-    maUuTien: item.maUuTien,
-    tenUuTien: item.tenUuTien,
-    thoiGianBatDauCa: item.thoiGianBatDauCa,
-    thoiGianKetThucCa: item.thoiGianBatDauCa,
-    thoiGianHieuLuc: item.thoiGianHieuLuc,
+  const dataSource = danhSachDoiTuongUuTien.map((item) => {
+    const phongBan = danhSachPhongBan.find(pb => pb.maPhongBan === item.maPhongBan);
+    return {
+      maUuTien: item.maUuTien,
+      tenUuTien: item.tenUuTien,
+      thoiGianBatDauCa: item.thoiGianBatDauCa,
+      thoiGianKetThucCa: item.thoiGianKetThucCa,
+      thoiGianHieuLuc: item.thoiGianHieuLuc,
+      maPhongBan: item.maPhongBan,
+      tenPhongBan: phongBan?.tenPhongBan || "Không xác định"
+    };
+  });
+  const datasourcePhongBan = danhSachPhongBan.map((pb) => ({
+    maPhongBans: pb.maPhongBan,
+    tenPhongBans: pb.tenPhongBan
   }));
 
   // Hàm lọc dữ liệu cho tìm kiếm lịch sử
@@ -126,9 +135,9 @@ export default function DoiTuongUuTienComponent() {
       const formatedValues = {
         ...values,
         maUuTien: editingId,
-        thoiGianVaoMuon: values.thoiGianVaoMuon?.format("HH:mm:ss"),
-        thoiGianVeSom: values.thoiGianVeSom?.format("HH:mm:ss"),
-        thoiGianHieuLuc: Number(values.thoiGianHieuLuc),
+        thoiGianBatDauCa: values.thoiGianBatDauCa?.format("HH:mm:ss"),
+        thoiGianKetThucCa: values.thoiGianKetThucCa?.format("HH:mm:ss"),
+        thoiGianHieuLuc: values.thoiGianHieuLuc,
         phongBan: values.phongBan,
       };
       await updateDoiTuongUuTien(formatedValues);
@@ -136,8 +145,8 @@ export default function DoiTuongUuTienComponent() {
     } else {
       const formatedValues = {
         ...values,
-        thoiGianVaoMuon: values.thoiGianVaoMuon?.format("HH:mm:ss"),
-        thoiGianVeSom: values.thoiGianVeSom?.format("HH:mm:ss"),
+        thoiGianBatDauCa: values.thoiGianBatDauCa?.format("HH:mm:ss"),
+        thoiGianKetThucCa: values.thoiGianKetThucCa?.format("HH:mm:ss"),
         phongBan: values.phongBan,
       };
       await createDoiTuongUuTien(formatedValues);
@@ -204,14 +213,14 @@ export default function DoiTuongUuTienComponent() {
       setEditingId(record.maUuTien);
       form.setFieldsValue({
         tenUuTien: record.tenUuTien,
-        thoiGianVaoMuon: record.thoiGianVaoMuon
-          ? dayjs(record.thoiGianVaoMuon, "HH:mm:ss")
+        thoiGianBatDauCa: record.thoiGianBatDauCa
+          ? dayjs(record.thoiGianBatDauCa, "HH:mm:ss")
           : null,
-        thoiGianVeSom: record.thoiGianVeSom
-          ? dayjs(record.thoiGianVeSom, "HH:mm:ss")
+        thoiGianKetThucCa: record.thoiGianKetThucCa
+          ? dayjs(record.thoiGianKetThucCa, "HH:mm:ss")
           : null,
         thoiGianHieuLuc: record.thoiGianHieuLuc,
-        phongBan: record.phongBan,
+        maPhongBan: record.maPhongBan,
       });
       setIsModalVisible(true);
     },
@@ -295,8 +304,8 @@ export default function DoiTuongUuTienComponent() {
     },
     {
       title: "Giờ vào",
-      dataIndex: "thoiGianVaoMuon",
-      key: "thoiGianVaoMuon",
+      dataIndex: "thoiGianBatDauCa",
+      key: "thoiGianBatDauCa",
       width: 150,
       render: (text) => {
         const time = dayjs(text, "HH:mm:ss", true);
@@ -312,8 +321,8 @@ export default function DoiTuongUuTienComponent() {
     },
     {
       title: "Giờ ra",
-      dataIndex: "thoiGianVeSom",
-      key: "thoiGianVeSom",
+      dataIndex: "thoiGianKetThucCa",
+      key: "thoiGianKetThucCa",
       width: 150,
       render: (text) => {
         const time = dayjs(text, "HH:mm:ss", true);
@@ -337,8 +346,8 @@ export default function DoiTuongUuTienComponent() {
     },
     {
       title: "Phòng ban",
-      dataIndex: "phongBan",
-      key: "phongBan",
+      dataIndex: "tenPhongBan",
+      key: "tenPhongBan",
       width: 150,
       //sorter: (a, b) => a.thoiGianHieuLuc - b.thoiGianHieuLuc,
     },
@@ -703,20 +712,22 @@ export default function DoiTuongUuTienComponent() {
               <Col xs={24} sm={12}>
                 <Form.Item
                   label="Phòng ban"
-                  name="phongBan"
+                  name="maPhongBan"
                   rules={[
                     {
                       required: true,
                       message: "Vui lòng chọn phòng ban",
                     },
                   ]}>
-                  <Select placeholder="Chọn phòng ban" style={{ width: "100%" }}>
-                    {danhSachPhongBan.map((pb) => (
-                      <Select.Option key={pb.maPhongBan} value={pb.maPhongBan}>
-                        {pb.tenPhongBan}
-                      </Select.Option>
-                    ))}
-                  </Select>
+                  <Select
+                    placeholder="Chọn phòng ban"
+                    size="large"
+                    loading={loading}
+                    options={datasourcePhongBan.map((item) => ({
+                      value: item.maPhongBans,
+                      label: item.tenPhongBans,
+                    }))}
+                  />
                 </Form.Item>
               </Col>
               <Col xs={24} sm={12}>
