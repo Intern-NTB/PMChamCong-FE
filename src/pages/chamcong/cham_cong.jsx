@@ -182,7 +182,7 @@ export default function GiaLapChamCong() {
 
   const formatTime = useCallback((text) => {
     // Nếu text là null, undefined, chuỗi rỗng, "N/A" HOẶC "Invalid Date", trả về "00:00:00"
-    if (!text || text === "N/A" || text === "Invalid Date") return "00:00:00"; 
+    if (!text || text === "N/A" || text === "Invalid Date") return "Chưa chấm công ra"; 
     if (typeof text === "string" && text.includes("T")) {
       const timePart = text.split("T")[1];
       return timePart.split(".")[0];
