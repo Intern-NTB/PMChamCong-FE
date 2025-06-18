@@ -69,6 +69,7 @@ export const useCaLam = () => {
   useEffect(() => {
     getAllCaLam();
   }, []);
+  
   useEffect(() => {
     if (isUpdatedCaLam || isCreatedCaLam || isDeletedCaLam) {
       getAllCaLam();

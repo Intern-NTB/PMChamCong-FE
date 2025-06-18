@@ -26,6 +26,7 @@ import {
   Checkbox,
   Tooltip,
   Tag,
+  Alert,
 } from "antd";
 import {
   CloseCircleOutlined,
@@ -36,6 +37,7 @@ import {
   DollarOutlined,
   CheckCircleOutlined,
   ExclamationCircleOutlined, // Import for Modal.confirm
+  WarningOutlined,
 } from "@ant-design/icons";
 
 // ===== STYLES ======
@@ -45,6 +47,10 @@ import "./nghi_phep.css"; // Đảm bảo file CSS này tồn tại và được
 import { useNghiPhep } from "../../component/hooks/useNghiPhep";
 import { useNhanVien } from "../../component/hooks/useNhanVien";
 import { useAppNotification } from "../../component/ui/notification";
+import { useNgayPhep } from "../../component/hooks/useNgayPhep";
+import { useHeThong } from "../../component/hooks/useHeThong";
+import { usePhongBan } from "../../component/hooks/usePhongBan";
+import { useCaLam } from "../../component/hooks/useCaLam";
 
 // ===== CONTEXT =====
 import { ReloadContext } from "../../context/reloadContext";
@@ -87,15 +93,24 @@ export default function NghiPhep() {
     createNghiPhep,
   } = useNghiPhep();
   const { danhSachNhanVien } = useNhanVien();
+  const { danhSachNgayPhep, getAllNgayPhep } = useNgayPhep();
+  const { danhSachHeThong } = useHeThong();
+  const { danhSachPhongBan } = usePhongBan();
+  const { danhSachCaLam } = useCaLam();
 
   const api = useAppNotification();
-  const [selectedMonth, setSelectedMonth] = useState(null);
+  const [selectedMonth, setSelectedMonth] = useState(dayjs());
   const [searchValue, setSearchValue] = useState("");
   const [dateRange, setDateRange] = useState([null, null]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingRecord, setEditingRecord] = useState(null);
   const [disableTinhLuong, setDisableTinhLuong] = useState(false);
   const [isPartialDay, setIsPartialDay] = useState(false);
+  const [selectedNhanVien, setSelectedNhanVien] = useState(null);
+
+  const [leaveWarning, setLeaveWarning] = useState("");
+  const [showSplitRecordModal, setShowSplitRecordModal] = useState(false);
+  const [soNgayPhepConLai, setSoNgayPhepConLai] = useState(0);
 
   // CONTEXT
   const { setReload } = useContext(ReloadContext);
@@ -107,10 +122,268 @@ export default function NghiPhep() {
     setReload(() => getAllNghiPhep);
   }, []);
 
+  // Hàm để tính số ngày phép còn lại
+  useEffect(() => {
+    const ngayPhep = danhSachNgayPhep.find(
+      (np) => np.maNhanVien === selectedNhanVien
+    );
+    setSoNgayPhepConLai(ngayPhep ? ngayPhep.ngayPhepConLai : 0);
+  }, [danhSachNgayPhep, selectedNhanVien]);
+
+  // Hàm tính số ngày nghỉ dựa trên ngày bắt đầu và kết thúc
+  const calculateLeaveDays = (
+    startDate,
+    endDate,
+    isPartial = false,
+    soGioLamViec
+  ) => {
+    if (!startDate || !endDate) return 0;
+    if (isPartial) {
+      // Tính theo giờ cho nghỉ giữa ngày
+      const start = dayjs(startDate);
+      const end = dayjs(endDate);
+
+      // Kiểm tra nếu cùng ngày
+      if (start.isSame(end, "day")) {
+        const hoursOff = end.diff(start, "hour", true);
+        // Nếu dưới 50% số giờ làm việc (4.5 giờ) thì tính 0.5 ngày, ngược lại 1 ngày
+        return hoursOff < soGioLamViec * 0.5 ? 0.5 : 1;
+      } else {
+        // Nếu khác ngày, tính số ngày đầy đủ
+        return end.diff(start, "day") + 1;
+      }
+    } else {
+      // Tính theo ngày đầy đủ
+      const start = dayjs(startDate).startOf("day");
+      const end = dayjs(endDate).startOf("day");
+      return end.diff(start, "day") + 1;
+    }
+  };
+
+  const laySoGioLamViecTheoCa = (maNhanVien) => {
+    const caLamNhanVien = dataSourceNghiPhep.find(
+      (nhanVienNghiPhep) => nhanVienNghiPhep.maNhanVien === maNhanVien
+    );
+    if (caLamNhanVien) {
+      return caLamNhanVien.soGioLamViec;
+    } else {
+      return 8; // Mặc định là 8 giờ nếu không tìm thấy ca làm
+    }
+  };
+
+  const isCanhBaoSapHetHan = (ngayBatDau, trangThaiPheDuyet) => {
+    if (
+      !danhSachHeThong ||
+      danhSachHeThong.length === 0 ||
+      !danhSachHeThong[0].nguongThoiGianPheDuyetNgayNghi
+    ) {
+      return;
+    }
+    if (trangThaiPheDuyet === "Đã duyệt" || trangThaiPheDuyet === "Từ chối")
+      return;
+
+    const parsedNgayBatDau = dayjs(ngayBatDau, "DD/MM/YYYY HH:mm:ss");
+    if (!parsedNgayBatDau.isValid()) {
+      return false;
+    }
+    const diffDays = dayjs().diff(parsedNgayBatDau, "day") + 1; // Số ngày còn lại
+    // Nếu
+    if (diffDays <= danhSachHeThong[0].nguongThoiGianPheDuyetNgayNghi - 2) {
+      return 1;
+    } else if (diffDays > danhSachHeThong[0].nguongThoiGianPheDuyetNgayNghi) {
+      return 2;
+    } else {
+      return 0;
+    }
+  };
+
+  // Hàm kiểm tra và cảnh báo về số ngày phép
+  const checkLeaveBalance = (maNhanVien, leaveDays, isTinhPhep) => {
+    if (!isTinhPhep || !maNhanVien) return "";
+
+    if (leaveDays > soNgayPhepConLai) {
+      return `Số ngày nghỉ có phép (${leaveDays}) vượt quá số ngày phép còn lại (${soNgayPhepConLai}). Bạn có muốn tách thành 2 bản ghi: ${soNgayPhepConLai} ngày có phép và ${
+        leaveDays - soNgayPhepConLai
+      } ngày không phép?`;
+    }
+
+    return "";
+  };
+
+  // Xử lý khi thay đổi ngày trong form
+  const handleDateChange = async () => {
+    const values = form.getFieldsValue();
+    const { ngayBatDau, ngayKetThuc, maNhanVien, tinhPhep } = values;
+
+    // Lấy số giờ làm việc theo ca của nhân viên
+    const soGioLamViec = laySoGioLamViecTheoCa(maNhanVien);
+
+    if (ngayBatDau && ngayKetThuc && maNhanVien) {
+      const leaveDays = calculateLeaveDays(
+        ngayBatDau,
+        ngayKetThuc,
+        isPartialDay,
+        soGioLamViec
+      );
+      if (tinhPhep) {
+        const warning = checkLeaveBalance(maNhanVien, leaveDays, true);
+        setLeaveWarning(warning);
+      }
+    }
+  };
+
+  // Hàm validation cho ngày kết thúc
+  const validateEndDate = (_, value) => {
+    const startDate = form.getFieldValue("ngayBatDau");
+
+    if (!value || !startDate) {
+      return Promise.resolve();
+    }
+
+    if (value.isBefore(startDate)) {
+      return Promise.reject(
+        new Error("Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu!")
+      );
+    }
+
+    return Promise.resolve();
+  };
+
+  // Hàm validation cho ngày bắt đầu (để re-validate ngày kết thúc khi thay đổi)
+  const validateStartDate = (_, value) => {
+    const endDate = form.getFieldValue("ngayKetThuc");
+
+    // Re-validate ngày kết thúc nếu đã có giá trị
+    if (endDate && value) {
+      form.validateFields(["ngayKetThuc"]);
+    }
+
+    return Promise.resolve();
+  };
+
+  const validateDateRangeUniqueDB = async () => {
+    const startDate = form.getFieldValue("ngayBatDau");
+    const endDate = form.getFieldValue("ngayKetThuc");
+    if (selectedNhanVien) {
+      const start = dayjs(startDate);
+      const end = dayjs(endDate);
+
+      const isOverlapped = dataSourceNghiPhep.some((record) => {
+        if (editingRecord && record.maNghiPhep === editingRecord) {
+          return false;
+        }
+
+        const rStart = dayjs(record.ngayBatDau, "DD/MM/YYYY HH:mm:ss");
+        const rEnd = dayjs(record.ngayKetThuc, "DD/MM/YYYY HH:mm:ss");
+
+        return (
+          record.maNhanVien === selectedNhanVien &&
+          (start.isBetween(rStart, rEnd, "[]") ||
+            end.isBetween(rStart, rEnd, "[]") ||
+            rStart.isBetween(start, end, "[]") ||
+            rEnd.isBetween(start, end, "[]"))
+        );
+      });
+
+      if (isOverlapped) {
+        return Promise.reject(
+          new Error("Khoảng thời gian nghỉ đã bị trùng với lịch nghỉ trước đó!")
+        );
+      }
+    }
+
+    return Promise.resolve();
+  };
+
+  // Hàm tạo 2 bản ghi khi tách phép
+  const handleSplitRecord = async () => {
+    const values = form.getFieldsValue();
+
+    try {
+      // **FIX**: Tính toán ngày chính xác cho việc tách bản ghi
+      const ngayBatDau = values.ngayBatDau;
+      const ngayKetThuc = values.ngayKetThuc;
+
+      // Ngày kết thúc của bản ghi đầu tiên (có phép)
+      const ngayKetThucBanGhi1 = ngayBatDau
+        .clone()
+        .add(soNgayPhepConLai - 1, "day");
+      // Ngày bắt đầu của bản ghi thứ hai (không phép)
+      const ngayBatDauBanGhi2 = ngayBatDau.clone().add(soNgayPhepConLai, "day");
+
+      // Tạo bản ghi đầu tiên (có phép)
+      const firstRecord = {
+        ngayBatDau: isPartialDay
+          ? ngayBatDau.format("YYYY-MM-DD HH:mm:ss")
+          : ngayBatDau.startOf("day").format("YYYY-MM-DD HH:mm:ss"),
+        ngayKetThuc: isPartialDay
+          ? ngayKetThucBanGhi1.format("YYYY-MM-DD HH:mm:ss")
+          : ngayKetThucBanGhi1.endOf("day").format("YYYY-MM-DD HH:mm:ss"),
+        tinhLuong: true,
+        tinhPhep: true,
+        liDo: values.liDo + " (Có phép)",
+        trangThaiPheDuyet: values.trangThaiPheDuyet || "Chờ duyệt",
+        maNhanVien: values.maNhanVien,
+      };
+
+      // Tạo bản ghi thứ hai (không phép)
+      const secondRecord = {
+        ngayBatDau: isPartialDay
+          ? ngayBatDauBanGhi2.format("YYYY-MM-DD HH:mm:ss")
+          : ngayBatDauBanGhi2.startOf("day").format("YYYY-MM-DD HH:mm:ss"),
+        ngayKetThuc: isPartialDay
+          ? ngayKetThuc.format("YYYY-MM-DD HH:mm:ss")
+          : ngayKetThuc.endOf("day").format("YYYY-MM-DD HH:mm:ss"),
+        tinhLuong: false,
+        tinhPhep: false,
+        liDo: values.liDo + " (Không phép)",
+        trangThaiPheDuyet: values.trangThaiPheDuyet || "Chờ duyệt",
+        maNhanVien: values.maNhanVien,
+      };
+
+      if (soNgayPhepConLai <= 0) {
+        await createNghiPhep(secondRecord);
+        api.success({
+          message: "Thành công",
+          description:
+            "Đã tạo bản ghi nghỉ phép không lương vì đã hết ngày phép.",
+        });
+        return;
+      }
+
+      await createNghiPhep(firstRecord);
+      await getAllNgayPhep();
+
+      api.success({
+        message: "Thành công",
+        description: "Đã tạo 2 bản ghi nghỉ phép (có phép và không phép)",
+      });
+
+      setIsModalVisible(false);
+      setShowSplitRecordModal(false);
+      setLeaveWarning("");
+      setIsPartialDay(false);
+    } catch (error) {
+      api.error({
+        message: "Có lỗi xảy ra",
+        description: error.message || "Không thể tạo bản ghi nghỉ phép",
+      });
+    }
+  };
+
   const dataSourceNghiPhep = danhSachNghiPhep.map((np) => {
     const nhanVien = danhSachNhanVien.find(
       (nv) => nv.maNhanVien === np.maNhanVien
     );
+
+    const phongBanFind = danhSachPhongBan.find(
+      (pb) => pb.maPhongBan === nhanVien?.maPhongBan
+    );
+
+    const caLamFind = danhSachCaLam.find(
+      (cl) => cl.maCa === phongBanFind?.maCa || 1 // Mặc định là ca 1 nếu không tìm thấy
+    );
+
     return {
       maNghiPhep: np.maNghiPhep,
       ngayBatDau: np.ngayBatDau,
@@ -121,71 +394,14 @@ export default function NghiPhep() {
       trangThaiPheDuyet: np.trangThaiPheDuyet,
       maNhanVien: np.maNhanVien,
       hoTen: nhanVien ? nhanVien.hoTen : "Không xác định",
+      soGioLamViec: caLamFind?.soGioLamViec || 0,
     };
   });
 
   const [form] = Form.useForm();
 
-  const statistics = useMemo(() => {
-    if (!dataSourceNghiPhep.length)
-      return { total: 0, tinhLuong: 0, tinhPhep: 0 };
-
-    const filtered = dataSourceNghiPhep.filter((item) => {
-      const start = parseDate(item.ngayBatDau);
-      const end = parseDate(item.ngayKetThuc);
-
-      // Kiểm tra validity trước khi so sánh
-      if (!start || !end || !start.isValid() || !end.isValid()) return false;
-
-      if (dateRange && dateRange[0] && dateRange[1]) {
-        return (
-          start.isBefore(dateRange[1].endOf("day")) &&
-          end.isAfter(dateRange[0].startOf("day"))
-        );
-      } else if (selectedMonth) {
-
-        const itemStartDate = parseDate(item.ngayBatDau);
-        return itemStartDate.isSame(selectedMonth, 'month');
-      }
-
-      return true;
-    });
-
-    return {
-      total: filtered.length,
-      tinhLuong: filtered.filter((i) => i.tinhLuong).length,
-      tinhPhep: filtered.filter((i) => i.tinhPhep).length,
-    };
-  }, [dataSourceNghiPhep, dateRange]);
-  // Xử lý khi thay đổi checkbox "Nghỉ giữa ngày"
-  const handlePartialDayChange = (e) => {
-    const checked = e.target.checked;
-    setIsPartialDay(checked);
-
-    if (!checked) {
-      // Nếu bỏ tick "nghỉ giữa ngày", set về thời gian mặc định
-      const currentValues = form.getFieldsValue();
-      if (currentValues.ngayBatDau) {
-        form.setFieldsValue({
-          ngayBatDau: dayjs(currentValues.ngayBatDau).startOf("day"), // 00:00:00
-        });
-      }
-      if (currentValues.ngayKetThuc) {
-        form.setFieldsValue({
-          ngayKetThuc: dayjs(currentValues.ngayKetThuc).endOf("day"), // 23:59:59
-        });
-      }
-    }
-  };
-  
-  const onMonthChange = (value) => {
-    setSelectedMonth(value);
-    console.log("Chọn tháng:", value ? value.format("MM/YYYY") : "Tất cả");
-  };
-
-  // Filter list - FIX logic lọc
+  // Filter list
   const filteredList = useMemo(() => {
-
     return dataSourceNghiPhep.filter((item) => {
       const maNhanVien = item.maNhanVien
         ? String(item.maNhanVien).toLowerCase()
@@ -234,36 +450,166 @@ export default function NghiPhep() {
     });
   }, [dataSourceNghiPhep, searchValue, dateRange, selectedMonth]);
 
+  const statistics = useMemo(() => {
+    if (!filteredList.length) return { total: 0, tinhLuong: 0, tinhPhep: 0 };
+
+    return {
+      total: filteredList.length,
+      tinhLuong: filteredList.filter((i) => i.tinhLuong).length,
+      tinhPhep: filteredList.filter((i) => i.tinhPhep).length,
+    };
+  }, [filteredList]);
+
+  // Xử lý khi thay đổi checkbox "Nghỉ giữa ngày"
+  const handlePartialDayChange = (e) => {
+    const checked = e.target.checked;
+    setIsPartialDay(checked);
+
+    if (!checked) {
+      // Nếu bỏ tick "nghỉ giữa ngày", set về thời gian mặc định
+      const currentValues = form.getFieldsValue();
+      if (currentValues.ngayBatDau) {
+        form.setFieldsValue({
+          ngayBatDau: dayjs(currentValues.ngayBatDau).startOf("day"), // 00:00:00
+        });
+      }
+      if (currentValues.ngayKetThuc) {
+        form.setFieldsValue({
+          ngayKetThuc: dayjs(currentValues.ngayKetThuc).endOf("day"), // 23:59:59
+        });
+      }
+    }
+    // Tính lại số ngày khi thay đổi loại nghỉ
+    setTimeout(handleDateChange, 100);
+  };
+
+  const onMonthChange = (value) => {
+    setSelectedMonth(value);
+  };
+
   const showAddModal = () => {
     setEditingRecord(null);
     form.resetFields();
     setIsModalVisible(true);
+    setLeaveWarning("");
+    setSelectedNhanVien(null);
+    setIsPartialDay(false);
+  };
+
+  const isPartialDayRecord = (ngayBatDau, ngayKetThuc) => {
+    const start = parseDate(ngayBatDau);
+    const end = parseDate(ngayKetThuc);
+
+    if (!start || !end) return false;
+
+    // Kiểm tra nếu thời gian bắt đầu không phải 00:00:00 hoặc kết thúc không phải 23:59:59
+    const isStartNotMidnight =
+      start.hour() !== 0 || start.minute() !== 0 || start.second() !== 0;
+    const isEndNotEndOfDay =
+      end.hour() !== 23 || end.minute() !== 59 || end.second() !== 59;
+
+    return isStartNotMidnight || isEndNotEndOfDay;
   };
 
   const showEditModal = (record) => {
+    setDisableTinhLuong(false);
+
+    if (record.tinhPhep) {
+      setDisableTinhLuong(true);
+    }
+
+    console.warn("Edit:", record);
+
+    // Kiểm tra xem record có phải nghỉ giữa ngày không
+    const isPartialRecord = isPartialDayRecord(
+      record.ngayBatDau,
+      record.ngayKetThuc
+    );
+    setIsPartialDay(isPartialRecord);
+
     setEditingRecord(record.maNghiPhep);
+
+    // Parse ngày và set vào form
+    const startDate = parseDate(record.ngayBatDau);
+    const endDate = parseDate(record.ngayKetThuc);
+
     form.setFieldsValue({
       ...record,
-      ngayBatDau: parseDate(record.ngayBatDau),
-      ngayKetThuc: parseDate(record.ngayKetThuc),
+      ngayBatDau: startDate,
+      ngayKetThuc: endDate,
+      nghiGiuaNgay: isPartialRecord, // Set checkbox dựa trên dữ liệu
     });
-    setIsModalVisible(true);
-  };
 
+    setIsModalVisible(true);
+    setSelectedNhanVien(record.maNhanVien);
+  };
   const handleOk = async () => {
     try {
-      await form.validateFields(); 
-      const values = form.getFieldsValue(); 
+      // Validate tất cả các field trước
+      const values = await form.validateFields();
+      console.warn("Edit:", values);
+
+      // Log để debug
+      console.log("Form values:", values);
+
+      // Kiểm tra các field bắt buộc
+      if (!values.maNhanVien) {
+        api.error({
+          message: "Lỗi validation",
+          description: "Vui lòng chọn nhân viên",
+        });
+        return;
+      }
+
+      if (!values.ngayBatDau || !values.ngayKetThuc) {
+        api.error({
+          message: "Lỗi validation",
+          description: "Vui lòng chọn đầy đủ ngày bắt đầu và kết thúc",
+        });
+        return;
+      }
+
+      if (!values.liDo || values.liDo.trim() === "") {
+        api.error({
+          message: "Lỗi validation",
+          description: "Vui lòng nhập lý do nghỉ",
+        });
+        return;
+      }
+
+      // Kiểm tra cảnh báo về số ngày phép
+      if (leaveWarning && !editingRecord) {
+        setShowSplitRecordModal(true);
+        return;
+      }
+
+      let ngayBatDauFormatted, ngayKetThucFormatted;
+      const isPartialFromForm = values.nghiGiuaNgay || isPartialDay;
+      if (isPartialFromForm) {
+        // Nghỉ giữa ngày - giữ nguyên thời gian người dùng chọn
+        ngayBatDauFormatted = values.ngayBatDau.format("YYYY-MM-DD HH:mm:ss");
+        ngayKetThucFormatted = values.ngayKetThuc.format("YYYY-MM-DD HH:mm:ss");
+      } else {
+        // Nghỉ nguyên ngày - đảm bảo 00:00:00 và 23:59:59
+        ngayBatDauFormatted = values.ngayBatDau
+          .startOf("day")
+          .format("YYYY-MM-DD HH:mm:ss");
+        ngayKetThucFormatted = values.ngayKetThuc
+          .endOf("day")
+          .format("YYYY-MM-DD HH:mm:ss");
+      }
 
       const dataToSave = {
-        ngayBatDau: values.ngayBatDau.format("YYYY-MM-DD"),
-        ngayKetThuc: values.ngayKetThuc.format("YYYY-MM-DD"),
+        ngayBatDau: ngayBatDauFormatted,
+        ngayKetThuc: ngayKetThucFormatted,
         tinhLuong: values.tinhLuong || false,
         tinhPhep: values.tinhPhep || false,
-        liDo: values.liDo,
+        liDo: values.liDo.trim(),
         trangThaiPheDuyet: values.trangThaiPheDuyet || "Chờ duyệt",
         maNhanVien: values.maNhanVien,
       };
+      // Log data để debug
+      console.log("Data to save:", dataToSave);
 
       if (editingRecord) {
         try {
@@ -272,9 +618,12 @@ export default function NghiPhep() {
             message: "Cập nhật nghỉ phép thành công",
           });
           setIsModalVisible(false);
-        } catch {
+          await getAllNgayPhep();
+        } catch (error) {
+          console.error("Update error:", error);
           api.error({
             message: "Cập nhật nghỉ phép không thành công",
+            description: error.message || "Có lỗi xảy ra khi cập nhật",
           });
         }
       } else {
@@ -286,20 +635,32 @@ export default function NghiPhep() {
             description: "Đã thêm thành công đơn nghỉ phép",
           });
           setIsModalVisible(false);
+          await getAllNgayPhep();
         } catch (error) {
+          console.error("Create error:", error);
           api.error({
             message: "Có lỗi xảy ra",
             description: error.message || "Đã xảy ra lỗi khi tạo mới",
           });
         }
       }
-    }
-    // eslint-disable-next-line no-unused-vars
-    catch (errorInfo) { 
-      api.error({
-        message: "Lỗi xác thực",
-        description: "Vui lòng kiểm tra lại các trường đã nhập.",
-      });
+    } catch (errorInfo) {
+      console.error("Validation failed:", errorInfo);
+
+      // Xử lý lỗi validation cụ thể
+      if (errorInfo.errorFields && errorInfo.errorFields.length > 0) {
+        const firstError = errorInfo.errorFields[0];
+        api.error({
+          message: "Lỗi xác thực",
+          description:
+            firstError.errors[0] || "Vui lòng kiểm tra lại các trường đã nhập.",
+        });
+      } else {
+        api.error({
+          message: "Lỗi xác thực",
+          description: "Vui lòng kiểm tra lại các trường đã nhập.",
+        });
+      }
     }
   };
 
@@ -311,6 +672,7 @@ export default function NghiPhep() {
         message: "Xoá dữ liệu thành công",
         description: "Đã xoá đơn nghỉ phép",
       });
+      await getAllNgayPhep();
     } catch {
       api.error({
         message: "Xoá dữ liệu không thành công",
@@ -533,6 +895,20 @@ export default function NghiPhep() {
       </Card>
 
       <Table
+        rowClassName={(record) => {
+          const canhBao = isCanhBaoSapHetHan(
+            record.ngayBatDau,
+            record.trangThaiPheDuyet
+          );
+
+          return canhBao === 0
+            ? "row-canh-bao"
+            : canhBao === 2
+            ? "row-qua-han"
+            : canhBao === 1
+            ? "row-cho-duyet"
+            : "";
+        }}
         columns={columns}
         dataSource={filteredList}
         rowKey={(record) => record.maNghiPhep}
@@ -540,13 +916,24 @@ export default function NghiPhep() {
         sticky
         className="custom-header-table"
       />
+
+      {/* Modal chính cho tạo/sữa đơn nghỉ phép */}
       <Modal
         title={editingRecord ? "Sửa đơn nghỉ phép" : "Tạo đơn xin nghỉ"}
         open={isModalVisible}
-        onCancel={() => setIsModalVisible(false)}
+        onCancel={() => {
+          setIsPartialDay(false);
+          setDisableTinhLuong(false);
+          setIsModalVisible(false);
+          setSelectedNhanVien(null);
+          setLeaveWarning("");
+          setIsPartialDay(false);
+        }}
         onOk={handleOk}
         okText="Lưu"
         cancelText="Hủy"
+        width={600}
+        closable={false}
       >
         <Form
           form={form}
@@ -560,14 +947,28 @@ export default function NghiPhep() {
           <Form.Item
             name="maNhanVien"
             label="Mã nhân viên"
-            rules={[{ required: true, message: "Vui lòng nhập mã nhân viên!" }]}
+            rules={[
+              {
+                required: true,
+                message: "Vui lòng chọn nhân viên!",
+              },
+            ]}
           >
             <Select
               disabled={editingRecord ? true : false}
+              placeholder="Chọn nhân viên"
+              showSearch
+              filterOption={(input, option) =>
+                option?.label?.toLowerCase().includes(input.toLowerCase())
+              }
               options={danhSachNhanVien.map((nv) => ({
                 value: nv.maNhanVien,
                 label: `${nv.hoTen} - ${nv.cmnd}`,
               }))}
+              onChange={(value) => {
+                setSelectedNhanVien(value);
+                setTimeout(handleDateChange, 100);
+              }}
             />
           </Form.Item>
 
@@ -581,7 +982,30 @@ export default function NghiPhep() {
           <Form.Item
             name="ngayBatDau"
             label="Ngày bắt đầu"
-            rules={[{ required: true, message: "Vui lòng chọn ngày bắt đầu!" }]}
+            rules={[
+              {
+                required: true,
+                message: "Vui lòng chọn ngày bắt đầu!",
+              },
+              {
+                validator: (_, value) => {
+                  if (!value) {
+                    return Promise.resolve();
+                  }
+
+                  const endDate = form.getFieldValue("ngayKetThuc");
+                  if (endDate && value.isAfter(endDate)) {
+                    return Promise.reject(
+                      new Error(
+                        "Ngày bắt đầu phải nhỏ hơn hoặc bằng ngày kết thúc!"
+                      )
+                    );
+                  }
+
+                  return Promise.resolve();
+                },
+              },
+            ]}
           >
             <DatePicker
               placeholder="Chọn ngày bắt đầu"
@@ -590,10 +1014,10 @@ export default function NghiPhep() {
               showTime={isPartialDay ? { format: "HH:mm:ss" } : false}
               onChange={(date) => {
                 if (date && !isPartialDay) {
-                  // Nếu không phải nghỉ giữa ngày, tự động set thời gian là 00:00:00
                   const startOfDay = dayjs(date).startOf("day");
                   form.setFieldsValue({ ngayBatDau: startOfDay });
                 }
+                setTimeout(handleDateChange, 100);
               }}
             />
           </Form.Item>
@@ -602,7 +1026,33 @@ export default function NghiPhep() {
             name="ngayKetThuc"
             label="Ngày kết thúc"
             rules={[
-              { required: true, message: "Vui lòng chọn ngày kết thúc!" },
+              {
+                required: true,
+                message: "Vui lòng chọn ngày kết thúc!",
+              },
+              {
+                validator: (_, value) => {
+                  if (!value) {
+                    return Promise.resolve();
+                  }
+
+                  const startDate = form.getFieldValue("ngayBatDau");
+                  if (startDate && value.isBefore(startDate)) {
+                    return Promise.reject(
+                      new Error(
+                        "Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu!"
+                      )
+                    );
+                  }
+
+                  return Promise.resolve();
+                },
+              },
+              {
+                validator: () => validateDateRangeUniqueDB(),
+                message:
+                  "Khoảng thời gian nghỉ đã bị trùng với lịch nghỉ trước đó!",
+              },
             ]}
           >
             <DatePicker
@@ -612,13 +1062,25 @@ export default function NghiPhep() {
               showTime={isPartialDay ? { format: "HH:mm:ss" } : false}
               onChange={(date) => {
                 if (date && !isPartialDay) {
-                  // Nếu không phải nghỉ giữa ngày, tự động set thời gian là 23:59:59
                   const endOfDay = dayjs(date).endOf("day");
                   form.setFieldsValue({ ngayKetThuc: endOfDay });
                 }
+                setTimeout(handleDateChange, 100);
               }}
             />
           </Form.Item>
+
+          {/* Cảnh báo về số ngày phép */}
+          {leaveWarning && (
+            <Alert
+              message="Cảnh báo về số ngày phép"
+              description={leaveWarning}
+              type="warning"
+              icon={<WarningOutlined />}
+              showIcon
+              style={{ marginBottom: 16 }}
+            />
+          )}
 
           <Form.Item
             name="liDo"
@@ -647,6 +1109,7 @@ export default function NghiPhep() {
 
           <Form.Item name="tinhPhep" valuePropName="checked">
             <Checkbox
+              disabled={editingRecord ? false : soNgayPhepConLai <= 0}
               onChange={(e) => {
                 const checked = e.target.checked;
                 if (checked) {
@@ -656,13 +1119,44 @@ export default function NghiPhep() {
                   form.setFieldsValue({ tinhLuong: false });
                   setDisableTinhLuong(false);
                 }
+                setTimeout(handleDateChange, 100);
               }}
             >
               Có phép{" "}
-              <Tag color="success">Số ngày phép còn lại trong năm : {}</Tag>
+              {selectedNhanVien && (
+                <Tag color="success">
+                  Số ngày phép còn lại trong năm: {soNgayPhepConLai}
+                </Tag>
+              )}
             </Checkbox>
           </Form.Item>
         </Form>
+      </Modal>
+
+      {/* Modal xác nhận tách bản ghi */}
+      <Modal
+      centered={true}
+        title="Xác nhận tách bản ghi"
+        open={showSplitRecordModal}
+        onOk={handleSplitRecord}
+        onCancel={() => {
+          setIsPartialDay(false);
+          setShowSplitRecordModal(false);
+        }}
+        okText="Tách thành 2 bản ghi"
+        cancelText="Nhập lại"
+        width={500}
+      >
+        <div style={{ textAlign: "center", padding: "20px 0" }}>
+          <ExclamationCircleOutlined
+            style={{ fontSize: "48px", color: "#faad14", marginBottom: "16px" }}
+          />
+          <p style={{ fontSize: "16px", marginBottom: "16px" }}>
+            Số ngày nghỉ có phép vượt quá số ngày phép còn lại!
+          </p>
+        
+          <p>Bạn có muốn tách thành 2 bản ghi?</p>
+        </div>
       </Modal>
     </div>
   );

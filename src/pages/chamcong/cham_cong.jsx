@@ -644,7 +644,7 @@ export default function GiaLapChamCong() {
                 const pb = filters.tenPhongBan?.[0]; // Lấy phòng ban đầu tiên được chọn
                 setSelectedPhongBan({
                   selected: true,
-                  phongBanValue: pb || null,
+                  phongBanValue: pb.tenPhongBan || null,
                 });
               }}
             />

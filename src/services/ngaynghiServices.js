@@ -11,6 +11,7 @@ export const getAllNghiPhepServices = async () => {
 
 export const createNghiPhepServices = async (duLieuNghiPhep) => {
   try {
+    console.log("duLieuNghiPhep", duLieuNghiPhep);
     await axiosInstance.post("/ngaynghi", duLieuNghiPhep);
   } catch {
     console.log("AXIOS! Lỗi lấy dữ liệu nghỉ phép");

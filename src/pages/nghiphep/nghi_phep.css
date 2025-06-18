@@ -155,3 +155,16 @@
 .custom-header-table .ant-table-thead > tr > th {
   font-size: 14px;
 }
+
+
+.row-canh-bao td {
+  background-color: #ffe6e6 !important; /* màu hồng nhạt */
+}
+
+.row-qua-han td {
+  background-color: rgb(254, 148, 148) !important; /* màu đỏ nhạt */
+}
+
+.row-cho-duyet td {
+  background-color: #f8f0e8 !important; /* màu cam nhạt */
+}
