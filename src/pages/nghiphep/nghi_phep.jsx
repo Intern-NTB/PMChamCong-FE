@@ -232,35 +232,6 @@ export default function NghiPhep() {
     }
   };
 
-  // Hàm validation cho ngày kết thúc
-  const validateEndDate = (_, value) => {
-    const startDate = form.getFieldValue("ngayBatDau");
-
-    if (!value || !startDate) {
-      return Promise.resolve();
-    }
-
-    if (value.isBefore(startDate)) {
-      return Promise.reject(
-        new Error("Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu!")
-      );
-    }
-
-    return Promise.resolve();
-  };
-
-  // Hàm validation cho ngày bắt đầu (để re-validate ngày kết thúc khi thay đổi)
-  const validateStartDate = (_, value) => {
-    const endDate = form.getFieldValue("ngayKetThuc");
-
-    // Re-validate ngày kết thúc nếu đã có giá trị
-    if (endDate && value) {
-      form.validateFields(["ngayKetThuc"]);
-    }
-
-    return Promise.resolve();
-  };
-
   const validateDateRangeUniqueDB = async () => {
     const startDate = form.getFieldValue("ngayBatDau");
     const endDate = form.getFieldValue("ngayKetThuc");

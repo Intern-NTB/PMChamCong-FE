@@ -1,8 +1,9 @@
-import { useEffect, useState, useCallback } from "react" 
-import { getAllPhongBanServices, updatePhongBanServices, createPhongBanServices, deletePhongBanServices } from "../../services/phongbanServices"
+import { useEffect, useState, useCallback } from "react"
+import { getAllPhongBanServices, updatePhongBanServices, createPhongBanServices, deletePhongBanServices, getAllPhongBanDieuChinhServices } from "../../services/phongbanServices"
 
 export const usePhongBan = () => {
     const [danhSachPhongBan, setDanhSachPhongBan] = useState([])
+    const [danhSachLichSuThayDoi, setDanhSachLichSuThayDoi] = useState([])
     const [loading, setLoading] = useState(false)
     const [statusPhongBan, setStatus] = useState(false)
 
@@ -59,19 +60,36 @@ export const usePhongBan = () => {
         } finally {
             setLoading(false)
         }
-    }, [fetchPhongBan]); 
+    }, [fetchPhongBan]);
+
+    const historyChangePhongBan = async () => {
+        setLoading(true)
+        try{
+            const response = await getAllPhongBanDieuChinhServices();
+            setDanhSachLichSuThayDoi(Array.isArray(response.data) ? response.data : []);
+        } catch (error) {
+            console.error('Lỗi khi lấy danh sách lịch sử phòng ban:', error);
+            setDanhSachLichSuThayDoi([]); // Sửa tên biến
+        } finally {
+            setLoading(false)
+        }
+    }
+
 
     useEffect(() => {
         fetchPhongBan();
-    }, [fetchPhongBan]);
+        historyChangePhongBan();
+    }, []);
 
     return {
         danhSachPhongBan,
+        danhSachLichSuThayDoi,
         statusPhongBan,
         loading,
         fetchPhongBan, 
         updatePhongBan,
         createPhongBan,
-        deletePhongBan
+        deletePhongBan,
+        historyChangePhongBan
     }
 }
