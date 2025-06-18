@@ -43,6 +43,7 @@ import { ReloadContext } from "../../context/reloadContext";
 import MyAlert from "../../component/ui/alert";
 import ModalTangCa from "./tangca/modal_tangcang";
 import ModalThemTangCa from "./tangca/modal_them_tang_ca";
+import ModalChinhSuaTangCa from "./tangca/modal_chinh_sua_tangca";
 
 // ===== Styles =====
 
@@ -99,7 +100,7 @@ export default function GiaLapChamCong() {
     message: "",
     description: "",
   });
-  const [form] = Form.useForm();
+  const [form] = Form.useForm(); // Khởi tạo form ở đây nếu bạn định sử dụng nó trong component này
 
   useEffect(() => {
     setReload(() => getAllChamCongDetail);
@@ -153,7 +154,9 @@ export default function GiaLapChamCong() {
       tempFilteredData = tempFilteredData.filter(
         (item) =>
           item.hoTen.toLowerCase().includes(searchText.toLowerCase()) ||
-          String(item.maNhanVien).toLowerCase().includes(searchText.toLowerCase())
+          String(item.maNhanVien)
+            .toLowerCase()
+            .includes(searchText.toLowerCase())
       );
     }
 
@@ -178,7 +181,8 @@ export default function GiaLapChamCong() {
   };
 
   const formatTime = useCallback((text) => {
-    if (!text || text === "N/A") return text;
+    // Nếu text là null, undefined, chuỗi rỗng, "N/A" HOẶC "Invalid Date", trả về "00:00:00"
+    if (!text || text === "N/A" || text === "Invalid Date") return "00:00:00"; 
     if (typeof text === "string" && text.includes("T")) {
       const timePart = text.split("T")[1];
       return timePart.split(".")[0];
@@ -408,9 +412,9 @@ export default function GiaLapChamCong() {
 
       if (thang === thangHienTai && nam === namHienTai) {
         const gioBatDau = dayjs(tc.gioTangCaBatDau, "HH:mm");
-        const gioKetThuc = dayjs(tc.gioTangCaKetThuc, "HH:mm");
+        const gioKetThuc = dayjs(tc.gioTangCaKetThuc, "HH:mm"); // Đã sửa lỗi chính tả
 
-        const soPhutTangCa = gioKetThuc.diff(gioBatDau, "minute");
+        const soPhutTangCa = gioKetThuc.diff(gioBatDau, "minute"); // Đã sửa lỗi chính tả
         return total + (soPhutTangCa / 60 || 0);
       }
 
@@ -492,7 +496,11 @@ export default function GiaLapChamCong() {
       {isMobile ? (
         <Space direction="vertical" style={{ width: "100%" }} size="middle">
           <Card title="Chấm công" size="small" extra={<CalendarOutlined />}>
-            <Space direction="vertical" style={{ width: "100%" }} size="middle">
+            <Space
+              direction="vertical"
+              style={{ width: "100%" }}
+              size="middle"
+            >
               <Row gutter={[8, 8]}>
                 <Col span={12}>
                   <Select
@@ -661,6 +669,7 @@ export default function GiaLapChamCong() {
                 boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
                 border: "1px solid #f0f0f0",
               }}
+              styles={{ body: { padding: "24px" } }} // Đã sửa từ bodyStyle
               title={
                 <div
                   style={{
@@ -676,7 +685,6 @@ export default function GiaLapChamCong() {
                   Chấm công
                 </div>
               }
-              bodyStyle={{ padding: "24px" }}
             >
               <Space
                 direction="vertical"
@@ -784,7 +792,7 @@ export default function GiaLapChamCong() {
                       <div style={{ textAlign: "center" }}>
                         <Statistic
                           title="Giờ tăng ca tháng này"
-                          value={statistics.tongSoGioTangCaThang}
+                          value={statistics.tongSoGioTangCaThang.toFixed(2)}
                           valueStyle={{ color: "green", fontSize: "24px" }}
                         />
                       </div>
@@ -850,7 +858,6 @@ export default function GiaLapChamCong() {
                     format="MM/YYYY"
                   />
                 </ConfigProvider>
-
                 <Input.Search
                   placeholder="Tìm kiếm theo mã nhân viên hoặc tên"
                   onSearch={handleSearch}
@@ -881,7 +888,7 @@ export default function GiaLapChamCong() {
                   const pb = filters.tenPhongBan?.[0]; // Lấy phòng ban đầu tiên được chọn
                   setSelectedPhongBan({
                     selected: true,
-                    phongBanValue: pb.tenPhongBan || null,
+                    phongBanValue: pb || null,
                   });
                 }}
               />
@@ -905,6 +912,7 @@ export default function GiaLapChamCong() {
         updateTangCa={updateTangCa}
         deleteTangCa={deleteTangCa}
         danhSachPhongBan={danhSachPhongBan}
+        formInstance={form} 
       />
     </div>
   );

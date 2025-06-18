@@ -1,6 +1,6 @@
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { Layout, Menu, Button, Drawer } from "antd";
-import ScrollToTop from "../../config/utils/scroll_to_top";
+import ScrollToTop from "../../config/utils/scroll_to_top"; 
 import {
   ReloadOutlined,
   UnorderedListOutlined,
@@ -13,32 +13,45 @@ import {
   SettingFilled,
   MenuOutlined,
   LogoutOutlined,
+  DesktopOutlined, 
 } from "@ant-design/icons";
-import LogoIcon from "../../assets/images/LogoIcon.png";
+import LogoIcon from "../../assets/images/LogoIcon.png"; 
 import "./mainLayout.css";
-import { useState, useEffect } from "react";
-import { ReloadContext } from "../../context/reloadContext";
-// Import icon cho Máy chấm công (ví dụ: AntDesign có icon tùy chỉnh)
-import { DesktopOutlined } from "@ant-design/icons"; // Ví dụ icon máy tính để bàn
+import { useState, useEffect, useMemo, useCallback } from "react"; 
+import { ReloadContext } from "../../context/reloadContext"; 
+
+const { Header, Sider, Content } = Layout; 
 
 const MainLayout = () => {
-  const pathToTitle = {
+  const pathToTitle = useMemo(() => ({
     "/main-layout/trangchu": "Trang Chủ",
     "/main-layout/nhanvien": "Quản Lý Nhân Viên",
     "/main-layout/nghiphep": "Nghỉ Phép",
     "/main-layout/chamcong": "Chấm Công",
-    "/main-layout/maychamcong": "Máy Chấm Công", // Thêm dòng này
+    "/main-layout/maychamcong": "Máy Chấm Công",
     "/main-layout/luong": "Lương",
     "/main-layout/caidat": "Cài Đặt",
     "/main-layout/baocao": "Báo Cáo",
-  };
+  }), []); 
 
-  const taiKhoan = JSON.parse(localStorage.getItem("taiKhoan") || "{}");
+  const taiKhoan = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem("taiKhoan") || "{}");
+    } catch (e) {
+      console.error("Lỗi khi parse tài khoản từ localStorage:", e);
+      return {};
+    }
+  }, []); 
 
   const location = useLocation();
   const title = pathToTitle[location.pathname] || "Quản lý nhân sự";
 
-  const [reloadFn, setReloadFn] = useState(() => () => {});
+  const [reloadFn, setReloadFnState] = useState(() => () => {});
+
+  const setReloadFn = useCallback((fn) => {
+    setReloadFnState(() => fn);
+  }, []);
+
   const [isMobile, setIsMobile] = useState(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
 
@@ -52,11 +65,83 @@ const MainLayout = () => {
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
 
-  const handleLogout = () => {
-    // Xử lý logout: ví dụ xóa token, chuyển hướng...
+  const handleLogout = useCallback(() => {
     localStorage.removeItem("token");
-    window.location.href = "/login";
-  };
+    window.location.replace("/login"); 
+  }, []);
+
+  const menuItems = useMemo(() => [
+    {
+      key: "/main-layout/trangchu", 
+      icon: <HomeOutlined />,
+      label: <Link to="/main-layout/trangchu">Trang Chủ</Link>,
+    },
+    {
+      key: "sub1", 
+      icon: <UserOutlined />,
+      label: "Quản Lý Nhân Viên",
+      children: [
+        {
+          key: "/main-layout/nhanvien", 
+          icon: <UnorderedListOutlined />,
+          label: <Link to="/main-layout/nhanvien">Nhân viên</Link>,
+        },
+        {
+          key: "/main-layout/nghiphep", 
+          icon: <SolutionOutlined />,
+          label: <Link to="/main-layout/nghiphep">Nghỉ Phép</Link>,
+        },
+      ],
+    },
+    {
+      key: "/main-layout/chamcong",
+      icon: <ScheduleOutlined />,
+      label: <Link to="/main-layout/chamcong">Chấm Công</Link>,
+    },
+    {
+      key: "/main-layout/maychamcong",
+      icon: <DesktopOutlined />,
+      label: <Link to="/main-layout/maychamcong">Máy Chấm Công</Link>,
+    },
+    {
+      key: "/main-layout/luong",
+      icon: <DollarOutlined />,
+      label: <Link to="/main-layout/luong">Lương</Link>,
+    },
+    {
+      key: "/main-layout/baocao",
+      icon: <BarChartOutlined />,
+      label: <Link to="/main-layout/baocao">Báo Cáo</Link>,
+    },
+    {
+      key: "/main-layout/caidat",
+      icon: <SettingFilled />,
+      label: <Link to="/main-layout/caidat">Cài đặt</Link>,
+    },
+  ], []); 
+
+  const getSelectedKeys = useCallback(() => {
+    const path = location.pathname;
+    let keys = [];
+
+    const directMatch = menuItems.find(item => item.key === path);
+    if (directMatch) {
+      keys.push(directMatch.key);
+    }
+
+    const subMenu = menuItems.find(item => item.children && item.children.some(child => child.key === path));
+    if (subMenu) {
+      keys.push(subMenu.key); 
+      keys.push(path); 
+    }
+
+    if (keys.length === 0) {
+      keys.push("/main-layout/trangchu");
+    }
+    
+    return keys;
+  }, [location.pathname, menuItems]);
+
 
   const menuContent = (
     <>
@@ -72,7 +157,7 @@ const MainLayout = () => {
       </div>
       <Menu
         mode="inline"
-        defaultSelectedKeys={["1"]}
+        selectedKeys={getSelectedKeys()} 
         theme="dark"
         onClick={() => {
           if (isMobile) {
@@ -83,56 +168,15 @@ const MainLayout = () => {
           background: "transparent",
           border: "none",
         }}
-      >
-        <Menu.Item key="1" icon={<HomeOutlined />}>
-          <Link to="/main-layout/trangchu">Trang Chủ</Link>
-        </Menu.Item>
-
-        <Menu.SubMenu
-          key="sub1"
-          icon={<UserOutlined />}
-          title="Quản Lý Nhân Viên"
-          trigger="click"
-          mode="inline"
-        >
-          <Menu.Item key="2" icon={<UnorderedListOutlined />}>
-            <Link to="/main-layout/nhanvien">Nhân viên</Link>
-          </Menu.Item>
-          <Menu.Item key="3" icon={<SolutionOutlined />}>
-            <Link to="/main-layout/nghiphep">Nghỉ Phép</Link>
-          </Menu.Item>
-        </Menu.SubMenu>
-
-        <Menu.Item key="4" icon={<ScheduleOutlined />}>
-          <Link to="/main-layout/chamcong">Chấm Công</Link>
-        </Menu.Item>
-
-        {/* Thêm mục menu Máy chấm công tại đây */}
-        <Menu.Item key="maychamcong" icon={<DesktopOutlined />}>
-          {" "}
-          {/* Sử dụng icon DesktopOutlined hoặc icon phù hợp */}
-          <Link to="/main-layout/maychamcong">Máy Chấm Công</Link>
-        </Menu.Item>
-
-        <Menu.Item key="5" icon={<DollarOutlined />}>
-          <Link to="/main-layout/luong">Lương</Link>
-        </Menu.Item>
-
-        <Menu.Item key="7" icon={<BarChartOutlined />}>
-          <Link to="/main-layout/baocao">Báo Cáo</Link>
-        </Menu.Item>
-
-        <Menu.Item key="6" icon={<SettingFilled />}>
-          <Link to="/main-layout/caidat">Cài đặt</Link>
-        </Menu.Item>
-      </Menu>
+        items={menuItems} 
+      />
     </>
   );
 
   if (isMobile) {
     return (
       <Layout style={{ height: "100dvh", minHeight: "100dvh" }}>
-        <Layout.Header
+        <Header
           style={{
             backgroundColor: "white",
             borderBottom: "1px solid grey",
@@ -153,7 +197,7 @@ const MainLayout = () => {
           <h2 style={{ margin: 0, flex: 1, textAlign: "center" }}>{title}</h2>
           <Button
             icon={<LogoutOutlined />}
-            onClick={() => handleLogout()}
+            onClick={handleLogout}
             type="text"
             size="large"
           />
@@ -163,7 +207,7 @@ const MainLayout = () => {
             onClick={() => reloadFn()}
             size="large"
           />
-        </Layout.Header>
+        </Header>
 
         <Drawer
           title={null}
@@ -219,7 +263,7 @@ const MainLayout = () => {
           </div>
         </Drawer>
 
-        <Layout.Content
+        <Content
           style={{
             margin: "12px",
             padding: "16px",
@@ -234,24 +278,24 @@ const MainLayout = () => {
           >
             <Outlet />
           </ReloadContext.Provider>
-        </Layout.Content>
+        </Content>
       </Layout>
     );
   }
 
   return (
     <Layout style={{ height: "100dvh", minHeight: "100dvh" }}>
-      <Layout.Sider
+      <Sider
         width={300}
         style={{ background: "#71A5E0", height: "100vh" }}
         breakpoint="lg"
         collapsedWidth="0"
       >
         {menuContent}
-      </Layout.Sider>
+      </Sider>
 
       <Layout style={{ height: "100vh" }}>
-        <Layout.Header
+        <Header
           style={{
             backgroundColor: "white",
             borderBottom: "1px solid grey",
@@ -286,9 +330,9 @@ const MainLayout = () => {
               Đăng xuất
             </Button>
           </div>
-        </Layout.Header>
+        </Header>
 
-        <Layout.Content
+        <Content
           style={{
             margin: "12px",
             padding: "24px",
@@ -303,7 +347,7 @@ const MainLayout = () => {
             <ScrollToTop />
             <Outlet />
           </ReloadContext.Provider>
-        </Layout.Content>
+        </Content>
       </Layout>
     </Layout>
   );

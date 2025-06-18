@@ -10,7 +10,7 @@ import {
   Select,
   InputNumber,
 } from "antd";
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react"; // Thêm useCallback
 import { usePhongBan } from "../../component/hooks/usePhongBan";
 import { useVaiTro } from "../../component/hooks/useVaiTro";
 import { useDoiTuongUuTien } from "../../component/hooks/useDoiTuongUuTien";
@@ -36,45 +36,49 @@ const Popup = ({
     tenVaiTro: vt.tenVaiTro,
   }));
 
-  // Reset form khi initialValues thay đổi
+  const parseDate = useCallback((dateString) => {
+    return dateString ? dayjs(dateString) : null;
+  }, []);
+
   useEffect(() => {
+    console.log("Popup useEffect running with initialValues:", initialValues); 
     if (initialValues) {
       const parsedDate = parseDate(initialValues.ngaySinh);
+      const cccdToSet = initialValues.cmnd || initialValues.CCCD || null; 
+      console.log("CCCD value to set in form:", cccdToSet); 
+
       form.setFieldsValue({
         ...initialValues,
         ngaySinh: parsedDate,
         maPhongBan: initialValues.maPhongBan ?? maPhongBan ?? null,
         maVaiTro: initialValues.maVaiTro ?? maVaiTro ?? null,
         maUuTien: initialValues.maUuTien > 0 ? initialValues.maUuTien : null,
+        CCCD: cccdToSet, 
       });
+      if (initialValues.maPhongBan) {
+        getAllVaiTro(initialValues.maPhongBan);
+      } else if (maPhongBan) {
+        getAllVaiTro(maPhongBan);
+      }
     } else {
       form.resetFields();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
-  const parseDate = (dateString) => {
-    return dateString ? dayjs(dateString) : null;
-  };
+  }, [initialValues, maPhongBan, maVaiTro, getAllVaiTro, parseDate, form]);
 
-  // Xử lý khi thay đổi ngày sinh
-  const handleDateChange = (date, dateString) => {
-    console.log("Date changed:", date, dateString);
-    // Chỉ update khi date là dayjs object hợp lệ
+  const handleDateChange = useCallback((date) => {
     if (date && dayjs.isDayjs(date) && date.isValid()) {
       form.setFieldValue("ngaySinh", date);
     } else if (!date) {
-      // Trường hợp clear date
       form.setFieldValue("ngaySinh", null);
     }
-  };
+  }, [form]);
 
-  // Xử lý khi nhấn OK
-  const handleOk = () => {
+
+  const handleOk = useCallback(() => {
     form
       .validateFields()
       .then((values) => {
-        // Format ngày sinh về dạng YYYY-MM-DD, kiểm tra tính hợp lệ
         if (
           values.ngaySinh &&
           dayjs.isDayjs(values.ngaySinh) &&
@@ -84,7 +88,6 @@ const Popup = ({
         } else {
           values.ngaySinh = null;
         }
-        console.log("Ngày sinh ", values.ngaySinh);
 
         values.diaChi = values.diaChi || null;
         values.soDienThoai = values.soDienThoai || null;
@@ -93,33 +96,33 @@ const Popup = ({
         values.maUuTien = Number(values.maUuTien) || null;
         values.luongCoBan = Number(values.luongCoBan) || null;
         values.heSoTangCa = Number(values.heSoTangCa) || null;
-        values.cmnd = String(values.CCCD) || null;
+        values.cmnd = String(values.CCCD) || null; 
         values.hoTen = values.hoTen || null;
 
-        // Thêm thời gian hiện tại
-        values.ngayVaoLam = toLocalISOString();
+        values.ngayVaoLam = toLocalISOString(); 
         console.log("Dữ liệu gửi lên API:", values);
-        onOk(values);
-        form.resetFields();
+        onOk(values); 
+        form.resetFields(); 
       })
       .catch((info) => {
         console.log("Validation failed:", info);
       });
-  };
+  }, [form, onOk]);
 
-  // Xử lý thay đổi phòng ban
-  const handleChange = (value) => {
+
+  const handleChangePhongBan = useCallback((value) => {
     console.log("Selected Phòng ban:", value);
     form.setFieldValue("maPhongBan", value);
-    getAllVaiTro(value);
-    form.setFieldValue("maVaiTro", null);
-  };
+    getAllVaiTro(value); 
+    form.setFieldValue("maVaiTro", null); 
+  }, [form, getAllVaiTro]);
 
-  // Kiểm tra giá trị hiển thị cho Select Ưu tiên
-  const getUuTienValue = () => {
+
+  const getUuTienValue = useCallback(() => {
     const currentMaUuTien = form.getFieldValue("maUuTien");
     return currentMaUuTien && currentMaUuTien > 0 ? currentMaUuTien : undefined;
-  };
+  }, [form]);
+
 
   return (
     <Modal
@@ -131,12 +134,14 @@ const Popup = ({
       onOk={handleOk}
       onCancel={() => {
         onCancel();
+        form.resetFields();
       }}
       footer={[
         <Button
           key="back"
           onClick={() => {
             onCancel();
+            form.resetFields(); 
           }}
         >
           Hủy
@@ -147,10 +152,9 @@ const Popup = ({
       ]}
     >
       <Form
-        form={form}
+        form={form} 
         layout="vertical"
         name="editForm"
-        initialValues={initialValues || {}}
       >
         <Row gutter={16}>
           <Col span={12}>
@@ -160,7 +164,7 @@ const Popup = ({
           </Col>
           <Col span={12}>
             <Form.Item name="ngaySinh" label="Ngày Sinh">
-              <Space>
+              <Space style={{ width: "100%" }}> 
                 <DatePicker
                   onChange={handleDateChange}
                   style={{ width: "100%" }}
@@ -221,7 +225,7 @@ const Popup = ({
               <Select
                 placeholder="Chọn phòng ban"
                 style={{ width: "100%" }}
-                onChange={handleChange}
+                onChange={handleChangePhongBan} 
                 options={
                   Array.isArray(danhSachPhongBan)
                     ? danhSachPhongBan.map((pb) => ({
@@ -233,11 +237,11 @@ const Popup = ({
               />
             </Form.Item>
             <Form.Item
-              name="CCCD"
+              name="CCCD" 
               label="Căn cước công dân"
               rules={[
                 {
-                  pattern: /^\d{12}$/,
+                  pattern: /^\d{12}$/, 
                   message: "Căn cước gồm 12 chữ số",
                 },
               ]}
@@ -254,7 +258,7 @@ const Popup = ({
               label="Số điện thoại"
               rules={[
                 {
-                  pattern: /^\d{10}$/,
+                  pattern: /^\d{10}$/, 
                   message: "Số điện thoại gồm 10 chữ số",
                 },
               ]}
