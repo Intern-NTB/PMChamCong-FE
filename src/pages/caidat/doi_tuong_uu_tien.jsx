@@ -37,7 +37,7 @@ import { useDoiTuongUuTien } from "../../component/hooks/useDoiTuongUuTien";
 import { useLichSuUuTien } from "../../component/hooks/useLichSuUuTien";
 import { useNhanVien } from "../../component/hooks/useNhanVien";
 import { useWatch } from "antd/es/form/Form";
-
+import { usePhongBan } from "../../component/hooks/usePhongBan";
 const { Title } = Typography;
 const { Search, TextArea } = Input;
 const { TabPane } = Tabs;
@@ -64,12 +64,13 @@ export default function DoiTuongUuTienComponent() {
 
   const api = useAppNotification();
   const { danhSachNhanVien, updateNhanVien } = useNhanVien();
+  const { danhSachPhongBan, loading } = usePhongBan();
   const { danhSachLichSuUuTien, updateLichSuUuTien, deleteLichSuUuTien } =
     useLichSuUuTien();
   const dataSourceLichSuUuTien = danhSachLichSuUuTien.map((lsut) => {
     const dataNhanVienFind = danhSachNhanVien.find(
       (nv) => nv.maNhanVien === lsut.maNhanVien
-    );
+    );    
     const dataDoiTuongUuTienFilter = danhSachDoiTuongUuTien.find(
       (dtut) => dtut.maUuTien === lsut.maUuTien
     );
@@ -80,16 +81,25 @@ export default function DoiTuongUuTienComponent() {
       thoiGianHieuLucKetThuc: lsut.thoiGianHieuLucKetThuc,
       hoTen: dataNhanVienFind?.hoTen || "N/A",
       tenUuTien: dataDoiTuongUuTienFilter?.tenUuTien || "N/A",
+      phongBan: dataNhanVienFind?.tenPhongBan || "N/A"
     };
   });
-
   // Data source mapping cho đối tượng ưu tiên
-  const dataSource = danhSachDoiTuongUuTien.map((item) => ({
-    maUuTien: item.maUuTien,
-    tenUuTien: item.tenUuTien,
-    thoiGianVaoMuon: item.thoiGianVaoMuon,
-    thoiGianVeSom: item.thoiGianVeSom,
-    thoiGianHieuLuc: item.thoiGianHieuLuc,
+  const dataSource = danhSachDoiTuongUuTien.map((item) => {
+    const phongBan = danhSachPhongBan.find(pb => pb.maPhongBan === item.maPhongBan);
+    return {
+      maUuTien: item.maUuTien,
+      tenUuTien: item.tenUuTien,
+      thoiGianBatDauCa: item.thoiGianBatDauCa,
+      thoiGianKetThucCa: item.thoiGianKetThucCa,
+      thoiGianHieuLuc: item.thoiGianHieuLuc,
+      maPhongBan: item.maPhongBan,
+      tenPhongBan: phongBan?.tenPhongBan || "Không xác định"
+    };
+  });
+  const datasourcePhongBan = danhSachPhongBan.map((pb) => ({
+    maPhongBans: pb.maPhongBan,
+    tenPhongBans: pb.tenPhongBan
   }));
 
   // Hàm lọc dữ liệu cho tìm kiếm lịch sử
@@ -125,17 +135,19 @@ export default function DoiTuongUuTienComponent() {
       const formatedValues = {
         ...values,
         maUuTien: editingId,
-        thoiGianVaoMuon: values.thoiGianVaoMuon?.format("HH:mm:ss"),
-        thoiGianVeSom: values.thoiGianVeSom?.format("HH:mm:ss"),
-        thoiGianHieuLuc: Number(values.thoiGianHieuLuc),
+        thoiGianBatDauCa: values.thoiGianBatDauCa?.format("HH:mm:ss"),
+        thoiGianKetThucCa: values.thoiGianKetThucCa?.format("HH:mm:ss"),
+        thoiGianHieuLuc: values.thoiGianHieuLuc,
+        phongBan: values.phongBan,
       };
       await updateDoiTuongUuTien(formatedValues);
       api.success({ message: "Cập nhật đối tượng ưu tiên thành công!" });
     } else {
       const formatedValues = {
         ...values,
-        thoiGianVaoMuon: values.thoiGianVaoMuon?.format("HH:mm:ss"),
-        thoiGianVeSom: values.thoiGianVeSom?.format("HH:mm:ss"),
+        thoiGianBatDauCa: values.thoiGianBatDauCa?.format("HH:mm:ss"),
+        thoiGianKetThucCa: values.thoiGianKetThucCa?.format("HH:mm:ss"),
+        phongBan: values.phongBan,
       };
       await createDoiTuongUuTien(formatedValues);
       api.success({ message: "Thêm đối tượng ưu tiên thành công!" });
@@ -201,13 +213,14 @@ export default function DoiTuongUuTienComponent() {
       setEditingId(record.maUuTien);
       form.setFieldsValue({
         tenUuTien: record.tenUuTien,
-        thoiGianVaoMuon: record.thoiGianVaoMuon
-          ? dayjs(record.thoiGianVaoMuon, "HH:mm:ss")
+        thoiGianBatDauCa: record.thoiGianBatDauCa
+          ? dayjs(record.thoiGianBatDauCa, "HH:mm:ss")
           : null,
-        thoiGianVeSom: record.thoiGianVeSom
-          ? dayjs(record.thoiGianVeSom, "HH:mm:ss")
+        thoiGianKetThucCa: record.thoiGianKetThucCa
+          ? dayjs(record.thoiGianKetThucCa, "HH:mm:ss")
           : null,
         thoiGianHieuLuc: record.thoiGianHieuLuc,
+        maPhongBan: record.maPhongBan,
       });
       setIsModalVisible(true);
     },
@@ -290,19 +303,26 @@ export default function DoiTuongUuTienComponent() {
       render: (text) => (text ? <Text strong>{text}</Text> : "N/A"),
     },
     {
-      title: "Thời gian vào muộn",
-      dataIndex: "thoiGianVaoMuon",
-      key: "thoiGianVaoMuon",
+      title: "Giờ vào",
+      dataIndex: "thoiGianBatDauCa",
+      key: "thoiGianBatDauCa",
       width: 150,
       render: (text) => {
         const time = dayjs(text, "HH:mm:ss", true);
         return time.isValid() ? time.format("HH:mm:ss") : "Không hợp lệ";
       },
+      sorter: (a, b) => {
+        const timeA = dayjs(a.thoiGianVeSom, "HH:mm:ss", true);
+        const timeB = dayjs(b.thoiGianVeSom, "HH:mm:ss", true);
+        return timeA.isValid() && timeB.isValid()
+          ? timeA.unix() - timeB.unix()
+          : 0;
+      },
     },
     {
-      title: "Thời gian về sớm",
-      dataIndex: "thoiGianVeSom",
-      key: "thoiGianVeSom",
+      title: "Giờ ra",
+      dataIndex: "thoiGianKetThucCa",
+      key: "thoiGianKetThucCa",
       width: 150,
       render: (text) => {
         const time = dayjs(text, "HH:mm:ss", true);
@@ -323,6 +343,13 @@ export default function DoiTuongUuTienComponent() {
       key: "thoiGianHieuLuc",
       width: 150,
       sorter: (a, b) => a.thoiGianHieuLuc - b.thoiGianHieuLuc,
+    },
+    {
+      title: "Phòng ban",
+      dataIndex: "tenPhongBan",
+      key: "tenPhongBan",
+      width: 150,
+      //sorter: (a, b) => a.thoiGianHieuLuc - b.thoiGianHieuLuc,
     },
     {
       title: "Thao tác",
@@ -385,7 +412,13 @@ export default function DoiTuongUuTienComponent() {
       width: 120,
       render: (date) => dayjs(date, "DD/MM/YYYY").format("DD/MM/YYYY"),
     },
-
+    {
+      title: "Phòng ban",
+      dataIndex: "phongBan",
+      key: "phongBan",
+      width: 150,
+      //sorter: (a, b) => a.thoiGianHieuLuc - b.thoiGianHieuLuc,
+    },
     {
       title: "Thao tác",
       key: "action",
@@ -678,6 +711,27 @@ export default function DoiTuongUuTienComponent() {
               </Col>
               <Col xs={24} sm={12}>
                 <Form.Item
+                  label="Phòng ban"
+                  name="maPhongBan"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Vui lòng chọn phòng ban",
+                    },
+                  ]}>
+                  <Select
+                    placeholder="Chọn phòng ban"
+                    size="large"
+                    loading={loading}
+                    options={datasourcePhongBan.map((item) => ({
+                      value: item.maPhongBans,
+                      label: item.tenPhongBans,
+                    }))}
+                  />
+                </Form.Item>
+              </Col>
+              <Col xs={24} sm={12}>
+                <Form.Item
                   label={
                     <Space>
                       <span>Thời gian hiệu lực (Ngày)</span>
@@ -701,17 +755,17 @@ export default function DoiTuongUuTienComponent() {
               </Col>
               <Col xs={24} sm={12}>
                 <Form.Item
-                  label="Thời gian vào muộn"
-                  name="thoiGianVaoMuon"
+                  label="Thời gian vào ca"
+                  name="thoiGianBatDauCa"
                   rules={[
                     {
                       required: true,
-                      message: "Vui lòng nhập thời gian vào muộn",
+                      message: "Vui lòng nhập thời gian vào ca",
                     },
                   ]}
                 >
                   <TimePicker
-                    placeholder="Chọn thời gian vào muộn"
+                    placeholder="Chọn thời gian vào ca"
                     format={"HH:mm:ss"}
                     style={{ width: "100%" }}
                   />
@@ -719,17 +773,17 @@ export default function DoiTuongUuTienComponent() {
               </Col>
               <Col xs={24} sm={12}>
                 <Form.Item
-                  label="Thời gian về sớm"
-                  name="thoiGianVeSom"
+                  label="Thời gian ra ca"
+                  name="thoiGianKetThucCa"
                   rules={[
                     {
                       required: true,
-                      message: "Vui lòng nhập thời gian về sớm ",
+                      message: "Vui lòng nhập thời gian ra ca",
                     },
                   ]}
                 >
                   <TimePicker
-                    placeholder="Chọn thời gian về sớm"
+                    placeholder="Chọn thời gian ra ca"
                     format={"HH:mm:ss"}
                     style={{ width: "100%" }}
                   />
