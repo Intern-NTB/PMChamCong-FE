@@ -1,5 +1,5 @@
 import { Tabs } from 'antd'
-import { useEffect, useState } from 'react'
+import { Children, useEffect, useState } from 'react'
 import { useNavigate, useLocation, Outlet } from 'react-router-dom'
 
 export default function CaiDat() {
@@ -26,6 +26,7 @@ export default function CaiDat() {
         { key: 'thuong', label: 'Thưởng' },
         { key: 'phat', label: 'Phạt' },
         { key: 'tai-khoan', label: 'Tài khoản' },
+        { key: 'lich-su-phong-ban', label: 'Lịch Sử Phòng Ban' }
     ]
 
     // Chọn tab hiện tại từ URL
