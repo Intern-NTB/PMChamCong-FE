@@ -6,13 +6,6 @@ import viVN from "antd/locale/vi_VN";
 
 import {
     CalendarOutlined,
-    MinusCircleOutlined,
-    CheckCircleOutlined,
-    WarningOutlined,
-    PlusOutlined,
-    ClockCircleOutlined,
-    CloseCircleOutlined,
-    HourglassOutlined,
     FileExcelOutlined,
 } from '@ant-design/icons';
 
@@ -183,7 +176,6 @@ export default function ModalChiTietChamCong({
             annualLeaveQuota: 'N/A',
             leaveTaken: 'N/A',
             leaveRemaining: 'N/A',
-            unpaidLeave: 'N/A',
         };
     }, [processedCalendarData]);
 
@@ -307,13 +299,7 @@ export default function ModalChiTietChamCong({
 
     const weekDays = useMemo(() => {
         return [
-            { name: 'T2', color: 'inherit' },
-            { name: 'T3', color: 'inherit' },
-            { name: 'T4', color: 'inherit' },
-            { name: 'T5', color: 'inherit' },
-            { name: 'T6', color: 'inherit' },
-            { name: 'T7', color: 'inherit' },
-            { name: 'CN', color: 'red' },
+         
         ];
     }, []);
 
@@ -406,42 +392,36 @@ export default function ModalChiTietChamCong({
                                 <Row gutter={[16, 8]}>
                                     <Col span={24}>
                                         <Space align="center" style={{ width: '100%', justifyContent: 'space-between' }}>
-                                          
                                             <Text strong>Tổng số công:</Text>
                                             <Text>{attendanceStatistics.totalWorkDays}</Text>
                                         </Space>
                                     </Col>
                                     <Col span={24}>
                                         <Space align="center" style={{ width: '100%', justifyContent: 'space-between' }}>
-                                           
                                             <Text strong>Tổng giờ làm thực tế:</Text>
                                             <Text>{attendanceStatistics.totalActualWorkHours}</Text>
                                         </Space>
                                     </Col>
                                     <Col span={24}>
                                         <Space align="center" style={{ width: '100%', justifyContent: 'space-between' }}>
-                                      
                                             <Text strong>Số ngày vắng:</Text>
                                             <Text>{attendanceStatistics.totalAbsentDays}</Text>
                                         </Space>
                                     </Col>
                                     <Col span={24}>
                                         <Space align="center" style={{ width: '100%', justifyContent: 'space-between' }}>
-                                          
                                             <Text strong>Số ngày vắng nửa buổi:</Text>
                                             <Text>{attendanceStatistics.totalHalfDayAbsent}</Text>
                                         </Space>
                                     </Col>
                                     <Col span={24}>
                                         <Space align="center" style={{ width: '100%', justifyContent: 'space-between' }}>
-                                         
                                             <Text strong>Số ngày tăng ca:</Text>
                                             <Text>{attendanceStatistics.totalOvertimeDays}</Text>
                                         </Space>
                                     </Col>
                                     <Col span={24}>
                                         <Space align="center" style={{ width: '100%', justifyContent: 'space-between' }}>
-                                           
                                             <Text strong>Số ngày nghỉ lễ/phép:</Text>
                                             <Text>{attendanceStatistics.totalHolidayDays + attendanceStatistics.totalLeaveDays}</Text>
                                         </Space>
@@ -464,30 +444,20 @@ export default function ModalChiTietChamCong({
                                 <Row gutter={[16, 8]}>
                                     <Col span={24}>
                                         <Space align="center" style={{ width: '100%', justifyContent: 'space-between' }}>
-                                        
                                             <Text strong>Số ngày phép cả năm:</Text>
                                             <Text>{attendanceStatistics.annualLeaveQuota}</Text>
                                         </Space>
                                     </Col>
                                     <Col span={24}>
                                         <Space align="center" style={{ width: '100%', justifyContent: 'space-between' }}>
-                                            
                                             <Text strong>Số ngày phép đã nghỉ:</Text>
                                             <Text>{attendanceStatistics.leaveTaken}</Text>
                                         </Space>
                                     </Col>
                                     <Col span={24}>
                                         <Space align="center" style={{ width: '100%', justifyContent: 'space-between' }}>
-                                      
                                             <Text strong>Số ngày phép còn lại:</Text>
                                             <Text>{attendanceStatistics.leaveRemaining}</Text>
-                                        </Space>
-                                    </Col>
-                                    <Col span={24}>
-                                        <Space align="center" style={{ width: '100%', justifyContent: 'space-between' }}>
-                                         
-                                            <Text strong>Số ngày nghỉ không lương:</Text>
-                                            <Text>{attendanceStatistics.unpaidLeave}</Text>
                                         </Space>
                                     </Col>
                                 </Row>
