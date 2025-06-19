@@ -41,12 +41,9 @@ const Popup = ({
   }, []);
 
   useEffect(() => {
-    console.log("Popup useEffect running with initialValues:", initialValues); 
     if (initialValues) {
       const parsedDate = parseDate(initialValues.ngaySinh);
       const cccdToSet = initialValues.cmnd || initialValues.CCCD || null; 
-      console.log("CCCD value to set in form:", cccdToSet); 
-
       form.setFieldsValue({
         ...initialValues,
         ngaySinh: parsedDate,

@@ -23,8 +23,7 @@ export const useNhanVien = () => {
       await reloadData();
       const response = await getAllNhanVienChiTietServices();
       setDanhSachNhanVien(Array.isArray(response.data) ? response.data : []);
-    } catch (error) {
-      console.error("Lỗi khi lấy danh sách nhân viên:", error);
+    } catch {
       setDanhSachNhanVien([]);
     } finally {
       setLoading(false);
@@ -48,8 +47,7 @@ export const useNhanVien = () => {
     try {
       await deleteNhanVienServices(maNhanVien);
       setStatusDeleteNhanVien(true);
-    } catch (error) {
-      console.log("API Response Error: ", error);
+    } catch  {
       setStatusDeleteNhanVien(false);
     } finally {
       setLoading(false);
@@ -61,23 +59,20 @@ export const useNhanVien = () => {
     try {
       await updateNhanVienService(maNhanVien, nhanVienData);
       setStatusUpdateNhanVien(true);
-    } catch (error) {
-      console.log(`API Response Error: ${error}`);
+    } catch{
       setStatusUpdateNhanVien(false);
     } finally {
       setLoading(false);
     }
   };
 
-  // SỬA: Bỏ useCallback để tránh vấn đề dependency
   const getAllFingerprintsOfNhanVien = async () => {
     setLoading(true);
     try {
       const res = await getAllFingerprintsOfNhanVienServices();
       setDanhSachVanTayNhanVien(res.data);
-      return res.data; // SỬA: Return data để có thể sử dụng kết quả
-    } catch (error) {
-      console.error("Lỗi khi lấy danh sách vân tay:", error);
+      return res.data;
+    } catch {
       setDanhSachVanTayNhanVien([]);
       return [];
     } finally {
@@ -96,7 +91,6 @@ export const useNhanVien = () => {
     }
   };
 
-  // SỬA: Tách riêng useEffect và chỉ chạy 1 lần khi component mount
   useEffect(() => {
     const initData = async () => {
       await fetchNhanVien();

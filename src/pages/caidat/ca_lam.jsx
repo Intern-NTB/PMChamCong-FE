@@ -164,48 +164,6 @@ export default function CaLamComponent  (){
       render: (text) => <Text strong>{text}</Text>,
     },
     {
-      title: 'Giờ Bắt Đầu',
-      dataIndex: 'gioBatDau',
-      key: 'gioBatDau',
-      width: 120,
-      render: (text) => (
-        <Space>
-          <ClockCircleOutlined />
-          {text}
-        </Space>
-      ),
-    },
-    {
-      title: 'Giờ Kết Thúc',
-      dataIndex: 'gioKetThuc',
-      key: 'gioKetThuc',
-      width: 120,
-      render: (text) => (
-        <Space>
-          <ClockCircleOutlined />
-          {text}
-        </Space>
-      ),
-    },
-    {
-      title: 'Giờ Nghỉ',
-      key: 'gioNghi',
-      width: 150,
-      render: (_, record) => (
-        <Text type="secondary">
-          {record.gioNghiBatDau} - {record.gioNghiKetThuc}
-        </Text>
-      ),
-    },
-    {
-      title: 'Tổng Giờ',
-      dataIndex: 'soGioLamViec',
-      key: 'soGioLamViec',
-      width: 100,
-      render: (hours) => <Tag color="green">{hours}h</Tag>,
-      sorter: (a, b) => a.soGioLamViec - b.soGioLamViec,
-    },
-    {
       title: 'Thao Tác',
       key: 'action',
       width: 120,
@@ -381,61 +339,7 @@ export default function CaLamComponent  (){
               </Col>
             </Row>
 
-            <Row gutter={16}>
-              <Col xs={24} sm={12}>
-                <Form.Item
-                  label="Thời Gian Bắt Đầu"
-                  name="gioBatDau"
-                  rules={[{ required: true, message: 'Vui lòng chọn giờ bắt đầu!' }]}
-                >
-                  <TimePicker
-                    format="HH:mm:ss"
-                    placeholder="Chọn giờ bắt đầu"
-                    style={{ width: '100%' }}
-                  />
-                </Form.Item>
-              </Col>
-              <Col xs={24} sm={12}>
-                <Form.Item
-                  label="Thời Gian Kết Thúc"
-                  name="gioKetThuc"
-                  rules={[{ required: true, message: 'Vui lòng chọn giờ kết thúc!' }]}
-                >
-                  <TimePicker
-                    format="HH:mm:ss"
-                    placeholder="Chọn giờ kết thúc"
-                    style={{ width: '100%' }}
-                  />
-                </Form.Item>
-              </Col>
-            </Row>
-
-            <Row gutter={16}>
-              <Col xs={24} sm={12}>
-                <Form.Item
-                  label="Giờ Nghỉ Trưa Bắt Đầu"
-                  name="gioNghiBatDau"
-                >
-                  <TimePicker
-                    format="HH:mm:ss"
-                    placeholder="Chọn giờ bắt đầu nghỉ"
-                    style={{ width: '100%' }}
-                  />
-                </Form.Item>
-              </Col>
-              <Col xs={24} sm={12}>
-                <Form.Item
-                  label="Giờ Nghỉ Trưa Kết Thúc"
-                  name="gioNghiKetThuc"
-                >
-                  <TimePicker
-                    format="HH:mm:ss"
-                    placeholder="Chọn giờ kết thúc nghỉ"
-                    style={{ width: '100%' }}
-                  />
-                </Form.Item>
-              </Col>
-            </Row>
+           
 
             {previewHours > 0 && (
               <Card size="small" style={{ backgroundColor: '#f6ffed', border: '1px solid #b7eb8f' }}>

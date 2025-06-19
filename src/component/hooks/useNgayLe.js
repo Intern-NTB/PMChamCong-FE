@@ -7,7 +7,7 @@ import {
 } from "../../services/ngayleServices";
 
 export const useNgayLe = () => {
-  const [danhsachNgayLe, setDanhSachNgayLe] = useState([]);
+  const [danhSachNgayLe, setDanhSachNgayLe] = useState([]);
   const [loadingNgayLe, setLoadingNgayLe] = useState(false);
   const [isCreatedNgayLe, setIsCreatedNgayLe] = useState(false);
   const [isUpdatedNgayLe, setIsUpdatedNgayLe] = useState(false);
@@ -74,7 +74,7 @@ export const useNgayLe = () => {
   }, [isCreatedNgayLe, isUpdatedNgayLe, isDeletedNgayLe]);
 
   return {
-    danhsachNgayLe,
+    danhSachNgayLe,
     loadingNgayLe,
     isCreatedNgayLe,
     isUpdatedNgayLe,
