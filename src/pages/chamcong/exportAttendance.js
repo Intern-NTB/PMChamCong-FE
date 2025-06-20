@@ -165,6 +165,7 @@ export const exportPersonalAttendanceExcel = async (
   currentRow++;
 
   // Data rows
+  // Data rows
   processedCalendarData.forEach((day, dayIndex) => {
     const dateStr = day.date.format("DD/MM/YYYY");
     const dayOfWeekStr = day.date.format("dddd");
@@ -176,10 +177,10 @@ export const exportPersonalAttendanceExcel = async (
     let trangThai = "Không có dữ liệu";
     let ghiChu = "";
 
-    // Determine day type for styling
+    // Xác định loại ngày để định dạng màu sắc
     let dayType = "normal";
-    const dayOfWeek = day.date.day(); // 0 = Sunday, 6 = Saturday
-    const isSunday = dayOfWeek === 0; // Chỉ Chủ nhật mới là nghỉ mặc định
+    const dayOfWeek = day.date.day(); // 0 = Chủ nhật, 6 = Thứ bảy
+    const isSunday = dayOfWeek === 0; // Chỉ Chủ nhật là ngày nghỉ mặc định
 
     if (day.chamCong) {
       gioVao = day.chamCong.thoiGianVao
@@ -188,69 +189,44 @@ export const exportPersonalAttendanceExcel = async (
       gioRa = day.chamCong.thoiGianRa
         ? formatTimeForExcel(day.chamCong.thoiGianRa)
         : "-";
+      // Sử dụng soGioThucTe từ database cho Tổng Giờ Làm
+      totalHours =
+        day.chamCong.soGioThucTe !== undefined &&
+        day.chamCong.soGioThucTe !== null
+          ? `${day.chamCong.soGioThucTe.toFixed(2)}h`
+          : "-";
       cong =
         day.chamCong.cong !== undefined && day.chamCong.cong !== null
           ? day.chamCong.cong.toFixed(2)
           : "0.00";
       trangThai = day.chamCong.trangThai || "Không rõ";
 
-      // Determine day type based on status
+      // Xác định loại ngày dựa trên trạng thái
       if (
         trangThai.toLowerCase().includes("hoàn tất") ||
-        trangThai.toLowerCase().includes("đầy đủ")
+        trangThai.toLowerCase().includes("không tăng ca")
       ) {
         dayType = "complete";
       } else if (
-        trangThai.toLowerCase().includes("thiếu") ||
-        trangThai.toLowerCase().includes("không đầy đủ")
+        trangThai.toLowerCase().includes("chưa hoàn tất")
       ) {
         dayType = "incomplete";
       }
-
-      if (day.chamCong.thoiGianVao && day.chamCong.thoiGianRa) {
-        const checkIn = dayjs(
-          day.chamCong.ngayChamCong +
-            "T" +
-            formatTimeForExcel(day.chamCong.thoiGianVao) +
-            ":00"
-        );
-        const checkOut = dayjs(
-          day.chamCong.ngayChamCong +
-            "T" +
-            formatTimeForExcel(day.chamCong.thoiGianRa) +
-            ":00"
-        );
-        if (
-          checkOut.isValid() &&
-          checkIn.isValid() &&
-          checkOut.isAfter(checkIn)
-        ) {
-          const diffMinutes = dayjs
-            .duration(checkOut.diff(checkIn))
-            .asMinutes();
-          const hours = Math.floor(diffMinutes / 60);
-          const minutes = Math.round(diffMinutes % 60);
-          totalHours = `${hours}h ${minutes}m`;
-        }
-      }
     } else {
-      // Determine day type when no attendance
-      if (day.isLeave || trangThai.toLowerCase().includes("nghỉ phép")) {
+      // Xác định loại ngày khi không có dữ liệu chấm công
+      if (day.isLeave) {
         trangThai = "Nghỉ phép";
         ghiChu = "Nghỉ phép";
         dayType = "leave";
-      } else if (day.isHoliday || trangThai.toLowerCase().includes("nghỉ lễ")) {
+      } else if (day.isHoliday) {
         trangThai = "Nghỉ lễ";
-        ghiChu = "Nghỉ lễ";
+        ghiChu = day.holidayInfo?.tenNgayLe || "Nghỉ lễ";
         dayType = "holiday";
       } else if (isSunday) {
-        // Chỉ Chủ nhật mới là nghỉ mặc định
+        // Chỉ Chủ nhật là ngày nghỉ mặc định
         trangThai = "Nghỉ";
         ghiChu = "Nghỉ Chủ nhật";
         dayType = "weekend";
-      } else if (trangThai.toLowerCase().includes("nghỉ")) {
-        dayType = "leave";
-        ghiChu = "Nghỉ";
       } else {
         trangThai = "Không chấm công";
         ghiChu = "Chưa có dữ liệu chấm công";
@@ -259,7 +235,7 @@ export const exportPersonalAttendanceExcel = async (
       cong = "0.00";
     }
 
-    // If Sunday and not categorized otherwise
+    // Nếu là Chủ nhật và chưa được phân loại
     if (isSunday && dayType === "normal") {
       dayType = "weekend";
     }
@@ -297,7 +273,7 @@ export const exportPersonalAttendanceExcel = async (
         right: { style: "thin", color: { argb: "FF000000" } },
       };
 
-      // Apply colors based on day type
+      // Áp dụng màu sắc dựa trên loại ngày
       let fillColor = "FFFFFFFF";
       let fontColor = "FF000000";
 
@@ -327,7 +303,7 @@ export const exportPersonalAttendanceExcel = async (
           fontColor = "FF155724";
           break;
         default:
-          // Normal days - alternating colors
+          // Ngày thường - xen kẽ màu
           if (dayIndex % 2 === 0) {
             fillColor = "FFF8F9FA";
           } else {
@@ -473,6 +449,10 @@ export const exportPersonalAttendanceExcel = async (
     [
       "Số ngày phép còn lại",
       (attendanceStatistics.leaveRemaining || 0) + " ngày",
+    ],
+    [
+      "Số ngày phép tích luỹ",
+      (attendanceStatistics.leaveAccumulated || 0) + " ngày",
     ],
   ];
 

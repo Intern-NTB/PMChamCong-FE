@@ -67,9 +67,8 @@ export const usePhongBan = () => {
         try{
             const response = await getAllPhongBanDieuChinhServices();
             setDanhSachLichSuThayDoi(Array.isArray(response.data) ? response.data : []);
-        } catch (error) {
-            console.error('Lỗi khi lấy danh sách lịch sử phòng ban:', error);
-            setDanhSachLichSuThayDoi([]); // Sửa tên biến
+        } catch {
+            setDanhSachLichSuThayDoi([]); 
         } finally {
             setLoading(false)
         }
@@ -78,7 +77,6 @@ export const usePhongBan = () => {
 
     useEffect(() => {
         fetchPhongBan();
-        historyChangePhongBan();
     }, []);
 
     return {

@@ -38,9 +38,10 @@ import { useLichSuThuong } from "../../component/hooks/useLichSuTienThuong";
 import { useLichSuTru } from "../../component/hooks/useLichSuTienTru";
 import { useLoaiTienThuong } from "../../component/hooks/useLoaiTienThuong";
 import { useLoaiTienTru } from "../../component/hooks/useLoaiTienTru";
-
+import { useChamCong } from "../../component/hooks/useChamCong";
 import LuongDetailModal from "./LuongDetailModal";
 import LuongEditModal from "./LuongEditModal";
+import ModalChiTietChamCong from "../chamcong/modal_chi_tiet_cham_cong";
 import { exportToExcel } from "./exportToExcel_version2";
 import {
   generateMultipleDetailedPDFs,
@@ -51,17 +52,20 @@ import "./luong.css";
 const { Title } = Typography;
 const { Option } = Select;
 
-
 export default function Luong() {
   const [selectedMonthYear, setSelectedMonthYear] = useState(dayjs());
   const [searchValue, setSearchValue] = useState("");
   const [selectedPhongBan, setSelectedPhongBan] = useState(null);
 
-  const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
-  const [detailRecord, setDetailRecord] = useState(null);
+  const { danhSachChamCongChiTiet } = useChamCong();
+  const [isModalChamCongChiTietVisible, setIsModalChamCongChiTietVisible] =
+    useState(false);
+  const [selectedNhanVien, setSelectedNhanVien] = useState(null);
 
-  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
-  const [editRecord, setEditRecord] = useState(null);
+  // const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
+  // const [detailRecord, setDetailRecord] = useState(null);
+  // const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  // const [editRecord, setEditRecord] = useState(null);
 
   const [selectedRows, setSelectedRows] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
@@ -149,6 +153,8 @@ export default function Luong() {
       tienTru: dsl.tienTru,
       tongTienTangCa: dsl.tongTienTangCa,
       luongGio: dsl.luongGio,
+      luongTheoNgay: dsl.luongTheoNgay || 0,
+      luongNgayNghi: dsl.luongNgayNghi || 0,
       hoTen: danhSachNhanVienFind?.hoTen || "N/A",
       heSoTangCa: danhSachNhanVienFind?.heSoTangCa || 0,
       luongCoBan: danhSachNhanVienFind?.luongCoBan || 0,
@@ -160,9 +166,9 @@ export default function Luong() {
 
   useEffect(() => {
     setReload(() => getAllLuong);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  
+
   // Menu cho PDF
   const menuPdf = (
     <Menu>
@@ -374,38 +380,6 @@ export default function Luong() {
         multiple: 2,
       },
     },
-    {
-      title: "Thao tác",
-      key: "action",
-      width: 120,
-      fixed: "right",
-      align: "center",
-      render: (_, record) => (
-        <Space size="middle">
-          <Button
-            type="text"
-            icon={<EyeOutlined style={{ color: "#1890ff", fontSize: 18 }} />}
-            title="Xem chi tiết"
-            onClick={() => {
-              setDetailRecord(record);
-              setIsDetailModalVisible(true);
-            }}
-            size="large"
-          />
-          <Button
-            type="primary"
-            shape="circle"
-            icon={<EditOutlined style={{ color: "#fff", fontSize: 18 }} />}
-            title="Chỉnh sửa"
-            onClick={() => {
-              setEditRecord(record);
-              setIsEditModalVisible(true);
-            }}
-            size="large"
-          />
-        </Space>
-      ),
-    },
   ];
 
   const onMonthYearChange = (date) => {
@@ -594,6 +568,15 @@ export default function Luong() {
         }
         size="middle"
         className="custom-table"
+        onRow={(record) => {
+          return {
+            onClick: () => {
+              console.log(record);
+              setSelectedNhanVien(record);
+              setIsModalChamCongChiTietVisible(true);
+            },
+          };
+        }}
       />
 
       <Space style={{ marginTop: 16 }}>
@@ -640,13 +623,15 @@ export default function Luong() {
                   { required: true, message: "Vui lòng chọn tháng/năm!" },
                 ]}
               >
-                <DatePicker
-                  picker="month"
-                  format="MM/YYYY"
-                  size="large"
-                  style={{ width: "100%" }}
-                  placeholder="Chọn tháng/năm"
-                />
+                <ConfigProvider locale={locale}>
+                  <DatePicker
+                    picker="month"
+                    format="MM/YYYY"
+                    size="large"
+                    style={{ width: "100%" }}
+                    placeholder="Chọn tháng/năm"
+                  />
+                </ConfigProvider>
               </Form.Item>
             </Col>
           </Row>
@@ -659,11 +644,15 @@ export default function Luong() {
               size="large"
               showSearch
               filterOption={(input, option) =>
-                option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                (option.label || "").toLowerCase().includes(input.toLowerCase())
               }
             >
               {danhSachNhanVien.map((nv) => (
-                <Option key={nv.maNhanVien} value={nv.maNhanVien}>
+                <Option
+                  key={nv.maNhanVien}
+                  value={nv.maNhanVien}
+                  label={`${nv.hoTen} - ${nv.cmnd}`}
+                >
                   {nv.hoTen} - {nv.cmnd}
                 </Option>
               ))}
@@ -694,7 +683,14 @@ export default function Luong() {
         </Form>
       </Modal>
 
-      <LuongDetailModal
+      <ModalChiTietChamCong
+        isVisible={isModalChamCongChiTietVisible}
+        onCancel={() => setIsModalChamCongChiTietVisible(false)}
+        selectedNhanVien={selectedNhanVien}
+        danhSachChamCongChiTiet={danhSachChamCongChiTiet}
+      />
+
+      {/* <LuongDetailModal
         visible={isDetailModalVisible}
         onCancel={() => setIsDetailModalVisible(false)}
         record={detailRecord}
@@ -705,7 +701,7 @@ export default function Luong() {
         onCancel={() => setIsEditModalVisible(false)}
         initialValues={editRecord}
         onSave={null}
-      />
+      /> */}
     </div>
   );
 }

@@ -2,8 +2,10 @@
 import { useEffect, useState } from "react"
 
 // ===== Ant Design =====
-import { Modal, Form, Row, Col, Button, DatePicker, TimePicker, Select, message } from "antd"
+import { Modal, Form, Row, Col, Button, DatePicker, TimePicker, Select, message, ConfigProvider } from "antd"
 import dayjs from 'dayjs'
+import locale from "antd/locale/vi_VN";
+dayjs.locale('vi')
 
 // ===== styles =====
 import './tangca.css'
@@ -81,12 +83,15 @@ export default function ModalThemTangCa({ onCancel, isVisible, createTangCa, dan
                                 { required: true, message: 'Vui lòng chọn ngày tăng ca!' }
                             ]}
                         >
-                            <DatePicker
+                        <ConfigProvider locale={locale}>
+ <DatePicker
                                 style={{ width: '100%' }}
                                 format="DD/MM/YYYY"
                                 placeholder="Chọn ngày tăng ca"
                                 disabledDate={(current) => current && current < dayjs().startOf('day')}
                             />
+                        </ConfigProvider>
+                           
                         </Form.Item>
                     </Col>
                 </Row>

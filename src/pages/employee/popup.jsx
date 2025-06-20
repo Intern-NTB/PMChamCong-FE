@@ -9,13 +9,17 @@ import {
   Col,
   Select,
   InputNumber,
+  message,
 } from "antd";
-import { useEffect, useCallback } from "react"; // Thêm useCallback
+import { useEffect, useCallback, useState } from "react"; 
 import { usePhongBan } from "../../component/hooks/usePhongBan";
 import { useVaiTro } from "../../component/hooks/useVaiTro";
 import { useDoiTuongUuTien } from "../../component/hooks/useDoiTuongUuTien";
+import { useNhanVien } from "../../component/hooks/useNhanVien";
 import dayjs from "dayjs";
 import { toLocalISOString } from "../../component/utils/format_date_iso";
+
+const { Option } = Select;
 
 const Popup = ({
   visible,
@@ -26,56 +30,130 @@ const Popup = ({
   maVaiTro,
   title,
 }) => {
+  const [form] = Form.useForm();
+  const [soDienThoaiWarning, setSoDienThoaiWarning] = useState(null);
+
   const { danhSachPhongBan } = usePhongBan();
   const { danhSachVaiTro, loadingVaiTro, getAllVaiTro } = useVaiTro();
   const { danhSachDoiTuongUuTien, loadingDoiTuongUuTien } = useDoiTuongUuTien();
-  const [form] = Form.useForm();
-
-  const dataSourceVaiTro = danhSachVaiTro.map((vt) => ({
-    maVaiTro: vt.maVaiTro,
-    tenVaiTro: vt.tenVaiTro,
-  }));
+  const { danhSachNhanVien } = useNhanVien();
 
   const parseDate = useCallback((dateString) => {
     return dateString ? dayjs(dateString) : null;
   }, []);
 
   useEffect(() => {
-    if (initialValues) {
-      const parsedDate = parseDate(initialValues.ngaySinh);
-      const cccdToSet = initialValues.cmnd || initialValues.CCCD || null; 
-      form.setFieldsValue({
-        ...initialValues,
-        ngaySinh: parsedDate,
-        maPhongBan: initialValues.maPhongBan ?? maPhongBan ?? null,
-        maVaiTro: initialValues.maVaiTro ?? maVaiTro ?? null,
-        maUuTien: initialValues.maUuTien > 0 ? initialValues.maUuTien : null,
-        CCCD: cccdToSet, 
-      });
-      if (initialValues.maPhongBan) {
-        getAllVaiTro(initialValues.maPhongBan);
-      } else if (maPhongBan) {
-        getAllVaiTro(maPhongBan);
-      }
-    } else {
-      form.resetFields();
-    }
+    if (visible) {
+      if (initialValues) {
+        const parsedNgaySinh = parseDate(initialValues.ngaySinh);
+        const cccdToSet = initialValues.CCCD || initialValues.cmnd || null;
 
-  }, [initialValues, maPhongBan, maVaiTro, getAllVaiTro, parseDate, form]);
+        form.setFieldsValue({
+          ...initialValues,
+          ngaySinh: parsedNgaySinh,
+          maPhongBan: initialValues.maPhongBan ?? maPhongBan ?? null,
+          maVaiTro: initialValues.maVaiTro ?? maVaiTro ?? null,
+          maUuTien: initialValues.maUuTien > 0 ? initialValues.maUuTien : undefined,
+          CCCD: cccdToSet,
+        });
+
+        const effectiveMaPhongBan = initialValues.maPhongBan ?? maPhongBan;
+        if (effectiveMaPhongBan) {
+          getAllVaiTro(effectiveMaPhongBan);
+        } else {
+          form.setFieldValue("maVaiTro", null);
+        }
+      } else {
+        form.resetFields();
+        setSoDienThoaiWarning(null); 
+        if (maPhongBan) {
+          form.setFieldValue("maPhongBan", maPhongBan);
+          getAllVaiTro(maPhongBan);
+        }
+      }
+    }
+  }, [visible, initialValues, maPhongBan, maVaiTro, getAllVaiTro, parseDate, form]);
+
+  useEffect(() => {
+    if (!visible) return; 
+
+    const checkDuplicatePhone = (value) => {
+      if (!value) {
+        setSoDienThoaiWarning(null);
+        return;
+      }
+
+      const isDuplicate = danhSachNhanVien.some(nv =>
+        nv.maNhanVien !== initialValues?.maNhanVien &&
+        nv.soDienThoai === value
+      );
+
+      if (isDuplicate) {
+        setSoDienThoaiWarning("Số điện thoại này đã tồn tại trong hệ thống. Vẫn có thể lưu.");
+      } else {
+        setSoDienThoaiWarning(null);
+      }
+    };
+
+    const soDienThoaiValue = form.getFieldValue('soDienThoai');
+    checkDuplicatePhone(soDienThoaiValue);
+
+    const timer = setTimeout(() => {
+      const currentSoDienThoai = form.getFieldValue('soDienThoai');
+      if (currentSoDienThoai !== soDienThoaiValue) { 
+        checkDuplicatePhone(currentSoDienThoai);
+      }
+    }, 300); 
+
+    return () => clearTimeout(timer); 
+
+  }, [form, danhSachNhanVien, initialValues?.maNhanVien, visible]); 
 
   const handleDateChange = useCallback((date) => {
     if (date && dayjs.isDayjs(date) && date.isValid()) {
       form.setFieldValue("ngaySinh", date);
-    } else if (!date) {
+    } else {
       form.setFieldValue("ngaySinh", null);
     }
   }, [form]);
 
+  const validateCCCD = useCallback(async (_, value) => {
+    if (!value) {
+      return Promise.resolve();
+    }
+    if (!/^\d{12}$/.test(value)) {
+      return Promise.reject("Căn cước công dân phải gồm 12 chữ số.");
+    }
+
+    const isDuplicate = danhSachNhanVien.some(nv =>
+      nv.maNhanVien !== initialValues?.maNhanVien &&
+      (nv.CCCD === value || nv.cmnd === value)
+    );
+
+    if (isDuplicate) {
+      return Promise.reject("CCCD này đã tồn tại trong hệ thống. Vui lòng nhập CCCD khác.");
+    }
+    return Promise.resolve();
+  }, [danhSachNhanVien, initialValues?.maNhanVien]);
+
+  const validateSoDienThoaiFormat = useCallback(async (_, value) => {
+    if (!value) {
+      return Promise.resolve();
+    }
+    if (!/^\d{10}$/.test(value)) {
+      return Promise.reject("Số điện thoại phải gồm 10 chữ số.");
+    }
+    return Promise.resolve();
+  }, []);
 
   const handleOk = useCallback(() => {
     form
       .validateFields()
       .then((values) => {
+        if (soDienThoaiWarning) {
+            console.log("Submitting with phone number warning.");
+        }
+
         if (
           values.ngaySinh &&
           dayjs.isDayjs(values.ngaySinh) &&
@@ -88,57 +166,66 @@ const Popup = ({
 
         values.diaChi = values.diaChi || null;
         values.soDienThoai = values.soDienThoai || null;
-        values.maPhongBan = Number(values.maPhongBan) || null;
-        values.maVaiTro = Number(values.maVaiTro) || null;
-        values.maUuTien = Number(values.maUuTien) || null;
-        values.luongCoBan = Number(values.luongCoBan) || null;
-        values.heSoTangCa = Number(values.heSoTangCa) || null;
-        values.cmnd = String(values.CCCD) || null; 
         values.hoTen = values.hoTen || null;
 
-        values.ngayVaoLam = toLocalISOString(); 
-        console.log("Dữ liệu gửi lên API:", values);
-        onOk(values); 
-        form.resetFields(); 
+        values.maPhongBan = values.maPhongBan ? Number(values.maPhongBan) : null;
+        values.maVaiTro = values.maVaiTro ? Number(values.maVaiTro) : null;
+        values.maUuTien = values.maUuTien ? Number(values.maUuTien) : null;
+        values.luongCoBan = values.luongCoBan ? Number(values.luongCoBan) : null;
+        values.heSoTangCa = values.heSoTangCa ? Number(values.heSoTangCa) : null;
+
+        values.cmnd = String(values.CCCD) || null;
+        delete values.CCCD;
+
+        if (!initialValues?.maNhanVien) {
+          values.ngayVaoLam = toLocalISOString();
+        }
+
+        console.log("Data submitted to API:", values);
+        onOk(values);
+        form.resetFields();
+        setSoDienThoaiWarning(null); 
       })
       .catch((info) => {
-        console.log("Validation failed:", info);
+        console.warn("Validation failed:", info);
+        message.error("Vui lòng kiểm tra lại thông tin nhập liệu và các trường bị lỗi.");
       });
-  }, [form, onOk]);
-
+  }, [form, onOk, initialValues?.maNhanVien, soDienThoaiWarning]); 
 
   const handleChangePhongBan = useCallback((value) => {
-    console.log("Selected Phòng ban:", value);
     form.setFieldValue("maPhongBan", value);
-    getAllVaiTro(value); 
-    form.setFieldValue("maVaiTro", null); 
+    getAllVaiTro(value);
+    form.setFieldValue("maVaiTro", null);
   }, [form, getAllVaiTro]);
-
 
   const getUuTienValue = useCallback(() => {
     const currentMaUuTien = form.getFieldValue("maUuTien");
-    return currentMaUuTien && currentMaUuTien > 0 ? currentMaUuTien : undefined;
+    return currentMaUuTien > 0 ? currentMaUuTien : undefined;
   }, [form]);
 
+  const dataSourceVaiTro = danhSachVaiTro.map((vt) => ({
+    value: vt.maVaiTro,
+    label: vt.tenVaiTro,
+  }));
 
   return (
     <Modal
-      style={{
-        width: "50vh",
-      }}
+      style={{ width: "500px" }}
       title={title}
       open={visible}
       onOk={handleOk}
       onCancel={() => {
         onCancel();
         form.resetFields();
+        setSoDienThoaiWarning(null); 
       }}
       footer={[
         <Button
           key="back"
           onClick={() => {
             onCancel();
-            form.resetFields(); 
+            form.resetFields();
+            setSoDienThoaiWarning(null); 
           }}
         >
           Hủy
@@ -148,20 +235,16 @@ const Popup = ({
         </Button>,
       ]}
     >
-      <Form
-        form={form} 
-        layout="vertical"
-        name="editForm"
-      >
+      <Form form={form} layout="vertical" name="employeeForm">
         <Row gutter={16}>
           <Col span={12}>
-            <Form.Item name="hoTen" label="Họ Tên">
-              <Input />
+            <Form.Item name="hoTen" label="Họ Tên" rules={[{ required: true, message: "Vui lòng nhập Họ Tên!" }]}>
+              <Input placeholder="Nhập họ tên" />
             </Form.Item>
           </Col>
           <Col span={12}>
             <Form.Item name="ngaySinh" label="Ngày Sinh">
-              <Space style={{ width: "100%" }}> 
+              <Space style={{ width: "100%" }}>
                 <DatePicker
                   onChange={handleDateChange}
                   style={{ width: "100%" }}
@@ -174,55 +257,55 @@ const Popup = ({
         </Row>
         <Row gutter={16}>
           <Col span={12}>
-            <Form.Item name="luongCoBan" label="Lương Cơ bản">
+            <Form.Item
+              name="luongCoBan"
+              label="Lương Cơ bản"
+              rules={[
+                {
+                  type: 'number',
+                  min: 0,
+                  message: 'Vui lòng nhập số hợp lệ và không âm!',
+                  transform: (value) => (value === '' || value === undefined || value === null) ? null : Number(value),
+                },
+              ]}
+            >
               <InputNumber
                 style={{ width: "100%" }}
                 formatter={(value) =>
                   `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                 }
                 parser={(value) => value?.replace(/\$\s?|(,*)/g, "")}
+                placeholder="Nhập lương cơ bản"
               />
             </Form.Item>
           </Col>
           <Col span={12}>
-            <Form.Item name="heSoTangCa" label="Hệ số tăng ca">
-              <Input type="number" />
+            <Form.Item
+              name="heSoTangCa"
+              label="Hệ số tăng ca"
+              rules={[
+                {
+                  type: 'number',
+                  min: 0,
+                  message: 'Vui lòng nhập số hợp lệ và không âm!',
+                  transform: (value) => (value === '' || value === undefined || value === null) ? null : Number(value),
+                },
+              ]}
+            >
+              <InputNumber style={{ width: "100%" }} placeholder="Nhập hệ số tăng ca" />
             </Form.Item>
           </Col>
           <Col span={12}>
             <Form.Item
               tooltip="Chọn phòng ban để thay đổi vai trò"
-              name="maVaiTro"
-              label="Vai Trò"
+              name="maPhongBan"
+              label="Phòng ban"
+              rules={[{ required: true, message: "Vui lòng chọn Phòng ban!" }]}
             >
-              <Select
-                placeholder="Chọn vai trò"
-                loading={loadingVaiTro}
-                options={dataSourceVaiTro.map((item) => ({
-                  value: item.maVaiTro,
-                  label: item.tenVaiTro,
-                }))}
-              />
-            </Form.Item>
-            <Form.Item name="maUuTien" label="Ưu tiên">
-              <Select
-                placeholder="Chọn ưu tiên"
-                style={{ width: "100%" }}
-                loading={loadingDoiTuongUuTien}
-                value={getUuTienValue()}
-                options={danhSachDoiTuongUuTien.map((dtut) => ({
-                  value: dtut.maUuTien,
-                  label: dtut.tenUuTien,
-                }))}
-              />
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item name="maPhongBan" label="Phòng ban">
               <Select
                 placeholder="Chọn phòng ban"
                 style={{ width: "100%" }}
-                onChange={handleChangePhongBan} 
+                onChange={handleChangePhongBan}
                 options={
                   Array.isArray(danhSachPhongBan)
                     ? danhSachPhongBan.map((pb) => ({
@@ -233,34 +316,82 @@ const Popup = ({
                 }
               />
             </Form.Item>
+          </Col>
+          <Col span={12}>
             <Form.Item
-              name="CCCD" 
+              name="maVaiTro"
+              label="Vai Trò"
+              rules={[{ required: true, message: "Vui lòng chọn Vai trò!" }]}
+            >
+              <Select
+                placeholder="Chọn vai trò"
+                loading={loadingVaiTro}
+                options={dataSourceVaiTro}
+              />
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item name="maUuTien" label="Ưu tiên">
+              <Select
+                placeholder="Chọn ưu tiên"
+                style={{ width: "100%" }}
+                loading={loadingDoiTuongUuTien}
+                value={getUuTienValue()}
+                allowClear
+              >
+                {Array.isArray(danhSachDoiTuongUuTien) ? (
+                  danhSachDoiTuongUuTien.map((dtut) => (
+                    <Option key={dtut.maUuTien} value={dtut.maUuTien}>
+                      {dtut.tenUuTien}
+                    </Option>
+                  ))
+                ) : (
+                  <Option value={null} disabled>Đang tải...</Option>
+                )}
+              </Select>
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item
+              name="CCCD"
               label="Căn cước công dân"
               rules={[
-                {
-                  pattern: /^\d{12}$/, 
-                  message: "Căn cước gồm 12 chữ số",
-                },
+                { validator: validateCCCD },
               ]}
             >
-              <Input />
+              <Input placeholder="Nhập số CCCD" maxLength={12} />
             </Form.Item>
           </Col>
           <Col span={24}>
             <Form.Item name="diaChi" label="Địa chỉ">
-              <Input />
+              <Input placeholder="Nhập địa chỉ" />
             </Form.Item>
             <Form.Item
               name="soDienThoai"
               label="Số điện thoại"
               rules={[
-                {
-                  pattern: /^\d{10}$/, 
-                  message: "Số điện thoại gồm 10 chữ số",
-                },
+                { validator: validateSoDienThoaiFormat },
               ]}
+              validateStatus={soDienThoaiWarning ? "warning" : undefined}
+              help={soDienThoaiWarning}
             >
-              <Input />
+              <Input
+                placeholder="Nhập số điện thoại"
+                maxLength={10}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  form.setFieldsValue({ soDienThoai: value });
+                  const isDuplicate = danhSachNhanVien.some(nv =>
+                    nv.maNhanVien !== initialValues?.maNhanVien &&
+                    nv.soDienThoai === value
+                  );
+                  if (isDuplicate) {
+                    setSoDienThoaiWarning("Số điện thoại này đã tồn tại trong hệ thống!");
+                  } else {
+                    setSoDienThoaiWarning(null);
+                  }
+                }}
+              />
             </Form.Item>
           </Col>
         </Row>

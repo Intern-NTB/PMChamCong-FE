@@ -312,19 +312,15 @@ export default function NghiPhep() {
         maNhanVien: values.maNhanVien,
       };
 
-      if (soNgayPhepConLai <= 0) {
-        await createNghiPhep(secondRecord);
-        api.success({
-          message: "Thành công",
-          description:
-            "Đã tạo bản ghi nghỉ phép không lương vì đã hết ngày phép.",
-        });
-        return;
-      }
+      await createNghiPhep(secondRecord);
 
       await createNghiPhep(firstRecord);
       await getAllNgayPhep();
-
+      api.success({
+        message: "Thành công",
+        description:
+          "Đã tạo bản ghi nghỉ phép không lương vì đã hết ngày phép.",
+      });
       api.success({
         message: "Thành công",
         description: "Đã tạo 2 bản ghi nghỉ phép (có phép và không phép)",
@@ -1106,7 +1102,7 @@ export default function NghiPhep() {
 
       {/* Modal xác nhận tách bản ghi */}
       <Modal
-      centered={true}
+        centered={true}
         title="Xác nhận tách bản ghi"
         open={showSplitRecordModal}
         onOk={handleSplitRecord}
@@ -1125,7 +1121,7 @@ export default function NghiPhep() {
           <p style={{ fontSize: "16px", marginBottom: "16px" }}>
             Số ngày nghỉ có phép vượt quá số ngày phép còn lại!
           </p>
-        
+
           <p>Bạn có muốn tách thành 2 bản ghi?</p>
         </div>
       </Modal>

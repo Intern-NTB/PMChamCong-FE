@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo, useContext } from "react";
 import dayjs from "dayjs";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
+import viVN from "antd/es/locale/vi_VN";
 
 // ===== Ant Design =====
 import {
@@ -29,7 +30,6 @@ import {
   UserOutlined,
 } from "@ant-design/icons";
 import "dayjs/locale/vi";
-import viVN from "antd/locale/vi_VN";
 
 // ===== Hook tùy chỉnh =====
 import { useChamCong } from "../../component/hooks/useChamCong";
@@ -57,6 +57,34 @@ const { Option } = Select;
 const { Text } = Typography;
 
 export default function GiaLapChamCong() {
+  const customLocale = {
+    ...viVN,
+    DatePicker: {
+      ...viVN.DatePicker,
+      lang: {
+        ...viVN.DatePicker.lang,
+        placeholder: "Chọn ngày",
+        rangePlaceholder: ["Ngày bắt đầu", "Ngày kết thúc"], // Tùy chỉnh placeholder cho RangePicker
+        today: "Hôm nay",
+        now: "Bây giờ",
+        backToToday: "Quay lại hôm nay",
+        ok: "OK",
+        clear: "Xóa",
+        month: "Tháng",
+        year: "Năm",
+        timeSelect: "Chọn thời gian",
+        dateSelect: "Chọn ngày",
+        monthSelect: "Chọn tháng",
+        yearSelect: "Chọn năm",
+        decadeSelect: "Chọn thập kỷ",
+        yearFormat: "YYYY",
+        dateFormat: "DD/MM/YYYY",
+        dayFormat: "DD",
+        dateTimeFormat: "DD/MM/YYYY HH:mm:ss",
+        monthBeforeYear: true,
+      },
+    },
+  };
   // Hooks
   const { danhSachChamCongChiTiet, getAllChamCongDetail } = useChamCong();
   const { danhSachPhongBan } = usePhongBan();
@@ -174,6 +202,12 @@ export default function GiaLapChamCong() {
     setIsModalTangCaVisible(true);
   };
 
+  const handleRowClick = useCallback((record) => {
+    console.log(record);
+    setSelectedNhanVien(record);
+    setIsModalChiTietVisible(true);
+  }, []);
+
   const handleShowModalThemTangCa = () => {
     setIsModalThemTangCaVisible(true);
   };
@@ -185,7 +219,8 @@ export default function GiaLapChamCong() {
 
   const formatTime = useCallback((text) => {
     // Nếu text là null, undefined, chuỗi rỗng, "N/A" HOẶC "Invalid Date", trả về "00:00:00"
-    if (!text || text === "N/A" || text === "Invalid Date") return "Chưa chấm công ra"; 
+    if (!text || text === "N/A" || text === "Invalid Date")
+      return "Chưa chấm công ra";
     if (typeof text === "string" && text.includes("T")) {
       const timePart = text.split("T")[1];
       return timePart.split(".")[0];
@@ -314,9 +349,7 @@ export default function GiaLapChamCong() {
             <div style={{ fontWeight: "bold", marginBottom: "4px" }}>
               {dayjs(record.ngayChamCong).format("DD/MM/YYYY")}
             </div>
-            <div style={{ marginBottom: "4px" }}>
-              {record.hoTen}
-            </div>
+            <div style={{ marginBottom: "4px" }}>{record.hoTen}</div>
             <div style={{ fontSize: "12px", color: "#666" }}>
               {record.tenPhongBan}
             </div>
@@ -411,7 +444,7 @@ export default function GiaLapChamCong() {
 
     const tongSoGioTangCaThang = danhSachTangCa.reduce((total, tc) => {
       const ngayTangCa = dayjs(tc.ngayChamCongTangCa);
-      const thang = ngayTangCa.month(); 
+      const thang = ngayTangCa.month();
       const nam = ngayTangCa.year();
 
       const thangHienTai = (selectedMonth ?? dayjs()).month();
@@ -503,11 +536,7 @@ export default function GiaLapChamCong() {
       {isMobile ? (
         <Space direction="vertical" style={{ width: "100%" }} size="middle">
           <Card title="Chấm công" size="small" extra={<CalendarOutlined />}>
-            <Space
-              direction="vertical"
-              style={{ width: "100%" }}
-              size="middle"
-            >
+            <Space direction="vertical" style={{ width: "100%" }} size="middle">
               <Row gutter={[8, 8]}>
                 <Col span={12}>
                   <Select
@@ -610,24 +639,33 @@ export default function GiaLapChamCong() {
               style={{ width: "100%", marginBottom: "16px" }}
             >
               <span>Chọn khoảng thời gian:</span>
-              <RangePicker
-                value={dateRange}
-                onChange={handleDateRangeChange}
-                format="DD/MM/YYYY"
-                style={{ width: "100%", marginBottom: "8px" }}
-                size="large"
-              />
-              <ConfigProvider locale={viVN}>
-                <DatePicker
-                  placeholder="Chọn tháng"
-                  picker="month"
-                  value={selectedMonth}
-                  onChange={handleMonthChange}
-                  format="MM/YYYY"
-                  style={{ width: "100%" }}
-                  size="large"
-                />
+              <ConfigProvider locale={customLocale}>
+                <Space style={{ marginBottom: "16px" }}>
+                  <span>Chọn khoảng thời gian:</span>
+                  <RangePicker
+                    value={dateRange}
+                    onChange={handleDateRangeChange}
+                    format="DD/MM/YYYY"
+                  />
+                  <span style={{ marginLeft: "16px" }}>Chọn tháng:</span>
+                  <DatePicker
+                    placeholder="Chọn tháng"
+                    picker="month"
+                    value={selectedMonth}
+                    onChange={handleMonthChange}
+                    format="MM/YYYY"
+                  />
+                  <Input.Search
+                    placeholder="Tìm kiếm theo mã nhân viên hoặc tên"
+                    onSearch={handleSearch}
+                    onChange={(e) => setSearchText(e.target.value)}
+                    value={searchText}
+                    style={{ width: "250px" }}
+                    allowClear
+                  />
+                </Space>
               </ConfigProvider>
+
               <Input.Search
                 placeholder="Tìm kiếm theo tên hoặc mã nhân viên"
                 onSearch={handleSearch}
@@ -655,7 +693,7 @@ export default function GiaLapChamCong() {
               size="small"
               scroll={{ y: "calc(100vh - 300px)", sticky: true }}
               onChange={(pagination, filters) => {
-                const pb = filters.tenPhongBan?.[0]; 
+                const pb = filters.tenPhongBan?.[0];
                 setSelectedPhongBan({
                   selected: true,
                   phongBanValue: pb.tenPhongBan || null,
@@ -844,16 +882,15 @@ export default function GiaLapChamCong() {
 
           <Col span={24}>
             <Card title="Lịch sử chấm công">
-              <Space style={{ marginBottom: "16px" }}>
-                <span>Chọn khoảng thời gian:</span>
-                <RangePicker
-                  value={dateRange}
-                  onChange={handleDateRangeChange}
-                  format="DD/MM/YYYY"
-                />
-                <span style={{ marginLeft: "16px" }}>Chọn tháng:</span>
-                <ConfigProvider locale={viVN}>
-                  {" "}
+              <ConfigProvider locale={customLocale}>
+                <Space style={{ marginBottom: "16px" }}>
+                  <span>Chọn khoảng thời gian:</span>
+                  <RangePicker
+                    value={dateRange}
+                    onChange={handleDateRangeChange}
+                    format="DD/MM/YYYY"
+                  />
+                  <span style={{ marginLeft: "16px" }}>Chọn tháng:</span>
                   <DatePicker
                     placeholder="Chọn tháng"
                     picker="month"
@@ -861,23 +898,25 @@ export default function GiaLapChamCong() {
                     onChange={handleMonthChange}
                     format="MM/YYYY"
                   />
-                </ConfigProvider>
-                <Input.Search
-                  placeholder="Tìm kiếm theo mã nhân viên hoặc tên"
-                  onSearch={handleSearch}
-                  onChange={(e) => setSearchText(e.target.value)}
-                  value={searchText}
-                  style={{ width: "250px" }}
-                  allowClear
-                />
-              </Space>
-
+                  <Input.Search
+                    placeholder="Tìm kiếm theo mã nhân viên hoặc tên"
+                    onSearch={handleSearch}
+                    onChange={(e) => setSearchText(e.target.value)}
+                    value={searchText}
+                    style={{ width: "250px" }}
+                    allowClear
+                  />
+                </Space>
+              </ConfigProvider>
               <Table
                 columns={columns}
                 dataSource={filteredData}
                 rowKey={(record) =>
-                  `${record.ngayChamCong}_${record.maNhanVien}`
+                  `${record.maNhanVien}_${record.ngayChamCong}`
                 }
+                onRow={(record) => ({
+                  onClick: () => handleRowClick(record),
+                })}
                 pagination={{
                   pageSize: pageSize,
                   showSizeChanger: true,
@@ -889,19 +928,11 @@ export default function GiaLapChamCong() {
                 }}
                 scroll={{ y: "calc(100vh - 300px)", sticky: true }}
                 onChange={(pagination, filters) => {
-                  const pb = filters.tenPhongBan?.[0]; 
+                  const pb = filters.tenPhongBan?.[0];
                   setSelectedPhongBan({
                     selected: true,
                     phongBanValue: pb || null,
                   });
-                }}
-                onRow={(record, rowIndex) => {
-                  return {
-                    onClick: (event) => {
-                      setSelectedNhanVien(record); 
-                      setIsModalChiTietVisible(true); 
-                    },
-                  };
                 }}
               />
             </Card>
@@ -928,6 +959,7 @@ export default function GiaLapChamCong() {
       />
 
       <ModalChiTietChamCong
+        key={selectedNhanVien?.maNhanVien}
         isVisible={isModalChiTietVisible}
         onCancel={() => {
           setIsModalChiTietVisible(false);

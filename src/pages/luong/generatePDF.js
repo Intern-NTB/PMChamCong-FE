@@ -214,7 +214,7 @@ export const generateDetailedSalaryPDF = (employeeData, monthYear = "") => {
     `BẢNG TÍNH LƯƠNG THÁNG ${removeVietnameseTones(monthYear)}`,
     doc.internal.pageSize.getWidth() / 2,
     15,
-    { align: "center" }
+    { align: "center", font: "Roboto-Regular", fontStyle: "normal" }
   );
 
   const basicData = [
@@ -227,31 +227,46 @@ export const generateDetailedSalaryPDF = (employeeData, monthYear = "") => {
     ["6", "Lương cơ bản", formatCurrency(baseSalary)],
     ["7", "Số ngày làm việc", employeeData.soNgayCong || 0],
     ["8", "Công chuẩn của tháng", employeeData.congChuanCuaThang || 0],
-    ["9", "Số ngày nghỉ lễ", employeeData.soNgayLe || 0],
-    ["10", "Số ngày nghỉ", employeeData.soNgayNghi || 0],
+    ["9", "Số ngày nghỉ", employeeData.soNgayNghi + employeeData.soNgayLe || 0],
+    ["10", "Số ngày nghỉ lễ", employeeData.soNgayLe || 0],
     ["11", "Số ngày nghỉ có phép", employeeData.soNgayNghiCoPhep || 0],
     ["12", "Số giờ tăng ca", employeeData.soGioTangCa || 0],
     ["13", "Hệ số tăng ca", employeeData.heSoTangCa || 0],
     ["14", "Lương giờ", formatCurrency(employeeData.luongGio)],
-    ["15", "Tiền tăng ca", formatCurrency(employeeData.tongTienTangCa || 0)],
+    [
+      "15",
+      "Tổng tiền tăng ca",
+      formatCurrency(employeeData.tongTienTangCa || 0),
+    ],
+    ["16", "Lương theo ngày", formatCurrency(employeeData.luongTheoNgay || 0)],
+    ["17", "Lương ngày nghi", formatCurrency(employeeData.luongNgayNghi || 0)],
+    [
+      "18",
+      "Tổng tiền phụ cấp",
+      formatCurrency(employeeData.tongTienPhuCap || 0),
+    ],
+    [
+      "19",
+      "Tổng lương",
+      formatCurrency(
+        employeeData.tongTienPhuCap ||
+          0 + employeeData.luongTheoNgay ||
+          0 + employeeData.luongNgayNghi ||
+          0
+      ),
+    ],
   ];
 
-  // Tạo dòng phụ cấp
-  const allowanceRow = [
-    String(16),
-    "Tổng tiền phụ cấp",
-    formatCurrency(employeeData.tongTienPhuCap || 0),
-  ];
   // Tạo các dòng chi tiết thưởng (truyền thêm baseSalary)
   const bonusRows = createBonusRows(
     employeeData.danhSachLichSuThuong,
-    17,
+    20,
     baseSalary
   );
 
   // Tạo dòng tổng thưởng
   const totalBonusRow = [
-    String(18),
+    String(21),
     "Tổng Tiền Thưởng",
     formatCurrency(employeeData.tienThuong || 0),
   ];
@@ -259,20 +274,20 @@ export const generateDetailedSalaryPDF = (employeeData, monthYear = "") => {
   // Tạo các dòng chi tiết phạt (truyền thêm baseSalary)
   const penaltyRows = createPenaltyRows(
     employeeData.danhSachLichSuTru,
-    19,
+    22,
     baseSalary
   );
 
   // Tạo dòng tổng phạt
   const totalPenaltyRow = [
-    String(20),
+    String(23),
     "Tổng Tiền Phạt",
     formatCurrency(employeeData.tienTru || 0),
   ];
 
   // Tạo dòng lương thực lãnh
   const finalSalaryRow = [
-    String(21),
+    String(24),
     "Lương thực lãnh",
     formatCurrency(employeeData.tongLuong || 0),
   ];
@@ -280,7 +295,6 @@ export const generateDetailedSalaryPDF = (employeeData, monthYear = "") => {
   // Kết hợp tất cả dữ liệu
   const tableData = [
     ...basicData,
-    allowanceRow,
     ...bonusRows,
     totalBonusRow,
     ...penaltyRows,
@@ -341,6 +355,7 @@ export const generateDetailedSalaryPDF = (employeeData, monthYear = "") => {
         "Tổng Tiền Thưởng",
         "Tổng Tiền Phạt",
         "Lương thực lãnh",
+        "Tổng lương",
       ].includes(cellText);
       if (isImportantRow) {
         data.cell.styles.fillColor = [140, 40, 80];
@@ -435,18 +450,16 @@ export const generateSinglePDFMultiplePages = (
     }
     const baseSalary = employeeData.luongCoBan || 0; // Lương cơ bản để tính %
 
-    // Tiêu đề cho mỗi trang
+    // Tiêu đề
+    doc.setFont("Roboto-Regular", "normal");
     doc.setFontSize(16);
-    doc.setFont("helvetica", "bold");
     doc.text(
-      `BANG TINH LUONG THANG ${monthYear}`,
+      `BẢNG TÍNH LƯƠNG THÁNG ${removeVietnameseTones(monthYear)}`,
       doc.internal.pageSize.getWidth() / 2,
       15,
-      { align: "center" }
+      { align: "center", font: "Roboto-Regular", fontStyle: "normal" }
     );
 
-    // Dữ liệu cho bảng
-    // Tạo dữ liệu cơ bản
     const basicData = [
       ["STT", "Nội dung", "Giá trị"], // Header row
       ["1", "Họ và tên", employeeData.hoTen || "-"],
@@ -457,32 +470,58 @@ export const generateSinglePDFMultiplePages = (
       ["6", "Lương cơ bản", formatCurrency(baseSalary)],
       ["7", "Số ngày làm việc", employeeData.soNgayCong || 0],
       ["8", "Công chuẩn của tháng", employeeData.congChuanCuaThang || 0],
-      ["9", "Số ngày nghỉ lễ", employeeData.soNgayLe || 0],
-      ["10", "Số ngày nghỉ", employeeData.soNgayNghi || 0],
+      [
+        "9",
+        "Số ngày nghỉ",
+        employeeData.soNgayNghi + employeeData.soNgayLe || 0,
+      ],
+      ["10", "Số ngày nghỉ lễ", employeeData.soNgayLe || 0],
       ["11", "Số ngày nghỉ có phép", employeeData.soNgayNghiCoPhep || 0],
-      // ["12", "Số ngày nghỉ trừ lương", employeeData.soNgayNghiTruLuong || 0],
-      ["13", "Số giờ tăng ca", employeeData.soGioTangCa || 0],
-      ["14", "Hệ số tăng ca", employeeData.heSoTangCa || 0],
-      ["15", "Lương giờ", formatCurrency(employeeData.luongGio)],
-      ["16", "Tiền tăng ca", formatCurrency(employeeData.tongTienTangCa || 0)],
+      ["12", "Số giờ tăng ca", employeeData.soGioTangCa || 0],
+      ["13", "Hệ số tăng ca", employeeData.heSoTangCa || 0],
+      ["14", "Lương giờ", formatCurrency(employeeData.luongGio)],
+      [
+        "15",
+        "Tổng tiền tăng ca",
+        formatCurrency(employeeData.tongTienTangCa || 0),
+      ],
+      [
+        "16",
+        "Lương theo ngày",
+        formatCurrency(employeeData.luongTheoNgay || 0),
+      ],
+      [
+        "17",
+        "Lương ngày nghi",
+        formatCurrency(employeeData.luongNgayNghi || 0),
+      ],
+      [
+        "18",
+        "Tổng tiền phụ cấp",
+        formatCurrency(employeeData.tongTienPhuCap || 0),
+      ],
+      [
+        "19",
+        "Tổng lương",
+        formatCurrency(
+          employeeData.tongTienPhuCap ||
+            0 + employeeData.luongTheoNgay ||
+            0 + employeeData.luongNgayNghi ||
+            0
+        ),
+      ],
     ];
 
-    // Tạo dòng phụ cấp
-    const allowanceRow = [
-      String(17),
-      "Tổng tiền phụ cấp",
-      formatCurrency(employeeData.tongTienPhuCap || 0),
-    ];
     // Tạo các dòng chi tiết thưởng (truyền thêm baseSalary)
     const bonusRows = createBonusRows(
       employeeData.danhSachLichSuThuong,
-      18,
+      20,
       baseSalary
     );
 
     // Tạo dòng tổng thưởng
     const totalBonusRow = [
-      String(19),
+      String(21),
       "Tổng Tiền Thưởng",
       formatCurrency(employeeData.tienThuong || 0),
     ];
@@ -490,20 +529,20 @@ export const generateSinglePDFMultiplePages = (
     // Tạo các dòng chi tiết phạt (truyền thêm baseSalary)
     const penaltyRows = createPenaltyRows(
       employeeData.danhSachLichSuTru,
-      20,
+      22,
       baseSalary
     );
 
     // Tạo dòng tổng phạt
     const totalPenaltyRow = [
-      String(21),
+      String(23),
       "Tổng Tiền Phạt",
       formatCurrency(employeeData.tienTru || 0),
     ];
 
     // Tạo dòng lương thực lãnh
     const finalSalaryRow = [
-      String(22),
+      String(24),
       "Lương thực lãnh",
       formatCurrency(employeeData.tongLuong || 0),
     ];
@@ -511,7 +550,6 @@ export const generateSinglePDFMultiplePages = (
     // Kết hợp tất cả dữ liệu
     const tableData = [
       ...basicData,
-      allowanceRow,
       ...bonusRows,
       totalBonusRow,
       ...penaltyRows,
@@ -572,6 +610,7 @@ export const generateSinglePDFMultiplePages = (
           "Tổng Tiền Thưởng",
           "Tổng Tiền Phạt",
           "Lương thực lãnh",
+          "Tổng lương",
         ].includes(cellText);
         if (isImportantRow) {
           data.cell.styles.fillColor = [140, 40, 80];
@@ -605,10 +644,24 @@ export const generateSinglePDFMultiplePages = (
       tableWidth: "auto",
       margin: { left: 10, right: 10 },
     });
-    // Thêm chân trang cho mỗi trang
+
+    // Thêm chân trang
     const pageHeight = doc.internal.pageSize.getHeight();
     doc.setFontSize(10);
-    doc.text(`${new Date().toLocaleDateString("vi-VN")}`, 10, pageHeight - 10);
+    doc.text(
+      `Ngày xuất: ${new Date().toLocaleDateString("vi-VN")}`,
+      10,
+      pageHeight - 10
+    );
+
+    doc.text(
+      `Trang 1`,
+      doc.internal.pageSize.getWidth() - 20,
+      pageHeight - 10,
+      {
+        align: "right",
+      }
+    );
 
     doc.text(
       `Trang ${index + 1}/${employeesData.length}`,

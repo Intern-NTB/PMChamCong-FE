@@ -40,6 +40,7 @@ const { Search } = Input;
 
 export default function NhanVien() {
   const { danhSachChamCongChiTiet } = useChamCong();
+  
   const {
     danhSachNhanVien,
     loading,
@@ -301,7 +302,13 @@ export default function NhanVien() {
           trigger={["click"]}
           placement="bottomRight"
         >
-          <Button type="text" icon={<MoreOutlined />} />
+          <Button
+            onClick={(e) => {
+              e.stopPropagation();
+            }}
+            type="text"
+            icon={<MoreOutlined />}
+          />
         </Dropdown>
       ),
     },
@@ -357,6 +364,9 @@ export default function NhanVien() {
               overlay={getActionMenu(record)}
               trigger={["click"]}
               placement="bottomRight"
+              onClick={(e) => {
+                e.stopPropagation(); // Ngăn sự kiện lan truyền lên hàng
+              }}
             >
               <Button type="text" icon={<MoreOutlined />} size="small" />
             </Dropdown>
@@ -368,11 +378,18 @@ export default function NhanVien() {
 
   // Action menu for each row
   const getActionMenu = (record) => (
-    <Menu>
+    <Menu
+      onClick={(e) => {
+        e.domEvent.stopPropagation();
+      }}
+    >
       <Menu.Item
         key="edit"
         icon={<EditOutlined />}
-        onClick={() => handleEdit(record)}
+        onClick={(e) => {
+          e.domEvent.stopPropagation();
+          handleEdit(record);
+        }}
       >
         Chỉnh sửa
       </Menu.Item>
@@ -380,7 +397,10 @@ export default function NhanVien() {
         key="delete"
         icon={<DeleteOutlined />}
         danger
-        onClick={() => handleDelete(record.key)}
+        onClick={(e) => {
+          e.domEvent.stopPropagation();
+          handleDelete(record.key);
+        }}
       >
         Xóa
       </Menu.Item>
@@ -444,7 +464,7 @@ export default function NhanVien() {
 
   const handleSave = async (values) => {
     try {
-      await updateNhanVien(currentRecord.key, values);
+      await updateNhanVien(currentRecord.maNhanVien, values);
       showAlert("success", "Thành công", "Cập nhật nhân viên thành công!");
       setIsModalVisible(false);
       await fetchNhanVien();
@@ -665,7 +685,7 @@ export default function NhanVien() {
               onRow={(record) => {
                 return {
                   onClick: () => {
-                    console.log(record)
+                    console.log(record);
                     setSelectedNhanVien(record);
                     setIsModalChamCongChiTietVisible(true);
                   },

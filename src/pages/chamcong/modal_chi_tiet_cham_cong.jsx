@@ -221,42 +221,36 @@ export default function ModalChiTietChamCong({
   }, [danhSachNgayPhep, selectedNhanVien, selectedMonth]);
 
   const attendanceStatistics = useMemo(() => {
-    let totalAbsentDays = 0;
-    let totalHalfDayAbsent = 0;
     let totalOvertimeDays = 0;
     let totalLeaveDays = 0;
     let totalHolidayDays = 0;
 
+    // Calculate total work days and hours, excluding leave days, for the selected employee
     const {
       totalWorkDays,
       totalActualWorkHours,
-    } = danhSachChamCongChiTiet.reduce(
-      (acc, ccct) => {
-        const sameMonth =
-          dayjs(ccct.ngayChamCong).month() + 1 ===
-          dayjs(selectedMonth, "YYYY-MM-DD").month() + 1;
+    } = processedCalendarData.reduce(
+      (acc, day) => {
+        // Only process days in the selected month for the selected employee
+        const isSameMonth = day.date.month() === selectedMonth.month();
+        const isSelectedEmployee =
+          selectedNhanVien?.maNhanVien === day.chamCong?.maNhanVien;
 
-        if (sameMonth) {
+        if (isSameMonth && !day.isLeave && day.chamCong && isSelectedEmployee) {
           acc.totalWorkDays += 1;
-          acc.totalActualWorkHours += ccct.soGioThucTe;
-          acc.danhSachChamCongChiTietFilter.push(ccct);
+          acc.totalActualWorkHours += day.chamCong.soGioThucTe || 0;
+          acc.danhSachChamCongChiTietFilter.push(day.chamCong);
         }
         return acc;
       },
       {
         totalWorkDays: 0,
         totalActualWorkHours: 0,
-        danhSachChamCongChiTietFilter: [], 
+        danhSachChamCongChiTietFilter: [],
       }
     );
 
     processedCalendarData.forEach((day) => {
-      if (day.isAbsent) {
-        totalAbsentDays += 1;
-      }
-      if (day.isHalfDayAbsent) {
-        totalHalfDayAbsent += 1;
-      }
       if (day.isOvertimeDay) {
         totalOvertimeDays += 1;
       }
@@ -275,10 +269,8 @@ export default function ModalChiTietChamCong({
     const ngayPhepTichLuy = dataSourceNgayPhep?.ngayPhepTichLuy || 0;
 
     return {
-      totalWorkDays: totalWorkDays.toFixed(2),
+      totalWorkDays: totalWorkDays,
       totalActualWorkHours: formattedTotalHours,
-      totalAbsentDays,
-      totalHalfDayAbsent,
       totalOvertimeDays,
       totalLeaveDays,
       totalHolidayDays,
@@ -287,12 +279,7 @@ export default function ModalChiTietChamCong({
       leaveRemaining: ngayPhepConLai,
       leaveAccumulated: ngayPhepTichLuy,
     };
-  }, [
-    processedCalendarData,
-    dataSourceNgayPhep,
-    danhSachChamCongChiTiet,
-    selectedMonth,
-  ]);
+  }, [processedCalendarData, dataSourceNgayPhep?.ngayPhepDaSuDung, dataSourceNgayPhep?.ngayPhepConLai, dataSourceNgayPhep?.ngayPhepTichLuy, selectedMonth, selectedNhanVien?.maNhanVien]);
 
   useEffect(() => {
     if (selectedNhanVien) {
@@ -747,20 +734,20 @@ export default function ModalChiTietChamCong({
           </Row>
         </div>
       </ConfigProvider>
-      <style jsx>{`
-        .day-cell {
-          box-sizing: border-box;
-        }
-        .day-cell-empty {
-          box-sizing: border-box;
-          background-color: #f9f9f9;
-          border: 1px solid #f0f0f0;
-          min-height: 100px;
-        }
-        .current-day {
-          border: 2px solid #6100b3 !important;
-        }
-      `}</style>
+      <style>{`
+      .day-cell {
+        box-sizing: border-box;
+      }
+      .day-cell-empty {
+        box-sizing: border-box;
+        background-color: #f9f9f9;
+        border: 1px solid #f0f0f0;
+        min-height: 100px;
+      }
+      .current-day {
+        border: 2px solid #6100b3 !important;
+      }
+`}</style>
     </Modal>
   );
 }
