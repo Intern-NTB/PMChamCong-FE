@@ -23,6 +23,8 @@ import { ReloadContext } from "../../context/reloadContext";
 const { Header, Sider, Content } = Layout;
 
 const MainLayout = () => {
+  const location = useLocation();
+
   const pathToTitle = useMemo(
     () => ({
       "/main-layout/trangchu": "Trang Chủ",
@@ -46,17 +48,26 @@ const MainLayout = () => {
     }
   }, []);
 
-  const location = useLocation();
-  const title = pathToTitle[location.pathname] || "Quản lý nhân sự";
+  // Get title - xử lý đường dẫn con của cài đặt
+  const title = useMemo(() => {
+    const currentPath = location.pathname;
+    
+    // Kiểm tra nếu đang trong phần cài đặt (bao gồm các tab con)
+    if (currentPath.startsWith("/main-layout/caidat")) {
+      return "Cài Đặt";
+    }
+    
+    return pathToTitle[currentPath] || "Quản lý nhân sự";
+  }, [location.pathname, pathToTitle]);
 
   const [reloadFn, setReloadFnState] = useState(() => () => {});
+  const [isMobile, setIsMobile] = useState(false);
+  const [drawerVisible, setDrawerVisible] = useState(false);
+  const [openKeys, setOpenKeys] = useState([]);
 
   const setReloadFn = useCallback((fn) => {
     setReloadFnState(() => fn);
   }, []);
-
-  const [isMobile, setIsMobile] = useState(false);
-  const [drawerVisible, setDrawerVisible] = useState(false);
 
   useEffect(() => {
     const checkScreenSize = () => {
@@ -68,8 +79,27 @@ const MainLayout = () => {
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
 
+  // Set default openKeys based on current path
+  useEffect(() => {
+    const currentPath = location.pathname;
+    
+    if (
+      currentPath.startsWith("/main-layout/nhanvien") ||
+      currentPath.startsWith("/main-layout/nghiphep")
+    ) {
+      setOpenKeys(["sub1"]);
+    } else {
+      setOpenKeys([]);
+    }
+  }, [location.pathname]);
+
+  const handleOpenChange = useCallback((keys) => {
+    setOpenKeys(keys);
+  }, []);
+
   const handleLogout = useCallback(() => {
     localStorage.removeItem("token");
+    localStorage.removeItem("taiKhoan");
     window.location.replace("/login");
   }, []);
 
@@ -118,60 +148,39 @@ const MainLayout = () => {
         label: <Link to="/main-layout/baocao">Báo Cáo</Link>,
       },
       {
-        key: "/main-layout/caidat/*",
+        key: "/main-layout/caidat",
         icon: <SettingFilled />,
         label: <Link to="/main-layout/caidat">Cài đặt</Link>,
       },
     ],
     []
   );
-  
 
+  // Get selected keys - sửa lại logic
   const getSelectedKeys = useMemo(() => {
     const currentPath = location.pathname;
 
-    // Kiểm tra nếu đang ở trong phần cài đặt
+    // Xử lý đường dẫn cài đặt và các tab con
     if (currentPath.startsWith("/main-layout/caidat")) {
-      return ["/main-layout/caidat/*"];
+      return ["/main-layout/caidat"];
     }
 
-    // Kiểm tra các đường dẫn khác
-    const exactMatch = menuItems.find(
-      (item) =>
-        item.key === currentPath ||
-        (item.children &&
-          item.children.some((child) => child.key === currentPath))
-    );
+    // Kiểm tra exact match
+    const hasExactMatch = menuItems.some(item => {
+      if (item.key === currentPath) return true;
+      if (item.children) {
+        return item.children.some(child => child.key === currentPath);
+      }
+      return false;
+    });
 
-    if (exactMatch) {
+    if (hasExactMatch) {
       return [currentPath];
     }
 
-    // Kiểm tra sub menu
-    for (const item of menuItems) {
-      if (item.children) {
-        const childMatch = item.children.find(
-          (child) => child.key === currentPath
-        );
-        if (childMatch) {
-          return [currentPath];
-        }
-      }
-    }
-
-    return ["/main-layout/trangchu"]; // default
+    // Default fallback
+    return ["/main-layout/trangchu"];
   }, [location.pathname, menuItems]);
-
-   const getOpenKeys = useMemo(() => {
-    const currentPath = location.pathname;
-    
-    if (currentPath.startsWith('/main-layout/nhanvien') || 
-        currentPath.startsWith('/main-layout/nghiphep')) {
-      return ['sub1'];
-    }
-    
-    return [];
-  }, [location.pathname]);
 
   const menuContent = (
     <>
@@ -188,7 +197,8 @@ const MainLayout = () => {
       <Menu
         mode="inline"
         selectedKeys={getSelectedKeys}
-        openKeys={getOpenKeys}
+        openKeys={openKeys}
+        onOpenChange={handleOpenChange}
         theme="dark"
         onClick={() => {
           if (isMobile) {
@@ -349,7 +359,7 @@ const MainLayout = () => {
               size="large"
             />
             <span style={{ fontSize: 24 }}>
-              Chào, <strong>{taiKhoan.tenVaiTro}</strong>
+              Chào, <strong>{taiKhoan.tenVaiTro || "User"}</strong>
             </span>
             <Button
               icon={<LogoutOutlined />}
