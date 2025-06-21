@@ -1,14 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Button, Modal, Form, Input, TimePicker, Space, Card, Statistic, Row, Col, Typography, Tag, Popconfirm, Divider } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, ClockCircleOutlined, TeamOutlined, SearchOutlined } from '@ant-design/icons'; // Corrected line
+import { Table, Button, Modal, Form, Input, TimePicker, Space, Card, Statistic, Row, Col, Typography, Tag, Popconfirm, Divider, Select } from 'antd'; // Thêm Select nếu cần cho ngày trong tuần
+import { PlusOutlined, EditOutlined, DeleteOutlined, ClockCircleOutlined, TeamOutlined, SearchOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import customParseFormat from 'dayjs/plugin/customParseFormat'; 
 import { useCaLam } from '../../component/hooks/useCaLam';
 import { useAppNotification } from "../../component/ui/notification";
 
+dayjs.extend(customParseFormat); 
+
 const { Title, Text } = Typography;
 const { Search } = Input;
+const { Option } = Select; 
 
-export default function CaLamComponent (){
+export default function CaLamComponent() {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [form] = Form.useForm();
@@ -22,24 +26,27 @@ export default function CaLamComponent (){
   }, []);
 
   const calculateWorkingHours = (start, end, breakStart, breakEnd) => {
-    const startTime = dayjs(`2000-01-01 ${start}`);
-    let endTime = dayjs(`2000-01-01 ${end}`);
-    
+    const startTime = dayjs(start, 'HH:mm');
+    let endTime = dayjs(end, 'HH:mm');
+
     if (endTime.isBefore(startTime)) {
       endTime = endTime.add(1, 'day');
     }
 
-    const breakStartTime = dayjs(`2000-01-01 ${breakStart}`);
-    let breakEndTime = dayjs(`2000-01-01 ${breakEnd}`);
+    const breakStartTime = breakStart ? dayjs(breakStart, 'HH:mm') : null;
+    let breakEndTime = breakEnd ? dayjs(breakEnd, 'HH:mm') : null;
 
-    if (breakEndTime.isBefore(breakStartTime)) {
+    if (breakStartTime && breakEndTime && breakEndTime.isBefore(breakStartTime)) {
       breakEndTime = breakEndTime.add(1, 'day');
     }
 
-    const totalHours = endTime.diff(startTime, 'hour', true);
-    const breakHours = breakEndTime.diff(breakStartTime, 'hour', true);
+    const totalHours = endTime.diff(startTime, 'minute', true) / 60; 
+    let breakHours = 0;
+    if (breakStartTime && breakEndTime) {
+      breakHours = breakEndTime.diff(breakStartTime, 'minute', true) / 60;
+    }
 
-    return Math.max(0, Math.round((totalHours - breakHours) * 10) / 10);
+    return Math.max(0, Math.round((totalHours - breakHours) * 10) / 10); 
   };
 
   const dataSource = Array.isArray(danhSachCaLam) ? danhSachCaLam.map(cl => ({
@@ -51,30 +58,34 @@ export default function CaLamComponent (){
     gioNghiBatDau: cl.gioNghiBatDau,
     gioNghiKetThuc: cl.gioNghiKetThuc,
     soGioLamViec: cl.soGioLamViec,
-    ngayTrongTuan: cl.ngayTrongTuan, 
-    coLamViec: cl.coLamViec,     
+    ngayTrongTuan: cl.ngayTrongTuan,
+    coLamViec: cl.coLamViec,
     originalData: cl
   })) : [];
 
   const handleSubmit = async (values) => {
-    console.log(`values : ${JSON.stringify(values)}`)
+    console.log(`values : ${JSON.stringify(values)}`);
     try {
       const shiftData = {
         tenCa: values.tenCa,
-        gioBatDau: values.gioBatDau && dayjs(values.gioBatDau).isValid()
-          ? dayjs(values.gioBatDau).format('HH:mm')
-          : null,
-        gioKetThuc: values.gioKetThuc && dayjs(values.gioKetThuc).isValid()
-          ? dayjs(values.gioKetThuc).format('HH:mm')
-          : null,
-        gioNghiBatDau: values.gioNghiBatDau && dayjs(values.gioNghiBatDau).isValid()
-          ? dayjs(values.gioNghiBatDau).format('HH:mm')
-          : null,
-        gioNghiKetThuc: values.gioNghiKetThuc && dayjs(values.gioNghiKetThuc).isValid()
-          ? dayjs(values.gioNghiKetThuc).format('HH:mm')
-          : null,
-     
+        gioBatDau: values.gioBatDau ? dayjs(values.gioBatDau).format('HH:mm') : null,
+        gioKetThuc: values.gioKetThuc ? dayjs(values.gioKetThuc).format('HH:mm') : null,
+        gioNghiBatDau: values.gioNghiBatDau ? dayjs(values.gioNghiBatDau).format('HH:mm') : null,
+        gioNghiKetThuc: values.gioNghiKetThuc ? dayjs(values.gioNghiKetThuc).format('HH:mm') : null,
+        ngayTrongTuan: values.ngayTrongTuan || null, 
+        coLamViec: values.coLamViec === true ? 1 : 0, 
       };
+
+      if (shiftData.gioBatDau && shiftData.gioKetThuc) {
+        shiftData.soGioLamViec = calculateWorkingHours(
+          shiftData.gioBatDau,
+          shiftData.gioKetThuc,
+          shiftData.gioNghiBatDau,
+          shiftData.gioNghiKetThuc
+        );
+      } else {
+        shiftData.soGioLamViec = 0;
+      }
 
       if (currentRecord) {
         shiftData.maCa = currentRecord.maCa;
@@ -102,32 +113,36 @@ export default function CaLamComponent (){
     setCurrentRecord(record);
     form.setFieldsValue({
       tenCa: record.tenCa,
-      gioBatDau: dayjs(record.gioBatDau, 'HH:mm'),
-      gioKetThuc: dayjs(record.gioKetThuc, 'HH:mm'),
+      gioBatDau: record.gioBatDau ? dayjs(record.gioBatDau, 'HH:mm') : null,
+      gioKetThuc: record.gioKetThuc ? dayjs(record.gioKetThuc, 'HH:mm') : null,
       gioNghiBatDau: record.gioNghiBatDau ? dayjs(record.gioNghiBatDau, 'HH:mm') : null,
       gioNghiKetThuc: record.gioNghiKetThuc ? dayjs(record.gioNghiKetThuc, 'HH:mm') : null,
- 
+      ngayTrongTuan: record.ngayTrongTuan,
+      coLamViec: record.coLamViec === 1 ? true : false,
     });
     const values = form.getFieldsValue();
-    if (values.gioBatDau && values.gioKetThuc && values.gioNghiBatDau && values.gioNghiKetThuc) {
+    if (values.gioBatDau && values.gioKetThuc) {
       const hours = calculateWorkingHours(
         values.gioBatDau.format('HH:mm'),
         values.gioKetThuc.format('HH:mm'),
-        values.gioNghiBatDau.format('HH:mm'),
-        values.gioNghiKetThuc.format('HH:mm')
+        values.gioNghiBatDau ? values.gioNghiBatDau.format('HH:mm') : null,
+        values.gioNghiKetThuc ? values.gioNghiKetThuc.format('HH:mm') : null
       );
       setPreviewHours(hours);
+    } else {
+      setPreviewHours(0);
     }
     setIsModalVisible(true);
   };
 
   const handleDelete = async (maCa) => {
-    console.log(maCa)
+    console.log("Attempting to delete maCa:", maCa); 
     try {
       await deleteCaLam(maCa);
       apiNotification.success('Xóa ca làm thành công!');
-    } catch {
-      apiNotification.error('Đã xảy ra lỗi khi xóa ca làm');
+    } catch (error) {
+      console.error('Error deleting shift:', error); 
+      apiNotification.error('Đã xảy ra lỗi khi xóa ca làm: ' + (error.response?.data?.message || error.message));
     }
   };
 
@@ -140,19 +155,28 @@ export default function CaLamComponent (){
 
   const handleFormChange = () => {
     const values = form.getFieldsValue();
-    if (values.gioBatDau && values.gioKetThuc &&
-        values.gioNghiBatDau && values.gioNghiKetThuc) {
+    if (values.gioBatDau && values.gioKetThuc) { 
       const hours = calculateWorkingHours(
         values.gioBatDau.format('HH:mm'),
         values.gioKetThuc.format('HH:mm'),
-        values.gioNghiBatDau.format('HH:mm'),
-        values.gioNghiKetThuc.format('HH:mm')
+        values.gioNghiBatDau ? values.gioNghiBatDau.format('HH:mm') : null,
+        values.gioNghiKetThuc ? values.gioNghiKetThuc.format('HH:mm') : null
       );
       setPreviewHours(hours);
     } else {
       setPreviewHours(0);
     }
   };
+
+  const daysOfWeekOptions = [
+    { value: 1, label: 'Thứ Hai' },
+    { value: 2, label: 'Thứ Ba' },
+    { value: 3, label: 'Thứ Tư' },
+    { value: 4, label: 'Thứ Năm' },
+    { value: 5, label: 'Thứ Sáu' },
+    { value: 6, label: 'Thứ Bảy' },
+    { value: 7, label: 'Chủ Nhật' },
+  ];
 
   const columns = [
     {
@@ -165,6 +189,16 @@ export default function CaLamComponent (){
       onFilter: (value, record) =>
         record.maCa?.toString().toLowerCase().includes(value.toLowerCase()) ||
         record.tenCa?.toLowerCase().includes(value.toLowerCase()),
+      sorter: (a, b) => a.maCa - b.maCa, 
+    },
+    {
+      title: 'Tên Ca', 
+      dataIndex: 'tenCa',
+      key: 'tenCa',
+      width: 150,
+      filteredValue: searchText ? [searchText] : null,
+      onFilter: (value, record) => record.tenCa?.toLowerCase().includes(value.toLowerCase()),
+      sorter: (a, b) => a.tenCa.localeCompare(b.tenCa), 
     },
     {
       title: 'Ngày Trong Tuần',
@@ -173,17 +207,11 @@ export default function CaLamComponent (){
       width: 150,
       sorter: (a, b) => a.ngayTrongTuan - b.ngayTrongTuan,
       render: (text) => {
-        const daysOfWeek = {
-          1: 'Thứ Hai',
-          2: 'Thứ Ba',
-          3: 'Thứ Tư',
-          4: 'Thứ Năm',
-          5: 'Thứ Sáu',
-          6: 'Thứ Bảy',
-          7: 'Chủ Nhật',
-        };
-        return <Tag color="geekblue">{daysOfWeek[text] || text}</Tag>;
-      }
+        const day = daysOfWeekOptions.find(d => d.value === text);
+        return day ? <Tag color="geekblue">{day.label}</Tag> : <Text type="secondary">Không xác định</Text>;
+      },
+      filters: daysOfWeekOptions.map(day => ({ text: day.label, value: day.value })), // Thêm filter cho Ngày Trong Tuần
+      onFilter: (value, record) => record.ngayTrongTuan === value,
     },
     {
       title: 'Có Làm Việc',
@@ -204,28 +232,28 @@ export default function CaLamComponent (){
       dataIndex: 'gioBatDau',
       key: 'gioBatDau',
       width: 120,
-      render: (text) => <Tag color="green">{text}</Tag>,
+      render: (text) => text ? <Tag color="green">{dayjs(text, 'HH:mm').format('HH:mm')}</Tag> : <Text type="secondary">N/A</Text>,
     },
     {
       title: 'Giờ Kết Thúc',
       dataIndex: 'gioKetThuc',
       key: 'gioKetThuc',
       width: 120,
-      render: (text) => <Tag color="red">{text}</Tag>,
+      render: (text) => text ? <Tag color="red">{dayjs(text, 'HH:mm').format('HH:mm')}</Tag> : <Text type="secondary">N/A</Text>,
     },
     {
       title: 'Giờ Nghỉ Trưa Bắt Đầu',
       dataIndex: 'gioNghiBatDau',
       key: 'gioNghiBatDau',
       width: 170,
-      render: (text) => text ? <Tag color="orange">{text}</Tag> : <Text type="secondary">Không có</Text>,
+      render: (text) => text ? <Tag color="orange">{dayjs(text, 'HH:mm').format('HH:mm')}</Tag> : <Text type="secondary">Không có</Text>,
     },
     {
       title: 'Giờ Nghỉ Trưa Kết Thúc',
       dataIndex: 'gioNghiKetThuc',
       key: 'gioNghiKetThuc',
       width: 170,
-      render: (text) => text ? <Tag color="orange">{text}</Tag> : <Text type="secondary">Không có</Text>,
+      render: (text) => text ? <Tag color="orange">{dayjs(text, 'HH:mm').format('HH:mm')}</Tag> : <Text type="secondary">Không có</Text>,
     },
     {
       title: 'Số Giờ Làm Việc',
@@ -279,15 +307,16 @@ export default function CaLamComponent (){
           <Row justify="space-between" align="middle">
             <Col>
               <Title
-                background
+        
                 level={2}
                 style={{
                   marginBottom: 8,
-                  background: 'linear-gradient(45deg, #667eea, #764ba2)',
+                  backgroundImage: 'linear-gradient(45deg, #667eea, #764ba2)', // Sử dụng backgroundImage
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   fontWeight: 700
-                }}>
+                }}
+              >
                 Quản Lý Ca Làm Việc
               </Title>
               <Text type="secondary">Quản lý và theo dõi các ca làm việc trong công ty</Text>
@@ -376,14 +405,13 @@ export default function CaLamComponent (){
 
         <Modal
           centered
-          size='large'
           title={
             <Space>
               <ClockCircleOutlined />
               {currentRecord ? 'Chỉnh Sửa Ca Làm' : 'Thêm Ca Làm'}
             </Space>
           }
-          open={isModalVisible}
+          open={isModalVisible} 
           onCancel={handleCancel}
           footer={null}
           width={800}
@@ -406,6 +434,25 @@ export default function CaLamComponent (){
               </Col>
               <Col xs={24} sm={12}>
                 <Form.Item
+                  label="Ngày Trong Tuần"
+                  name="ngayTrongTuan"
+                  rules={[{ required: true, message: 'Vui lòng chọn ngày trong tuần!' }]}
+                >
+                  <Select
+                    placeholder="Chọn ngày trong tuần"
+                    allowClear
+                  >
+                    {daysOfWeekOptions.map(day => (
+                      <Option key={day.value} value={day.value}>{day.label}</Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+            </Row>
+
+            <Row gutter={16}>
+              <Col xs={24} sm={12}>
+                <Form.Item
                   label="Giờ Bắt Đầu"
                   name="gioBatDau"
                   rules={[{ required: true, message: 'Vui lòng chọn giờ bắt đầu!' }]}
@@ -418,9 +465,6 @@ export default function CaLamComponent (){
                   />
                 </Form.Item>
               </Col>
-            </Row>
-
-            <Row gutter={16}>
               <Col xs={24} sm={12}>
                 <Form.Item
                   label="Giờ Kết Thúc"
@@ -435,6 +479,9 @@ export default function CaLamComponent (){
                   />
                 </Form.Item>
               </Col>
+            </Row>
+
+            <Row gutter={16}>
               <Col xs={24} sm={12}>
                 <Form.Item
                   label="Giờ Nghỉ Bắt Đầu (Tùy chọn)"
@@ -448,9 +495,6 @@ export default function CaLamComponent (){
                   />
                 </Form.Item>
               </Col>
-            </Row>
-
-            <Row gutter={16}>
               <Col xs={24} sm={12}>
                 <Form.Item
                   label="Giờ Nghỉ Kết Thúc (Tùy chọn)"
@@ -465,6 +509,25 @@ export default function CaLamComponent (){
                 </Form.Item>
               </Col>
             </Row>
+
+            <Row gutter={16}>
+              <Col xs={24} sm={12}>
+                <Form.Item
+                  label="Có Làm Việc"
+                  name="coLamViec"
+                  valuePropName="checked" 
+                >
+                  <Select
+                    placeholder="Chọn trạng thái làm việc"
+                    allowClear
+                  >
+                    <Option value={true}>Có</Option>
+                    <Option value={false}>Không</Option>
+                  </Select>
+                </Form.Item>
+              </Col>
+            </Row>
+
 
             {previewHours > 0 && (
               <Card size="small" style={{ backgroundColor: '#f6ffed', border: '1px solid #b7eb8f' }}>
