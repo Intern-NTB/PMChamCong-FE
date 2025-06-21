@@ -43,7 +43,6 @@ import { ReloadContext } from "../../context/reloadContext";
 import MyAlert from "../../component/ui/alert";
 import ModalTangCa from "./tangca/modal_tangcang";
 import ModalThemTangCa from "./tangca/modal_them_tang_ca";
-import ModalChinhSuaTangCa from "./tangca/modal_chinh_sua_tangca";
 import ModalChiTietChamCong from "./modal_chi_tiet_cham_cong";
 
 // ===== Styles =====
@@ -135,8 +134,8 @@ export default function GiaLapChamCong() {
   const [form] = Form.useForm();
 
   useEffect(() => {
-    setReload(() => getAllChamCongDetail);
-  }, []);
+    setReload(getAllChamCongDetail);
+  }, [getAllChamCongDetail, setReload]);
 
   useEffect(() => {
     const checkScreenSize = () => {

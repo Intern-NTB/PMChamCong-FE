@@ -46,7 +46,7 @@ const Popup = ({
     if (visible) {
       if (initialValues) {
         const parsedNgaySinh = parseDate(initialValues.ngaySinh);
-        const cccdToSet = initialValues.CCCD || initialValues.cmnd || null;
+        const cmndToSet = initialValues.cmnd || null ;
 
         form.setFieldsValue({
           ...initialValues,
@@ -54,7 +54,7 @@ const Popup = ({
           maPhongBan: initialValues.maPhongBan ?? maPhongBan ?? null,
           maVaiTro: initialValues.maVaiTro ?? maVaiTro ?? null,
           maUuTien: initialValues.maUuTien > 0 ? initialValues.maUuTien : undefined,
-          CCCD: cccdToSet,
+          cmnd: cmndToSet,
         });
 
         const effectiveMaPhongBan = initialValues.maPhongBan ?? maPhongBan;
@@ -117,7 +117,7 @@ const Popup = ({
     }
   }, [form]);
 
-  const validateCCCD = useCallback(async (_, value) => {
+  const validatecmnd = useCallback(async (_, value) => {
     if (!value) {
       return Promise.resolve();
     }
@@ -127,11 +127,11 @@ const Popup = ({
 
     const isDuplicate = danhSachNhanVien.some(nv =>
       nv.maNhanVien !== initialValues?.maNhanVien &&
-      (nv.CCCD === value || nv.cmnd === value)
+      (nv.cmnd === value)
     );
 
     if (isDuplicate) {
-      return Promise.reject("CCCD này đã tồn tại trong hệ thống. Vui lòng nhập CCCD khác.");
+      return Promise.reject("cmnd này đã tồn tại trong hệ thống. Vui lòng nhập cmnd khác.");
     }
     return Promise.resolve();
   }, [danhSachNhanVien, initialValues?.maNhanVien]);
@@ -174,13 +174,10 @@ const Popup = ({
         values.luongCoBan = values.luongCoBan ? Number(values.luongCoBan) : null;
         values.heSoTangCa = values.heSoTangCa ? Number(values.heSoTangCa) : null;
 
-        values.cmnd = String(values.CCCD) || null;
-        delete values.CCCD;
-
+        values.cmnd = values.cmnd ? String(values.cmnd) : null;
         if (!initialValues?.maNhanVien) {
           values.ngayVaoLam = toLocalISOString();
         }
-
         console.log("Data submitted to API:", values);
         onOk(values);
         form.resetFields();
@@ -261,6 +258,7 @@ const Popup = ({
               name="luongCoBan"
               label="Lương Cơ bản"
               rules={[
+                {required:true,message: "Vui lòng nhập lương cơ bản cho nhân viên"},
                 {
                   type: 'number',
                   min: 0,
@@ -353,13 +351,13 @@ const Popup = ({
           </Col>
           <Col span={12}>
             <Form.Item
-              name="CCCD"
+              name="cmnd"
               label="Căn cước công dân"
               rules={[
-                { validator: validateCCCD },
+                { validator: validatecmnd },
               ]}
             >
-              <Input placeholder="Nhập số CCCD" maxLength={12} />
+              <Input placeholder="Nhập số cmnd" maxLength={12} />
             </Form.Item>
           </Col>
           <Col span={24}>

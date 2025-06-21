@@ -34,13 +34,13 @@ import { useChamCong } from "../../component/hooks/useChamCong";
 import "./employee.css";
 import MyAlert from "../../component/ui/alert";
 import ModalChiTietChamCong from "../chamcong/modal_chi_tiet_cham_cong";
-
+import dayjs from "dayjs";
 const { Option } = Select;
 const { Search } = Input;
 
 export default function NhanVien() {
   const { danhSachChamCongChiTiet } = useChamCong();
-  
+
   const {
     danhSachNhanVien,
     loading,
@@ -78,7 +78,7 @@ export default function NhanVien() {
   const [highlightedText, setHighlightedText] = useState("");
 
   useEffect(() => {
-    setReload(() => fetchNhanVien);
+    setReload(() => fetchNhanVien());
     const checkScreenSize = () => {
       setIsMobile(window.innerWidth < 880);
     };
@@ -102,10 +102,10 @@ export default function NhanVien() {
     let filtered = danhSachNhanVien.map((nhanVien) => ({
       maNhanVien: nhanVien.maNhanVien,
       hoTen: nhanVien.hoTen || "N/A",
-      CCCD: nhanVien.cmnd || "N/A",
-      ngaySinh: nhanVien.ngaySinh || "N/A",
-      diaChi: nhanVien.diaChi || "N/A",
-      soDienThoai: nhanVien.soDienThoai || "N/A",
+      cmnd: nhanVien.cmnd || "",
+      ngaySinh: nhanVien.ngaySinh || "",
+      diaChi: nhanVien.diaChi || "",
+      soDienThoai: nhanVien.soDienThoai || "",
       trangThai: nhanVien.trangThai || "N/A",
       ngayVaoLam: nhanVien.ngayVaoLam || "N/a",
       luongCoBan: nhanVien.luongCoBan || "N/A",
@@ -224,11 +224,21 @@ export default function NhanVien() {
       },
     },
     {
+      title: "Ngày sinh",
+      dataIndex: "ngaySinh",
+      key: "ngaySinh",
+      width: 150,
+      render: (text) =>
+        dayjs(highlightText(text)).isValid()
+          ? dayjs(highlightText(text)).format("DD/MM/YYYY")
+          : "",
+    },
+    {
       title: "CCCD",
-      dataIndex: "CCCD",
-      key: "CCCD",
+      dataIndex: "cmnd",
+      key: "cmnd",
       width: 120,
-      render: (text) => highlightText(text),
+      render: (text) => (text ? highlightText(text) : ""),
     },
     {
       title: "Chức vụ",
@@ -324,7 +334,7 @@ export default function NhanVien() {
             {highlightText(record.hoTen)}
           </div>
           <div style={{ fontSize: "12px", color: "#666", marginBottom: "4px" }}>
-            CCCD: {highlightText(record.CCCD)}
+            cmnd: {highlightText(record.cmnd)}
           </div>
           <div style={{ fontSize: "12px", marginBottom: "4px" }}>
             {highlightText(record.tenVaiTro)} -{" "}
@@ -399,7 +409,7 @@ export default function NhanVien() {
         danger
         onClick={(e) => {
           e.domEvent.stopPropagation();
-          handleDelete(record.key);
+          handleDelete(record.maNhanVien);
         }}
       >
         Xóa
@@ -436,6 +446,7 @@ export default function NhanVien() {
 
   const handleSaveCreateNhanVien = async (values) => {
     try {
+      console.log(values)
       await addNhanVien(values);
       showAlert("success", "Thành công", "Thêm nhân viên thành công!");
       setIsModalCreateNhanVienVisible(false);
@@ -453,6 +464,7 @@ export default function NhanVien() {
 
   const handleDelete = async (maNhanVien) => {
     try {
+      console.log(maNhanVien)
       await deleteNhanVien(maNhanVien);
       showAlert("success", "Thành công", "Xoá nhân viên thành công!");
       await fetchNhanVien();

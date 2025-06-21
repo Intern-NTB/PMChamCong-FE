@@ -93,7 +93,7 @@ export default function NghiPhep() {
     createNghiPhep,
   } = useNghiPhep();
   const { danhSachNhanVien } = useNhanVien();
-  const { danhSachNgayPhep, getAllNgayPhep } = useNgayPhep();
+  const { danhSachNgayPhep, getAllNgayPhep, tinhToanNgayPhepTatCa } = useNgayPhep();
   const { danhSachHeThong } = useHeThong();
   const { danhSachPhongBan } = usePhongBan();
   const { danhSachCaLam } = useCaLam();
@@ -856,6 +856,18 @@ export default function NghiPhep() {
               onClick={showAddModal}
             >
               Tạo đơn xin nghỉ
+            </Button>
+          </Col>
+           <Col xs={24} sm={24} md={8}>
+            <Button
+              type="primary"
+              block
+              onClick={async() => {
+                await tinhToanNgayPhepTatCa(Number(dayjs(selectedMonth).year()),null)
+                api.success({message:"Đã cập nhật phép cho nhân viên"})
+              }}
+            >
+              Cập nhật ngày phép
             </Button>
           </Col>
         </Row>

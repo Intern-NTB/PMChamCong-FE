@@ -17,13 +17,16 @@ import {
 } from "@ant-design/icons";
 import LogoIcon from "../../assets/images/LogoIcon.png";
 import "./mainLayout.css";
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { ReloadContext } from "../../context/reloadContext";
 
 const { Header, Sider, Content } = Layout;
 
 const MainLayout = () => {
   const location = useLocation();
+  
+  // Use useRef instead of useState for the reload function
+  const reloadFnRef = useRef(() => {});
 
   const pathToTitle = useMemo(
     () => ({
@@ -60,13 +63,17 @@ const MainLayout = () => {
     return pathToTitle[currentPath] || "Quản lý nhân sự";
   }, [location.pathname, pathToTitle]);
 
-  const [reloadFn, setReloadFnState] = useState(() => () => {});
   const [isMobile, setIsMobile] = useState(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [openKeys, setOpenKeys] = useState([]);
 
+  // Stable function references
   const setReloadFn = useCallback((fn) => {
-    setReloadFnState(() => fn);
+    reloadFnRef.current = fn;
+  }, []);
+
+  const executeReload = useCallback(() => {
+    reloadFnRef.current();
   }, []);
 
   useEffect(() => {
@@ -182,6 +189,12 @@ const MainLayout = () => {
     return ["/main-layout/trangchu"];
   }, [location.pathname, menuItems]);
 
+  // Stable context value
+  const contextValue = useMemo(() => ({
+    reload: executeReload,
+    setReload: setReloadFn
+  }), [executeReload, setReloadFn]);
+
   const menuContent = (
     <>
       <div
@@ -245,7 +258,7 @@ const MainLayout = () => {
           <Button
             style={{ marginLeft: 12 }}
             icon={<ReloadOutlined />}
-            onClick={() => reloadFn()}
+            onClick={executeReload}
             size="large"
           />
         </Header>
@@ -314,9 +327,7 @@ const MainLayout = () => {
             flex: 1,
           }}
         >
-          <ReloadContext.Provider
-            value={{ reload: reloadFn, setReload: setReloadFn }}
-          >
+          <ReloadContext.Provider value={contextValue}>
             <Outlet />
           </ReloadContext.Provider>
         </Content>
@@ -355,7 +366,7 @@ const MainLayout = () => {
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <Button
               icon={<ReloadOutlined />}
-              onClick={() => reloadFn()}
+              onClick={executeReload}
               size="large"
             />
             <span style={{ fontSize: 24 }}>
@@ -382,9 +393,7 @@ const MainLayout = () => {
             overflow: "auto",
           }}
         >
-          <ReloadContext.Provider
-            value={{ reload: reloadFn, setReload: setReloadFn }}
-          >
+          <ReloadContext.Provider value={contextValue}>
             <ScrollToTop />
             <Outlet />
           </ReloadContext.Provider>

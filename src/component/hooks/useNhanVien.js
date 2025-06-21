@@ -94,6 +94,7 @@ export const useNhanVien = () => {
   useEffect(() => {
     const initData = async () => {
       await fetchNhanVien();
+      await getAllFingerprintsOfNhanVien();
     };
     initData();
   }, []); 
