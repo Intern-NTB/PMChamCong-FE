@@ -1,52 +1,100 @@
-import React, { useEffect, useState } from 'react';
-import { Table, Button, Modal, Form, Input, TimePicker, Space, Card, Statistic, Row, Col, Typography, Tag, Popconfirm, Divider, Select } from 'antd'; // Thêm Select nếu cần cho ngày trong tuần
+import React, { useEffect, useState, useCallback } from 'react'; 
+import { Table, Button, Modal, Form, Input, TimePicker, Space, Card, Statistic, Row, Col, Typography, Tag, Popconfirm, Divider } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, ClockCircleOutlined, TeamOutlined, SearchOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import customParseFormat from 'dayjs/plugin/customParseFormat'; 
 import { useCaLam } from '../../component/hooks/useCaLam';
 import { useAppNotification } from "../../component/ui/notification";
-
-dayjs.extend(customParseFormat); 
+import ModalChiTietCaLam from './modal_chitiet_calam'; 
 
 const { Title, Text } = Typography;
 const { Search } = Input;
-const { Option } = Select; 
+
+const fetchShiftDetailsByMaCa = async (maCa) => {
+  await new Promise(resolve => setTimeout(resolve, 500));
+
+  const allDetails = {
+    '1': [
+      { NgayTrongTuan: 1, CoLamViec: 0, GioBatDau: null, GioKetThuc: null, GioNghiTruaBatDau: null, GioNghiTruaKetThuc: null, SoGioLamViec: null },
+      { NgayTrongTuan: 2, CoLamViec: 1, GioBatDau: "08:00:00", GioKetThuc: "17:00:00", GioNghiTruaBatDau: "12:00:00", GioNghiTruaKetThuc: "13:00:00", SoGioLamViec: 8.000000 },
+      { NgayTrongTuan: 3, CoLamViec: 1, GioBatDau: "08:00:00", GioKetThuc: "17:00:00", GioNghiTruaBatDau: "12:00:00", GioNghiTruaKetThuc: "13:00:00", SoGioLamViec: 8.000000 },
+      { NgayTrongTuan: 4, CoLamViec: 1, GioBatDau: "08:00:00", GioKetThuc: "17:00:00", GioNghiTruaBatDau: "12:00:00", GioNghiTruaKetThuc: "13:00:00", SoGioLamViec: 8.000000 },
+      { NgayTrongTuan: 5, CoLamViec: 1, GioBatDau: "08:00:00", GioKetThuc: "17:00:00", GioNghiTruaBatDau: "12:00:00", GioNghiTruaKetThuc: "13:00:00", SoGioLamViec: 8.000000 },
+      { NgayTrongTuan: 6, CoLamViec: 1, GioBatDau: "09:00:00", GioKetThuc: "18:00:00", GioNghiTruaBatDau: "13:00:00", GioNghiTruaKetThuc: "14:00:00", SoGioLamViec: 8.000000 },
+      { NgayTrongTuan: 7, CoLamViec: 1, GioBatDau: "08:00:00", GioKetThuc: "17:00:00", GioNghiTruaBatDau: "12:00:00", GioNghiTruaKetThuc: "13:00:00", SoGioLamViec: 8.000000 },
+    ],
+    '2': [
+      { NgayTrongTuan: 1, CoLamViec: 0, GioBatDau: null, GioKetThuc: null, GioNghiTruaBatDau: null, GioNghiTruaKetThuc: null, SoGioLamViec: null },
+      { NgayTrongTuan: 2, CoLamViec: 1, GioBatDau: "13:00:00", GioKetThuc: "22:00:00", GioNghiTruaBatDau: "17:00:00", GioNghiTruaKetThuc: "18:00:00", SoGioLamViec: 8.000000 },
+      { NgayTrongTuan: 3, CoLamViec: 1, GioBatDau: "13:00:00", GioKetThuc: "22:00:00", GioNghiTruaBatDau: "17:00:00", GioNghiTruaKetThuc: "18:00:00", SoGioLamViec: 8.000000 },
+      { NgayTrongTuan: 4, CoLamViec: 1, GioBatDau: "13:00:00", GioKetThuc: "22:00:00", GioNghiTruaBatDau: "17:00:00", GioNghiTruaKetThuc: "18:00:00", SoGioLamViec: 8.000000 },
+      { NgayTrongTuan: 5, CoLamViec: 1, GioBatDau: "13:00:00", GioKetThuc: "22:00:00", GioNghiTruaBatDau: "17:00:00", GioNghiTruaKetThuc: "18:00:00", SoGioLamViec: 8.000000 },
+      { NgayTrongTuan: 6, CoLamViec: 1, GioBatDau: "13:00:00", GioKetThuc: "22:00:00", GioNghiTruaBatDau: "17:00:00", GioNghiTruaKetThuc: "18:00:00", SoGioLamViec: 8.000000 },
+      { NgayTrongTuan: 7, CoLamViec: 0, GioBatDau: null, GioKetThuc: null, GioNghiTruaBatDau: null, GioNghiTruaKetThuc: null, SoGioLamViec: null },
+    ],
+    '3': [
+      { NgayTrongTuan: 1, CoLamViec: 1, GioBatDau: "22:00:00", GioKetThuc: "06:00:00", GioNghiTruaBatDau: "02:00:00", GioNghiTruaKetThuc: "03:00:00", SoGioLamViec: 7.000000 },
+      { NgayTrongTuan: 2, CoLamViec: 1, GioBatDau: "22:00:00", GioKetThuc: "06:00:00", GioNghiTruaBatDau: "02:00:00", GioNghiTruaKetThuc: "03:00:00", SoGioLamViec: 7.000000 },
+      { NgayTrongTuan: 3, CoLamViec: 1, GioBatDau: "22:00:00", GioKetThuc: "06:00:00", GioNghiTruaBatDau: "02:00:00", GioNghiTruaKetThuc: "03:00:00", SoGioLamViec: 7.000000 },
+      { NgayTrongTuan: 4, CoLamViec: 1, GioBatDau: "22:00:00", GioKetThuc: "06:00:00", GioNghiTruaBatDau: "02:00:00", GioNghiTruaKetThuc: "03:00:00", SoGioLamViec: 7.000000 },
+      { NgayTrongTuan: 5, CoLamViec: 1, GioBatDau: "22:00:00", GioKetThuc: "06:00:00", GioNghiTruaBatDau: "02:00:00", GioNghiTruaKetThuc: "03:00:00", SoGioLamViec: 7.000000 },
+      { NgayTrongTuan: 6, CoLamViec: 1, GioBatDau: "22:00:00", GioKetThuc: "06:00:00", GioNghiTruaBatDau: "02:00:00", GioNghiTruaKetThuc: "03:00:00", SoGioLamViec: 7.000000 },
+      { NgayTrongTuan: 7, CoLamViec: 1, GioBatDau: "22:00:00", GioKetThuc: "06:00:00", GioNghiTruaBatDau: "02:00:00", GioNghiTruaKetThuc: "03:00:00", SoGioLamViec: 7.000000 },
+    ],
+  };
+  return allDetails[maCa] || [];
+};
 
 export default function CaLamComponent() {
-  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false); 
+  const [isDetailModalVisible, setIsDetailModalVisible] = useState(false); 
   const [searchText, setSearchText] = useState('');
   const [form] = Form.useForm();
-  const [currentRecord, setCurrentRecord] = useState(null);
+  const [currentRecord, setCurrentRecord] = useState(null); 
+  const [selectedShiftForDetail, setSelectedShiftForDetail] = useState(null); 
+  const [shiftDetailsByDay, setShiftDetailsByDay] = useState([]); 
+  const [loadingDetails, setLoadingDetails] = useState(false); 
   const [previewHours, setPreviewHours] = useState(0);
   const apiNotification = useAppNotification();
   const { danhSachCaLam, loadingCaLam, createCaLam, updateCaLam, deleteCaLam, getAllCaLam } = useCaLam();
 
+  const [tableScrollY, setTableScrollY] = useState(0);
+
   useEffect(() => {
     getAllCaLam();
+
+    const calculateTableHeight = () => {
+      const headerFooterOffset = 120 + 120 + 60 + 64 + 50;
+      setTableScrollY(window.innerHeight - headerFooterOffset);
+    };
+
+    calculateTableHeight();
+    window.addEventListener('resize', calculateTableHeight);
+
+    return () => {
+      window.removeEventListener('resize', calculateTableHeight);
+    };
   }, []);
 
   const calculateWorkingHours = (start, end, breakStart, breakEnd) => {
-    const startTime = dayjs(start, 'HH:mm');
-    let endTime = dayjs(end, 'HH:mm');
+    const startTime = dayjs(`2000-01-01 ${start}`);
+    let endTime = dayjs(`2000-01-01 ${end}`);
 
     if (endTime.isBefore(startTime)) {
       endTime = endTime.add(1, 'day');
     }
 
-    const breakStartTime = breakStart ? dayjs(breakStart, 'HH:mm') : null;
-    let breakEndTime = breakEnd ? dayjs(breakEnd, 'HH:mm') : null;
+    const breakStartTime = breakStart ? dayjs(`2000-01-01 ${breakStart}`) : null;
+    let breakEndTime = breakEnd ? dayjs(`2000-01-01 ${breakEnd}`) : null;
 
     if (breakStartTime && breakEndTime && breakEndTime.isBefore(breakStartTime)) {
       breakEndTime = breakEndTime.add(1, 'day');
     }
 
-    const totalHours = endTime.diff(startTime, 'minute', true) / 60; 
-    let breakHours = 0;
-    if (breakStartTime && breakEndTime) {
-      breakHours = breakEndTime.diff(breakStartTime, 'minute', true) / 60;
-    }
+    const totalHours = endTime.diff(startTime, 'hour', true);
+    const breakHours = (breakStartTime && breakEndTime) ? breakEndTime.diff(breakStartTime, 'hour', true) : 0;
 
-    return Math.max(0, Math.round((totalHours - breakHours) * 10) / 10); 
+
+    return Math.max(0, Math.round((totalHours - breakHours) * 10) / 10);
   };
 
   const dataSource = Array.isArray(danhSachCaLam) ? danhSachCaLam.map(cl => ({
@@ -58,34 +106,26 @@ export default function CaLamComponent() {
     gioNghiBatDau: cl.gioNghiBatDau,
     gioNghiKetThuc: cl.gioNghiKetThuc,
     soGioLamViec: cl.soGioLamViec,
-    ngayTrongTuan: cl.ngayTrongTuan,
-    coLamViec: cl.coLamViec,
     originalData: cl
   })) : [];
 
   const handleSubmit = async (values) => {
-    console.log(`values : ${JSON.stringify(values)}`);
     try {
       const shiftData = {
         tenCa: values.tenCa,
-        gioBatDau: values.gioBatDau ? dayjs(values.gioBatDau).format('HH:mm') : null,
-        gioKetThuc: values.gioKetThuc ? dayjs(values.gioKetThuc).format('HH:mm') : null,
-        gioNghiBatDau: values.gioNghiBatDau ? dayjs(values.gioNghiBatDau).format('HH:mm') : null,
-        gioNghiKetThuc: values.gioNghiKetThuc ? dayjs(values.gioNghiKetThuc).format('HH:mm') : null,
-        ngayTrongTuan: values.ngayTrongTuan || null, 
-        coLamViec: values.coLamViec === true ? 1 : 0, 
+        gioBatDau: values.gioBatDau && dayjs(values.gioBatDau).isValid()
+          ? dayjs(values.gioBatDau).format('HH:mm:ss')
+          : null,
+        gioKetThuc: values.gioKetThuc && dayjs(values.gioKetThuc).isValid()
+          ? dayjs(values.gioKetThuc).format('HH:mm:ss')
+          : null,
+        gioNghiBatDau: values.gioNghiBatDau && dayjs(values.gioNghiBatDau).isValid()
+          ? dayjs(values.gioNghiBatDau).format('HH:mm:ss')
+          : null,
+        gioNghiKetThuc: values.gioNghiKetThuc && dayjs(values.gioNghiKetThuc).isValid()
+          ? dayjs(values.gioNghiKetThuc).format('HH:mm:ss')
+          : null,
       };
-
-      if (shiftData.gioBatDau && shiftData.gioKetThuc) {
-        shiftData.soGioLamViec = calculateWorkingHours(
-          shiftData.gioBatDau,
-          shiftData.gioKetThuc,
-          shiftData.gioNghiBatDau,
-          shiftData.gioNghiKetThuc
-        );
-      } else {
-        shiftData.soGioLamViec = 0;
-      }
 
       if (currentRecord) {
         shiftData.maCa = currentRecord.maCa;
@@ -113,22 +153,13 @@ export default function CaLamComponent() {
     setCurrentRecord(record);
     form.setFieldsValue({
       tenCa: record.tenCa,
-      gioBatDau: record.gioBatDau ? dayjs(record.gioBatDau, 'HH:mm') : null,
-      gioKetThuc: record.gioKetThuc ? dayjs(record.gioKetThuc, 'HH:mm') : null,
-      gioNghiBatDau: record.gioNghiBatDau ? dayjs(record.gioNghiBatDau, 'HH:mm') : null,
-      gioNghiKetThuc: record.gioNghiKetThuc ? dayjs(record.gioNghiKetThuc, 'HH:mm') : null,
-      ngayTrongTuan: record.ngayTrongTuan,
-      coLamViec: record.coLamViec === 1 ? true : false,
+      gioBatDau: dayjs(record.gioBatDau, 'HH:mm:ss'),
+      gioKetThuc: dayjs(record.gioKetThuc, 'HH:mm:ss'),
+      gioNghiBatDau: record.gioNghiBatDau ? dayjs(record.gioNghiBatDau, 'HH:mm:ss') : null,
+      gioNghiKetThuc: record.gioNghiKetThuc ? dayjs(record.gioNghiKetThuc, 'HH:mm:ss') : null
     });
-    const values = form.getFieldsValue();
-    if (values.gioBatDau && values.gioKetThuc) {
-      const hours = calculateWorkingHours(
-        values.gioBatDau.format('HH:mm'),
-        values.gioKetThuc.format('HH:mm'),
-        values.gioNghiBatDau ? values.gioNghiBatDau.format('HH:mm') : null,
-        values.gioNghiKetThuc ? values.gioNghiKetThuc.format('HH:mm') : null
-      );
-      setPreviewHours(hours);
+    if (record.gioBatDau && record.gioKetThuc) {
+      setPreviewHours(calculateWorkingHours(record.gioBatDau, record.gioKetThuc, record.gioNghiBatDau, record.gioNghiKetThuc));
     } else {
       setPreviewHours(0);
     }
@@ -136,13 +167,11 @@ export default function CaLamComponent() {
   };
 
   const handleDelete = async (maCa) => {
-    console.log("Attempting to delete maCa:", maCa); 
     try {
       await deleteCaLam(maCa);
       apiNotification.success('Xóa ca làm thành công!');
-    } catch (error) {
-      console.error('Error deleting shift:', error); 
-      apiNotification.error('Đã xảy ra lỗi khi xóa ca làm: ' + (error.response?.data?.message || error.message));
+    } catch (err) {
+      apiNotification.error('Đã xảy ra lỗi khi xóa ca làm: ' + (err.response?.data?.message || err.message));
     }
   };
 
@@ -155,12 +184,15 @@ export default function CaLamComponent() {
 
   const handleFormChange = () => {
     const values = form.getFieldsValue();
-    if (values.gioBatDau && values.gioKetThuc) { 
+    if (values.gioBatDau && values.gioKetThuc) {
+      const breakStart = values.gioNghiBatDau ? values.gioNghiBatDau.format('HH:mm:ss') : null;
+      const breakEnd = values.gioNghiKetThuc ? values.gioNghiKetThuc.format('HH:mm:ss') : null;
+
       const hours = calculateWorkingHours(
-        values.gioBatDau.format('HH:mm'),
-        values.gioKetThuc.format('HH:mm'),
-        values.gioNghiBatDau ? values.gioNghiBatDau.format('HH:mm') : null,
-        values.gioNghiKetThuc ? values.gioNghiKetThuc.format('HH:mm') : null
+        values.gioBatDau.format('HH:mm:ss'),
+        values.gioKetThuc.format('HH:mm:ss'),
+        breakStart,
+        breakEnd
       );
       setPreviewHours(hours);
     } else {
@@ -168,17 +200,23 @@ export default function CaLamComponent() {
     }
   };
 
-  const daysOfWeekOptions = [
-    { value: 1, label: 'Thứ Hai' },
-    { value: 2, label: 'Thứ Ba' },
-    { value: 3, label: 'Thứ Tư' },
-    { value: 4, label: 'Thứ Năm' },
-    { value: 5, label: 'Thứ Sáu' },
-    { value: 6, label: 'Thứ Bảy' },
-    { value: 7, label: 'Chủ Nhật' },
-  ];
+  const handleRowClick = useCallback(async (record) => {
+    setSelectedShiftForDetail(record);
+    setLoadingDetails(true);
+    setIsDetailModalVisible(true);
+    try {
+      const details = await fetchShiftDetailsByMaCa(record.maCa); 
+      setShiftDetailsByDay(details);
+    } catch (error) {
+      console.error("Lỗi khi tải chi tiết ca làm:", error);
+      apiNotification.error("Lỗi", "Không thể tải chi tiết ca làm.");
+      setShiftDetailsByDay([]); 
+    } finally {
+      setLoadingDetails(false);
+    }
+  }, [apiNotification]);
 
-  const columns = [
+  const mainTableColumns = [
     {
       title: 'Mã Ca',
       dataIndex: 'maCa',
@@ -189,97 +227,39 @@ export default function CaLamComponent() {
       onFilter: (value, record) =>
         record.maCa?.toString().toLowerCase().includes(value.toLowerCase()) ||
         record.tenCa?.toLowerCase().includes(value.toLowerCase()),
-      sorter: (a, b) => a.maCa - b.maCa, 
     },
     {
-      title: 'Tên Ca', 
+      title: 'Tên Ca',
       dataIndex: 'tenCa',
       key: 'tenCa',
-      width: 150,
-      filteredValue: searchText ? [searchText] : null,
-      onFilter: (value, record) => record.tenCa?.toLowerCase().includes(value.toLowerCase()),
-      sorter: (a, b) => a.tenCa.localeCompare(b.tenCa), 
-    },
-    {
-      title: 'Ngày Trong Tuần',
-      dataIndex: 'ngayTrongTuan',
-      key: 'ngayTrongTuan',
-      width: 150,
-      sorter: (a, b) => a.ngayTrongTuan - b.ngayTrongTuan,
-      render: (text) => {
-        const day = daysOfWeekOptions.find(d => d.value === text);
-        return day ? <Tag color="geekblue">{day.label}</Tag> : <Text type="secondary">Không xác định</Text>;
-      },
-      filters: daysOfWeekOptions.map(day => ({ text: day.label, value: day.value })), // Thêm filter cho Ngày Trong Tuần
-      onFilter: (value, record) => record.ngayTrongTuan === value,
-    },
-    {
-      title: 'Có Làm Việc',
-      dataIndex: 'coLamViec',
-      key: 'coLamViec',
-      width: 120,
-      render: (text) => (
-        text === 1 ? <Tag color="green">Có</Tag> : <Tag color="red">Không</Tag>
-      ),
-      filters: [
-        { text: 'Có', value: 1 },
-        { text: 'Không', value: 0 },
-      ],
-      onFilter: (value, record) => record.coLamViec === value,
-    },
-    {
-      title: 'Giờ Bắt Đầu',
-      dataIndex: 'gioBatDau',
-      key: 'gioBatDau',
-      width: 120,
-      render: (text) => text ? <Tag color="green">{dayjs(text, 'HH:mm').format('HH:mm')}</Tag> : <Text type="secondary">N/A</Text>,
-    },
-    {
-      title: 'Giờ Kết Thúc',
-      dataIndex: 'gioKetThuc',
-      key: 'gioKetThuc',
-      width: 120,
-      render: (text) => text ? <Tag color="red">{dayjs(text, 'HH:mm').format('HH:mm')}</Tag> : <Text type="secondary">N/A</Text>,
-    },
-    {
-      title: 'Giờ Nghỉ Trưa Bắt Đầu',
-      dataIndex: 'gioNghiBatDau',
-      key: 'gioNghiBatDau',
-      width: 170,
-      render: (text) => text ? <Tag color="orange">{dayjs(text, 'HH:mm').format('HH:mm')}</Tag> : <Text type="secondary">Không có</Text>,
-    },
-    {
-      title: 'Giờ Nghỉ Trưa Kết Thúc',
-      dataIndex: 'gioNghiKetThuc',
-      key: 'gioNghiKetThuc',
-      width: 170,
-      render: (text) => text ? <Tag color="orange">{dayjs(text, 'HH:mm').format('HH:mm')}</Tag> : <Text type="secondary">Không có</Text>,
-    },
-    {
-      title: 'Số Giờ Làm Việc',
-      dataIndex: 'soGioLamViec',
-      key: 'soGioLamViec',
-      width: 150,
-      render: (text) => <Statistic value={text} suffix="h" precision={2} valueStyle={{ fontSize: '16px' }} />,
-      sorter: (a, b) => a.soGioLamViec - b.soGioLamViec,
+      width: 200,
+      render: (text) => <Text strong>{text}</Text>,
     },
     {
       title: 'Thao Tác',
       key: 'action',
-      width: 120,
+      width: 150,
       fixed: 'right',
       render: (_, record) => (
         <Space>
+          {/* Removed EyeOutlined button as per request */}
           <Button
             type="text"
             icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
+            onClick={(e) => {
+                e.stopPropagation(); 
+                handleEdit(record);
+            }}
             size="middle"
+            title="Chỉnh sửa"
           />
           <Popconfirm
             title="Xóa ca làm"
             description="Bạn có chắc chắn muốn xóa ca làm này?"
-            onConfirm={() => handleDelete(record.maCa)}
+            onConfirm={(e) => {
+                e.stopPropagation(); 
+                handleDelete(record.maCa);
+            }}
             okText="Có"
             cancelText="Không"
           >
@@ -287,6 +267,7 @@ export default function CaLamComponent() {
               danger
               icon={<DeleteOutlined style={{ color: 'red' }} />}
               size="middle"
+              title="Xóa"
             />
           </Popconfirm>
         </Space>
@@ -307,16 +288,14 @@ export default function CaLamComponent() {
           <Row justify="space-between" align="middle">
             <Col>
               <Title
-        
                 level={2}
                 style={{
                   marginBottom: 8,
-                  backgroundImage: 'linear-gradient(45deg, #667eea, #764ba2)', // Sử dụng backgroundImage
+                  background: 'linear-gradient(45deg, #667eea, #764ba2)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   fontWeight: 700
-                }}
-              >
+                }}>
                 Quản Lý Ca Làm Việc
               </Title>
               <Text type="secondary">Quản lý và theo dõi các ca làm việc trong công ty</Text>
@@ -387,7 +366,7 @@ export default function CaLamComponent() {
           </Row>
 
           <Table
-            columns={columns}
+            columns={mainTableColumns}
             dataSource={dataSource}
             rowKey="maCa"
             loading={loadingCaLam}
@@ -398,20 +377,27 @@ export default function CaLamComponent() {
               showTotal: (total, range) =>
                 `${range[0]}-${range[1]} của ${total} ca làm`,
             }}
-            scroll={{ x: 1200 }}
+            scroll={{ x: 500, y: tableScrollY }}
             size="middle"
+            onRow={(record) => {
+                return {
+                    onClick: () => handleRowClick(record), 
+                };
+            }}
           />
         </Card>
 
+        {/* Modal for Adding/Editing Shift */}
         <Modal
           centered
+          size='large'
           title={
             <Space>
               <ClockCircleOutlined />
               {currentRecord ? 'Chỉnh Sửa Ca Làm' : 'Thêm Ca Làm'}
             </Space>
           }
-          open={isModalVisible} 
+          open={isModalVisible}
           onCancel={handleCancel}
           footer={null}
           width={800}
@@ -432,34 +418,17 @@ export default function CaLamComponent() {
                   <Input placeholder="Nhập tên ca (VD: Ca Sáng)" />
                 </Form.Item>
               </Col>
-              <Col xs={24} sm={12}>
-                <Form.Item
-                  label="Ngày Trong Tuần"
-                  name="ngayTrongTuan"
-                  rules={[{ required: true, message: 'Vui lòng chọn ngày trong tuần!' }]}
-                >
-                  <Select
-                    placeholder="Chọn ngày trong tuần"
-                    allowClear
-                  >
-                    {daysOfWeekOptions.map(day => (
-                      <Option key={day.value} value={day.value}>{day.label}</Option>
-                    ))}
-                  </Select>
-                </Form.Item>
-              </Col>
             </Row>
 
             <Row gutter={16}>
               <Col xs={24} sm={12}>
                 <Form.Item
-                  label="Giờ Bắt Đầu"
+                  label="Thời Gian Bắt Đầu"
                   name="gioBatDau"
                   rules={[{ required: true, message: 'Vui lòng chọn giờ bắt đầu!' }]}
                 >
                   <TimePicker
-                    format="HH:mm"
-                    className="w-full"
+                    format="HH:mm:ss"
                     placeholder="Chọn giờ bắt đầu"
                     style={{ width: '100%' }}
                   />
@@ -467,13 +436,12 @@ export default function CaLamComponent() {
               </Col>
               <Col xs={24} sm={12}>
                 <Form.Item
-                  label="Giờ Kết Thúc"
+                  label="Thời Gian Kết Thúc"
                   name="gioKetThuc"
                   rules={[{ required: true, message: 'Vui lòng chọn giờ kết thúc!' }]}
                 >
                   <TimePicker
-                    format="HH:mm"
-                    className="w-full"
+                    format="HH:mm:ss"
                     placeholder="Chọn giờ kết thúc"
                     style={{ width: '100%' }}
                   />
@@ -484,50 +452,29 @@ export default function CaLamComponent() {
             <Row gutter={16}>
               <Col xs={24} sm={12}>
                 <Form.Item
-                  label="Giờ Nghỉ Bắt Đầu (Tùy chọn)"
+                  label="Giờ Nghỉ Trưa Bắt Đầu"
                   name="gioNghiBatDau"
                 >
                   <TimePicker
-                    format="HH:mm"
-                    className="w-full"
-                    placeholder="Chọn giờ nghỉ bắt đầu"
+                    format="HH:mm:ss"
+                    placeholder="Chọn giờ bắt đầu nghỉ"
                     style={{ width: '100%' }}
                   />
                 </Form.Item>
               </Col>
               <Col xs={24} sm={12}>
                 <Form.Item
-                  label="Giờ Nghỉ Kết Thúc (Tùy chọn)"
+                  label="Giờ Nghỉ Trưa Kết Thúc"
                   name="gioNghiKetThuc"
                 >
                   <TimePicker
-                    format="HH:mm"
-                    className="w-full"
-                    placeholder="Chọn giờ nghỉ kết thúc"
+                    format="HH:mm:ss"
+                    placeholder="Chọn giờ kết thúc nghỉ"
                     style={{ width: '100%' }}
                   />
                 </Form.Item>
               </Col>
             </Row>
-
-            <Row gutter={16}>
-              <Col xs={24} sm={12}>
-                <Form.Item
-                  label="Có Làm Việc"
-                  name="coLamViec"
-                  valuePropName="checked" 
-                >
-                  <Select
-                    placeholder="Chọn trạng thái làm việc"
-                    allowClear
-                  >
-                    <Option value={true}>Có</Option>
-                    <Option value={false}>Không</Option>
-                  </Select>
-                </Form.Item>
-              </Col>
-            </Row>
-
 
             {previewHours > 0 && (
               <Card size="small" style={{ backgroundColor: '#f6ffed', border: '1px solid #b7eb8f' }}>
@@ -553,7 +500,16 @@ export default function CaLamComponent() {
             </Row>
           </Form>
         </Modal>
+
+        {/* Modal for displaying Shift Details (now imported) */}
+        <ModalChiTietCaLam
+          isVisible={isDetailModalVisible}
+          onCancel={() => setIsDetailModalVisible(false)}
+          shiftData={selectedShiftForDetail}
+          shiftDetailsByDay={shiftDetailsByDay}
+          loadingDetails={loadingDetails}
+        />
       </div>
     </div >
   );
-};
+}

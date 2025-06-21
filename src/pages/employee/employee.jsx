@@ -77,16 +77,32 @@ export default function NhanVien() {
   });
   const [highlightedText, setHighlightedText] = useState("");
 
+  const [tableScrollY, setTableScrollY] = useState(0);
+
   useEffect(() => {
     setReload(() => fetchNhanVien);
     const checkScreenSize = () => {
       setIsMobile(window.innerWidth < 880);
     };
 
+    const calculateTableHeight = () => {
+      const headerOffset = isMobile ? 250 : 220; 
+      const paginationOffset = 64; 
+      const totalOffset = headerOffset + paginationOffset;
+      setTableScrollY(window.innerHeight - totalOffset);
+    };
+
     checkScreenSize();
-    window.addEventListener("resize", checkScreenSize);
-    return () => window.removeEventListener("resize", checkScreenSize);
-  }, []);
+    calculateTableHeight(); 
+    window.addEventListener("resize", () => {
+      checkScreenSize();
+      calculateTableHeight(); 
+    });
+    return () => window.removeEventListener("resize", () => {
+      checkScreenSize();
+      calculateTableHeight();
+    });
+  }, [isMobile]); 
 
   useEffect(() => {
     const savedSearchHistory = localStorage.getItem("employeeSearchHistory");
@@ -171,7 +187,7 @@ export default function NhanVien() {
       inactive,
       byDepartment,
     };
-  }, [processedData]); 
+  }, [processedData]);
 
   const filterOptions = useMemo(() => {
     if (!Array.isArray(danhSachNhanVien))
@@ -365,7 +381,7 @@ export default function NhanVien() {
               trigger={["click"]}
               placement="bottomRight"
               onClick={(e) => {
-                e.stopPropagation(); 
+                e.stopPropagation();
               }}
             >
               <Button type="text" icon={<MoreOutlined />} size="small" />
@@ -398,7 +414,7 @@ export default function NhanVien() {
         danger
         onClick={(e) => {
           e.domEvent.stopPropagation();
-          handleDelete(record.maNhanVien); 
+          handleDelete(record.maNhanVien);
         }}
       >
         Xóa
@@ -707,7 +723,7 @@ export default function NhanVien() {
                 total: processedData.length,
               }}
               size="small"
-              scroll={{ x: 300 }}
+              scroll={{ x: 300, y: tableScrollY }}
               sticky={{ offsetHeader: 0 }}
             />
           </Card>
@@ -894,7 +910,7 @@ export default function NhanVien() {
                   showTotal: (total, range) =>
                     `${range[0]}-${range[1]} trong ${total} nhân viên`,
                 }}
-                scroll={{ x: 1000 }}
+                scroll={{ x: 1000, y: tableScrollY }}
                 sticky={{ offsetHeader: 0 }}
               />
             </Card>
