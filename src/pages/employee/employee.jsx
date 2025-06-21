@@ -151,15 +151,15 @@ export default function NhanVien() {
   }, [danhSachNhanVien, currentFilter, globalSearchValue]);
 
   const statistics = useMemo(() => {
-    if (!Array.isArray(danhSachNhanVien)) return {};
+    if (!Array.isArray(processedData)) return {};
 
-    const total = danhSachNhanVien.length;
-    const active = danhSachNhanVien.filter(
+    const total = processedData.length;
+    const active = processedData.filter(
       (nv) => nv.trangThai === "Đang làm" || nv.trangThai === "Mới đăng ký"
     ).length;
     const inactive = total - active;
 
-    const byDepartment = danhSachNhanVien.reduce((acc, nv) => {
+    const byDepartment = processedData.reduce((acc, nv) => {
       const dept = nv.tenPhongBan || "Chưa phân bổ";
       acc[dept] = (acc[dept] || 0) + 1;
       return acc;
@@ -171,7 +171,7 @@ export default function NhanVien() {
       inactive,
       byDepartment,
     };
-  }, [danhSachNhanVien]);
+  }, [processedData]); 
 
   const filterOptions = useMemo(() => {
     if (!Array.isArray(danhSachNhanVien))
@@ -375,7 +375,7 @@ export default function NhanVien() {
               trigger={["click"]}
               placement="bottomRight"
               onClick={(e) => {
-                e.stopPropagation(); // Ngăn sự kiện lan truyền lên hàng
+                e.stopPropagation(); 
               }}
             >
               <Button type="text" icon={<MoreOutlined />} size="small" />
@@ -386,7 +386,6 @@ export default function NhanVien() {
     },
   ];
 
-  // Action menu for each row
   const getActionMenu = (record) => (
     <Menu
       onClick={(e) => {
@@ -915,8 +914,6 @@ export default function NhanVien() {
         </Row>
       )}
 
-      {/* Modals */}
-
       <ModalChiTietChamCong
         isVisible={isModalChamCongChiTietVisible}
         onCancel={() => setIsModalChamCongChiTietVisible(false)}
@@ -938,7 +935,6 @@ export default function NhanVien() {
         visible={isModalCreateNhanVienVisible}
         onCancel={() => {
           setIsModalCreateNhanVienVisible(false);
-          selectedNhanVien(null);
         }}
         onOk={handleSaveCreateNhanVien}
         title="Thêm nhân viên"

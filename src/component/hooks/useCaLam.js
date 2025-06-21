@@ -8,16 +8,18 @@ import {
 
 export const useCaLam = () => {
   const [danhSachCaLam, setDanhSachCaLam] = useState([]);
-  const [loadingCaLam, setLoadingCaLam] = useState();
+  const [loadingCaLam, setLoadingCaLam] = useState(false); 
   const [isUpdatedCaLam, setIsUpdatedCaLam] = useState(false);
   const [isCreatedCaLam, setIsCreatedCaLam] = useState(false);
   const [isDeletedCaLam, setIsDeletedCaLam] = useState(false);
+
   const getAllCaLam = async () => {
     setLoadingCaLam(true);
     try {
       const res = await getAllCaLamServices();
       setDanhSachCaLam(res.data);
-    } catch {
+    } catch (error) {
+      console.error("Lỗi khi lấy dữ liệu Ca Lam:", error);
       setDanhSachCaLam([]);
     } finally {
       setLoadingCaLam(false);
@@ -26,13 +28,13 @@ export const useCaLam = () => {
 
   const updateCaLam = async (maCa, duLieuCaLam) => {
     setLoadingCaLam(true);
-
     try {
       await updateCaLamServices(maCa, duLieuCaLam);
-      await getAllCaLam();
-      setIsUpdatedCaLam(true);
-    } catch {
+      setIsUpdatedCaLam(true); 
+    } catch (error) {
+      console.error("Lỗi khi cập nhật Ca Lam:", error);
       setIsUpdatedCaLam(false);
+      throw error; 
     } finally {
       setLoadingCaLam(false);
     }
@@ -40,13 +42,13 @@ export const useCaLam = () => {
 
   const deleteCaLam = async (maCaLam) => {
     setLoadingCaLam(true);
-
     try {
       await deleteCaLamServices(maCaLam);
-      await getAllCaLam();
       setIsDeletedCaLam(true);
-    } catch {
+    } catch (error) {
+      console.error("Lỗi khi xóa Ca Lam:", error);
       setIsDeletedCaLam(false);
+      throw error; 
     } finally {
       setLoadingCaLam(false);
     }
@@ -54,13 +56,13 @@ export const useCaLam = () => {
 
   const createCaLam = async (duLieuCaLam) => {
     setLoadingCaLam(true);
-
     try {
       await createCaLamServices(duLieuCaLam);
-      await getAllCaLam();
-      isCreatedCaLam(true);
-    } catch {
-      isCreatedCaLam(false);
+      setIsCreatedCaLam(true); 
+    } catch (error) {
+      console.error("Lỗi khi tạo Ca Lam:", error);
+      setIsCreatedCaLam(false); 
+      throw error; 
     } finally {
       setLoadingCaLam(false);
     }
@@ -69,16 +71,16 @@ export const useCaLam = () => {
   useEffect(() => {
     getAllCaLam();
   }, []);
-  
+
   useEffect(() => {
     if (isUpdatedCaLam || isCreatedCaLam || isDeletedCaLam) {
       getAllCaLam();
     }
-    setIsCreatedCaLam();
-    setIsUpdatedCaLam();
-    setIsDeletedCaLam();
-  }, [isUpdatedCaLam, isCreatedCaLam, isDeletedCaLam]);
-  
+    setIsCreatedCaLam(false);
+    setIsUpdatedCaLam(false);
+    setIsDeletedCaLam(false);
+  }, [isUpdatedCaLam, isCreatedCaLam, isDeletedCaLam]); 
+
   return {
     danhSachCaLam,
     loadingCaLam,
