@@ -1,6 +1,6 @@
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { Layout, Menu, Button, Drawer } from "antd";
-import ScrollToTop from "../../config/utils/scroll_to_top"; 
+import ScrollToTop from "../../config/utils/scroll_to_top";
 import {
   ReloadOutlined,
   UnorderedListOutlined,
@@ -13,26 +13,29 @@ import {
   SettingFilled,
   MenuOutlined,
   LogoutOutlined,
-  DesktopOutlined, 
+  DesktopOutlined,
 } from "@ant-design/icons";
-import LogoIcon from "../../assets/images/LogoIcon.png"; 
+import LogoIcon from "../../assets/images/LogoIcon.png";
 import "./mainLayout.css";
-import { useState, useEffect, useMemo, useCallback } from "react"; 
-import { ReloadContext } from "../../context/reloadContext"; 
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { ReloadContext } from "../../context/reloadContext";
 
-const { Header, Sider, Content } = Layout; 
+const { Header, Sider, Content } = Layout;
 
 const MainLayout = () => {
-  const pathToTitle = useMemo(() => ({
-    "/main-layout/trangchu": "Trang Chủ",
-    "/main-layout/nhanvien": "Quản Lý Nhân Viên",
-    "/main-layout/nghiphep": "Nghỉ Phép",
-    "/main-layout/chamcong": "Chấm Công",
-    "/main-layout/maychamcong": "Máy Chấm Công",
-    "/main-layout/luong": "Lương",
-    "/main-layout/caidat": "Cài Đặt",
-    "/main-layout/baocao": "Báo Cáo",
-  }), []); 
+  const pathToTitle = useMemo(
+    () => ({
+      "/main-layout/trangchu": "Trang Chủ",
+      "/main-layout/nhanvien": "Quản Lý Nhân Viên",
+      "/main-layout/nghiphep": "Nghỉ Phép",
+      "/main-layout/chamcong": "Chấm Công",
+      "/main-layout/maychamcong": "Máy Chấm Công",
+      "/main-layout/luong": "Lương",
+      "/main-layout/caidat": "Cài Đặt",
+      "/main-layout/baocao": "Báo Cáo",
+    }),
+    []
+  );
 
   const taiKhoan = useMemo(() => {
     try {
@@ -41,7 +44,7 @@ const MainLayout = () => {
       console.error("Lỗi khi parse tài khoản từ localStorage:", e);
       return {};
     }
-  }, []); 
+  }, []);
 
   const location = useLocation();
   const title = pathToTitle[location.pathname] || "Quản lý nhân sự";
@@ -67,81 +70,108 @@ const MainLayout = () => {
 
   const handleLogout = useCallback(() => {
     localStorage.removeItem("token");
-    window.location.replace("/login"); 
+    window.location.replace("/login");
   }, []);
 
-  const menuItems = useMemo(() => [
-    {
-      key: "/main-layout/trangchu", 
-      icon: <HomeOutlined />,
-      label: <Link to="/main-layout/trangchu">Trang Chủ</Link>,
-    },
-    {
-      key: "sub1", 
-      icon: <UserOutlined />,
-      label: "Quản Lý Nhân Viên",
-      children: [
-        {
-          key: "/main-layout/nhanvien", 
-          icon: <UnorderedListOutlined />,
-          label: <Link to="/main-layout/nhanvien">Nhân viên</Link>,
-        },
-        {
-          key: "/main-layout/nghiphep", 
-          icon: <SolutionOutlined />,
-          label: <Link to="/main-layout/nghiphep">Nghỉ Phép</Link>,
-        },
-      ],
-    },
-    {
-      key: "/main-layout/chamcong",
-      icon: <ScheduleOutlined />,
-      label: <Link to="/main-layout/chamcong">Chấm Công</Link>,
-    },
-    {
-      key: "/main-layout/maychamcong",
-      icon: <DesktopOutlined />,
-      label: <Link to="/main-layout/maychamcong">Máy Chấm Công</Link>,
-    },
-    {
-      key: "/main-layout/luong",
-      icon: <DollarOutlined />,
-      label: <Link to="/main-layout/luong">Lương</Link>,
-    },
-    {
-      key: "/main-layout/baocao",
-      icon: <BarChartOutlined />,
-      label: <Link to="/main-layout/baocao">Báo Cáo</Link>,
-    },
-    {
-      key: "/main-layout/caidat",
-      icon: <SettingFilled />,
-      label: <Link to="/main-layout/caidat">Cài đặt</Link>,
-    },
-  ], []); 
+  const menuItems = useMemo(
+    () => [
+      {
+        key: "/main-layout/trangchu",
+        icon: <HomeOutlined />,
+        label: <Link to="/main-layout/trangchu">Trang Chủ</Link>,
+      },
+      {
+        key: "sub1",
+        icon: <UserOutlined />,
+        label: "Quản Lý Nhân Viên",
+        children: [
+          {
+            key: "/main-layout/nhanvien",
+            icon: <UnorderedListOutlined />,
+            label: <Link to="/main-layout/nhanvien">Nhân viên</Link>,
+          },
+          {
+            key: "/main-layout/nghiphep",
+            icon: <SolutionOutlined />,
+            label: <Link to="/main-layout/nghiphep">Nghỉ Phép</Link>,
+          },
+        ],
+      },
+      {
+        key: "/main-layout/chamcong",
+        icon: <ScheduleOutlined />,
+        label: <Link to="/main-layout/chamcong">Chấm Công</Link>,
+      },
+      {
+        key: "/main-layout/maychamcong",
+        icon: <DesktopOutlined />,
+        label: <Link to="/main-layout/maychamcong">Máy Chấm Công</Link>,
+      },
+      {
+        key: "/main-layout/luong",
+        icon: <DollarOutlined />,
+        label: <Link to="/main-layout/luong">Lương</Link>,
+      },
+      {
+        key: "/main-layout/baocao",
+        icon: <BarChartOutlined />,
+        label: <Link to="/main-layout/baocao">Báo Cáo</Link>,
+      },
+      {
+        key: "/main-layout/caidat/*",
+        icon: <SettingFilled />,
+        label: <Link to="/main-layout/caidat">Cài đặt</Link>,
+      },
+    ],
+    []
+  );
+  
 
-  const getSelectedKeys = useCallback(() => {
-    const path = location.pathname;
-    let keys = [];
+  const getSelectedKeys = useMemo(() => {
+    const currentPath = location.pathname;
 
-    const directMatch = menuItems.find(item => item.key === path);
-    if (directMatch) {
-      keys.push(directMatch.key);
+    // Kiểm tra nếu đang ở trong phần cài đặt
+    if (currentPath.startsWith("/main-layout/caidat")) {
+      return ["/main-layout/caidat/*"];
     }
 
-    const subMenu = menuItems.find(item => item.children && item.children.some(child => child.key === path));
-    if (subMenu) {
-      keys.push(subMenu.key); 
-      keys.push(path); 
+    // Kiểm tra các đường dẫn khác
+    const exactMatch = menuItems.find(
+      (item) =>
+        item.key === currentPath ||
+        (item.children &&
+          item.children.some((child) => child.key === currentPath))
+    );
+
+    if (exactMatch) {
+      return [currentPath];
     }
 
-    if (keys.length === 0) {
-      keys.push("/main-layout/trangchu");
+    // Kiểm tra sub menu
+    for (const item of menuItems) {
+      if (item.children) {
+        const childMatch = item.children.find(
+          (child) => child.key === currentPath
+        );
+        if (childMatch) {
+          return [currentPath];
+        }
+      }
     }
-    
-    return keys;
+
+    return ["/main-layout/trangchu"]; // default
   }, [location.pathname, menuItems]);
 
+   const getOpenKeys = useMemo(() => {
+    const currentPath = location.pathname;
+    
+    if (currentPath.startsWith('/main-layout/nhanvien') || 
+        currentPath.startsWith('/main-layout/nghiphep')) {
+      return ['sub1'];
+    }
+    
+    return [];
+  }, [location.pathname]);
 
   const menuContent = (
     <>
@@ -157,7 +187,8 @@ const MainLayout = () => {
       </div>
       <Menu
         mode="inline"
-        selectedKeys={getSelectedKeys()} 
+        selectedKeys={getSelectedKeys}
+        openKeys={getOpenKeys}
         theme="dark"
         onClick={() => {
           if (isMobile) {
@@ -168,7 +199,7 @@ const MainLayout = () => {
           background: "transparent",
           border: "none",
         }}
-        items={menuItems} 
+        items={menuItems}
       />
     </>
   );

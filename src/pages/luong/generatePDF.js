@@ -249,10 +249,10 @@ export const generateDetailedSalaryPDF = (employeeData, monthYear = "") => {
       "19",
       "Tổng lương",
       formatCurrency(
-        employeeData.tongTienPhuCap ||
-          0 + employeeData.luongTheoNgay ||
-          0 + employeeData.luongNgayNghi ||
-          0
+        (employeeData.tongTienPhuCap || 0) +
+          (employeeData.luongTheoNgay || 0) +
+          (employeeData.luongNgayNghi || 0) +
+          (employeeData.tongTienTangCa || 0)
       ),
     ],
   ];
@@ -503,12 +503,16 @@ export const generateSinglePDFMultiplePages = (
       [
         "19",
         "Tổng lương",
-        formatCurrency(
-          employeeData.tongTienPhuCap ||
-            0 + employeeData.luongTheoNgay ||
-            0 + employeeData.luongNgayNghi ||
-            0
-        ),
+        [
+          "19",
+          "Tổng lương",
+          formatCurrency(
+            (employeeData.tongTienPhuCap || 0) +
+              (employeeData.luongTheoNgay || 0) +
+              (employeeData.luongNgayNghi || 0) +
+              (employeeData.tongTienTangCa || 0)
+          ),
+        ],
       ],
     ];
 

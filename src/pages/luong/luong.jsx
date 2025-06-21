@@ -236,37 +236,41 @@ export default function Luong() {
   const columns = [
     {
       title: (
-        <Checkbox
-          checked={selectAll}
-          onChange={(e) => {
-            setSelectAll(e.target.checked);
-            if (e.target.checked) {
-              setSelectedRows(filteredData.map((item) => item.maNhanVien));
-            } else {
-              setSelectedRows([]);
-              console.log("Deselected all.");
-            }
-          }}
-        />
+        <div onClick={(e) => e.stopPropagation()}>
+          <Checkbox
+            checked={selectAll}
+            onChange={(e) => {
+              setSelectAll(e.target.checked);
+              if (e.target.checked) {
+                setSelectedRows(filteredData.map((item) => item.maNhanVien));
+              } else {
+                setSelectedRows([]);
+                console.log("Deselected all.");
+              }
+            }}
+          />
+        </div>
       ),
       key: "select",
       width: 60,
       align: "center",
       render: (_, record) => (
-        <Checkbox
-          checked={selectedRows.includes(record.maNhanVien)}
-          onChange={(e) => {
-            if (e.target.checked) {
-              setSelectedRows([...selectedRows, record.maNhanVien]);
-            } else {
-              setSelectedRows(
-                selectedRows.filter(
-                  (maNhanVien) => maNhanVien !== record.maNhanVien
-                )
-              );
-            }
-          }}
-        />
+        <div onClick={(e) => e.stopPropagation()}>
+          <Checkbox
+            checked={selectedRows.includes(record.maNhanVien)}
+            onChange={(e) => {
+              if (e.target.checked) {
+                setSelectedRows([...selectedRows, record.maNhanVien]);
+              } else {
+                setSelectedRows(
+                  selectedRows.filter(
+                    (maNhanVien) => maNhanVien !== record.maNhanVien
+                  )
+                );
+              }
+            }}
+          />
+        </div>
       ),
     },
     {
@@ -571,7 +575,6 @@ export default function Luong() {
         onRow={(record) => {
           return {
             onClick: () => {
-              console.log(record);
               setSelectedNhanVien(record);
               setIsModalChamCongChiTietVisible(true);
             },
