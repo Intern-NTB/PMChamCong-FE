@@ -57,6 +57,7 @@ const { Text } = Typography;
 
 export default function GiaLapChamCong() {
   // Hooks
+  const { danhSachNhanVien } = useNhanVien();
   const { danhSachChamCongChiTiet, getAllChamCongDetail } = useChamCong();
   const { danhSachPhongBan } = usePhongBan();
   const { setReload } = useContext(ReloadContext);
@@ -183,7 +184,8 @@ export default function GiaLapChamCong() {
 
   const formatTime = useCallback((text) => {
     // Nếu text là null, undefined, chuỗi rỗng, "N/A" HOẶC "Invalid Date", trả về "00:00:00"
-    if (!text || text === "N/A" || text === "Invalid Date") return "Chưa chấm công ra"; 
+    if (!text || text === "N/A" || text === "Invalid Date")
+      return "Chưa chấm công ra";
     if (typeof text === "string" && text.includes("T")) {
       const timePart = text.split("T")[1];
       return timePart.split(".")[0];
@@ -312,9 +314,7 @@ export default function GiaLapChamCong() {
             <div style={{ fontWeight: "bold", marginBottom: "4px" }}>
               {dayjs(record.ngayChamCong).format("DD/MM/YYYY")}
             </div>
-            <div style={{ marginBottom: "4px" }}>
-              {record.hoTen}
-            </div>
+            <div style={{ marginBottom: "4px" }}>{record.hoTen}</div>
             <div style={{ fontSize: "12px", color: "#666" }}>
               {record.tenPhongBan}
             </div>
@@ -409,7 +409,7 @@ export default function GiaLapChamCong() {
 
     const tongSoGioTangCaThang = danhSachTangCa.reduce((total, tc) => {
       const ngayTangCa = dayjs(tc.ngayChamCongTangCa);
-      const thang = ngayTangCa.month(); 
+      const thang = ngayTangCa.month();
       const nam = ngayTangCa.year();
 
       const thangHienTai = (selectedMonth ?? dayjs()).month();
@@ -501,11 +501,7 @@ export default function GiaLapChamCong() {
       {isMobile ? (
         <Space direction="vertical" style={{ width: "100%" }} size="middle">
           <Card title="Chấm công" size="small" extra={<CalendarOutlined />}>
-            <Space
-              direction="vertical"
-              style={{ width: "100%" }}
-              size="middle"
-            >
+            <Space direction="vertical" style={{ width: "100%" }} size="middle">
               <Row gutter={[8, 8]}>
                 <Col span={12}>
                   <Select
@@ -653,7 +649,7 @@ export default function GiaLapChamCong() {
               size="small"
               scroll={{ y: "calc(100vh - 300px)", sticky: true }}
               onChange={(pagination, filters) => {
-                const pb = filters.tenPhongBan?.[0]; 
+                const pb = filters.tenPhongBan?.[0];
                 setSelectedPhongBan({
                   selected: true,
                   phongBanValue: pb.tenPhongBan || null,
@@ -887,7 +883,7 @@ export default function GiaLapChamCong() {
                 }}
                 scroll={{ y: "calc(100vh - 300px)", sticky: true }}
                 onChange={(pagination, filters) => {
-                  const pb = filters.tenPhongBan?.[0]; 
+                  const pb = filters.tenPhongBan?.[0];
                   setSelectedPhongBan({
                     selected: true,
                     phongBanValue: pb || null,
@@ -896,8 +892,8 @@ export default function GiaLapChamCong() {
                 onRow={(record, rowIndex) => {
                   return {
                     onClick: (event) => {
-                      setSelectedNhanVien(record); 
-                      setIsModalChiTietVisible(true); 
+                      setSelectedNhanVien(record);
+                      setIsModalChiTietVisible(true);
                     },
                   };
                 }}
