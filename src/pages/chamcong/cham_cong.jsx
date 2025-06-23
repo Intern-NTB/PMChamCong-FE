@@ -87,7 +87,6 @@ export default function GiaLapChamCong() {
   // Hooks
   const { danhSachChamCongChiTiet, getAllChamCongDetail } = useChamCong();
   const { danhSachPhongBan } = usePhongBan();
-  const { danhSachNhanVien } = useNhanVien();
   const { setReload } = useContext(ReloadContext);
   const {
     danhSachTangCa,
