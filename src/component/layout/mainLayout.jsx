@@ -76,14 +76,16 @@ const MainLayout = () => {
     reloadFnRef.current();
   }, []);
 
+  const [collapsed, setCollapsed] = useState(true); 
+
   useEffect(() => {
     const checkScreenSize = () => {
-      setIsMobile(window.innerWidth < 992);
+      setIsMobile(window.innerWidth < 992); 
     };
 
-    checkScreenSize();
-    window.addEventListener("resize", checkScreenSize);
-    return () => window.removeEventListener("resize", checkScreenSize);
+    checkScreenSize(); 
+    window.addEventListener("resize", checkScreenSize); 
+    return () => window.removeEventListener("resize", checkScreenSize); 
   }, []);
 
   // Set default openKeys based on current path
@@ -203,9 +205,12 @@ const MainLayout = () => {
           justifyContent: "center",
           alignItems: "center",
           padding: isMobile ? "20px 0" : "16px 0",
+          overflow: 'hidden', 
+          transition: 'width 0.2s ease', 
+          width: collapsed ? '80px' : '300px', 
         }}
       >
-        <img src={LogoIcon} alt="Logo" />
+        {/* Removed the MenuOutlined icon from here as requested */}
       </div>
       <Menu
         mode="inline"
@@ -214,12 +219,13 @@ const MainLayout = () => {
         onOpenChange={handleOpenChange}
         theme="dark"
         onClick={() => {
+     
           if (isMobile) {
             setDrawerVisible(false);
           }
         }}
         style={{
-          background: "transparent",
+          background: "transparent", 
           border: "none",
         }}
         items={menuItems}
@@ -254,26 +260,27 @@ const MainLayout = () => {
             onClick={handleLogout}
             type="text"
             size="large"
+            style={{ marginRight: 12 }}
           />
           <Button
-            style={{ marginLeft: 12 }}
             icon={<ReloadOutlined />}
             onClick={executeReload}
             size="large"
           />
         </Header>
 
+        {/* Mobile Drawer for navigation */}
         <Drawer
           title={null}
           placement="left"
-          closable={false}
+          closable={false} 
           onClose={() => setDrawerVisible(false)}
           open={drawerVisible}
-          width="100vw"
+          width="100vw" 
           styles={{
             body: {
               padding: 0,
-              background: "#71A5E0",
+              background: "#71A5E0", 
               height: "100vh",
             },
             header: {
@@ -288,6 +295,7 @@ const MainLayout = () => {
               position: "relative",
             }}
           >
+            {/* Custom close button for the drawer */}
             <div
               style={{
                 position: "absolute",
@@ -313,10 +321,11 @@ const MainLayout = () => {
               </Button>
             </div>
 
-            {menuContent}
+            {menuContent} {/* Render the shared menu content */}
           </div>
         </Drawer>
 
+        {/* Main content area for mobile */}
         <Content
           style={{
             margin: "12px",
@@ -338,12 +347,18 @@ const MainLayout = () => {
   return (
     <Layout style={{ height: "100dvh", minHeight: "100dvh" }}>
       <Sider
-        width={300}
+        width={300} 
         style={{ background: "#71A5E0", height: "100vh" }}
-        breakpoint="lg"
-        collapsedWidth="0"
+        breakpoint="lg" 
+        collapsedWidth="80" 
+        collapsible 
+        collapsed={collapsed} 
+        onMouseEnter={() => setCollapsed(false)}
+        onMouseLeave={() => setCollapsed(true)}  
+        trigger={null} 
+        className={collapsed ? 'collapsed-sider' : ''} 
       >
-        {menuContent}
+        {menuContent} {/* Render the shared menu content */}
       </Sider>
 
       <Layout style={{ height: "100vh" }}>
@@ -353,14 +368,20 @@ const MainLayout = () => {
             borderBottom: "1px solid grey",
             display: "flex",
             justifyContent: "space-between",
+            alignItems: "center", // Align items vertically
             padding: "0 24px",
             height: "64px",
             lineHeight: "64px",
           }}
         >
-          <span></span>
-          <div>
-            <h2 style={{ margin: 0 }}>{title}</h2>
+          {/* Logo moved to the top-left of the main header, with 5px gap to title */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <img
+              src={LogoIcon}
+              alt="Company Logo" // More descriptive alt text
+              style={{ height: '40px', objectFit: 'contain' }}
+            />
+            <h2 style={{ margin: 0 }}>{title}</h2> {/* Current page title */}
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
