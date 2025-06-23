@@ -18,6 +18,7 @@ import VaiTroComponent from '../pages/caidat/vai_tro.jsx';
 import TaiKhoanComponent from '../pages/caidat/tai_khoan.jsx';
 import LichSuPhongBanComponent from '../pages/caidat/lich_su_phong_ban.jsx';
 import LichSuLuongComponent from '../pages/caidat/lich_su_luong.jsx';
+import HeThongComponent from '../pages/caidat/he_thong.jsx';
 // Thêm import cho thành phần Máy chấm công
 import MayChamCong from '../pages/maychamcong/maychamcong.jsx'; 
 
@@ -42,6 +43,10 @@ export const privateRoutes = [
                     {
                         index: true,
                         element: <PhongBanComponent />
+                    },
+                    {
+                        path: 'he-thong',
+                        element: <HeThongComponent />
                     },
                     {
                         path: 'phong-ban',

@@ -18,6 +18,7 @@ export default function CaiDat() {
 
     // map tab key to route path
     const tabItems = [
+        { key: 'he-thong', label: 'Hệ thống' },
         { key: 'phong-ban', label: 'Phòng ban' },
         { key: 'ca-lam', label: 'Ca làm' },
         { key: 'doi-tuong-uu-tien', label: 'Đối tượng ưu tiên' },
@@ -39,13 +40,17 @@ export default function CaiDat() {
 
     return (
         <>
-            <Tabs
-                activeKey={currentTab}
-                items={tabItems}
-                onChange={onChange}
-                tabPosition='top'
-                size={isMobile ? 'small' : 'middle'}
-            />
+            <div style={{ overflowX: 'auto' }}>
+                <div style={{ minWidth: 600, display: 'inline-block' }}>
+                    <Tabs
+                        activeKey={currentTab}
+                        items={tabItems}
+                        onChange={onChange}
+                        tabPosition='top'
+                        size={isMobile ? 'small' : 'middle'}
+                    />
+                </div>
+            </div>
             <Outlet />
         </>
 
