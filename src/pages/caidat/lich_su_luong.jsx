@@ -25,21 +25,21 @@ import { SearchOutlined } from '@ant-design/icons';
 const { Title, Text } = Typography;
 const { Search } = Input;
 
-import { usePhongBan } from '../../component/hooks/usePhongBan';
+import { useLuong } from '../../component/hooks/useLuong';
 import { useNhanVien } from '../../component/hooks/useNhanVien';
 
-export default function LichSuPhongBanComponent() {
+export default function LichSuLuongComponent() {
     const [searchText, setSearchText] = useState('');
 
     const {
-        danhSachPhongBan,
+        danhSachLuong,
         danhSachLichSuThayDoi,
         loading,
-        historyChangePhongBan,
-    } = usePhongBan();
+        historyChangeLuong
+    } = useLuong();
 
     useEffect(() => {
-        historyChangePhongBan();
+        historyChangeLuong();
     }, []);
 
     const {
@@ -50,14 +50,10 @@ export default function LichSuPhongBanComponent() {
         const nhanVien = danhSachNhanVien.find(nv => nv.maNhanVien === ma);
         return nhanVien ? nhanVien.hoTen : ma;
     };
-    const getTenPhongBan = (maPB) => {
-        const phongBan = danhSachPhongBan.find(pb => pb.maPhongBan === maPB);
-        return phongBan ? phongBan.tenPhongBan : maPB
-    }
 
     const dataSource = danhSachLichSuThayDoi.map((history) => ({
-        tenPhongBanCu: getTenPhongBan(history.phongBanCu),
-        tenPhongBanMoi: getTenPhongBan(history.phongBanMoi),
+        luongCu: history.luongCu,
+        luongMoi: history.luongMoi,
         thoiGianThayDoi: history.thoiGianThayDoi,
         tenNguoiDuocChinh: getTenNhanVien(history.maNguoiDuocChinh),
         tenNguoiChinh: getTenNhanVien(history.maNguoiChinh),
@@ -79,28 +75,6 @@ export default function LichSuPhongBanComponent() {
                 record.tenNguoiChinh?.toLowerCase().includes(value.toLowerCase()) || record.tenPhongBanMoi?.toLowerCase().includes(value.toLowerCase()),
         },
         {
-            title: "Phòng Ban Cũ",
-            dataIndex: "tenPhongBanCu",
-            key: "tenPhongBanCu",
-            width: 150,
-            render: (text) => <Text strong>{text}</Text>,
-            sorter: {
-                compare: (a, b) => a.tenPhongBanCu.localeCompare(b.tenPhongBanCu, 'vi', { numeric: true }),
-                multiple: 1,
-            },
-        },
-        {
-            title: "Phòng Ban Mới",
-            dataIndex: "tenPhongBanMoi",
-            key: "tenPhongBanMoi",
-            width: 150,
-            render: (text) => <Text strong>{text}</Text>,
-            sorter: {
-                compare: (a, b) => a.tenPhongBanMoi.localeCompare(b.tenPhongBanMoi, 'vi', { numeric: true }),
-                multiple: 1,
-            },
-        },    
-        {
             title: "Nhân viên",
             dataIndex: "tenNguoiDuocChinh",
             key: "tenNguoiDuocChinh",
@@ -118,6 +92,28 @@ export default function LichSuPhongBanComponent() {
             width: 150,
             render: (text) => <Text strong>{text}</Text>,
         },
+        {
+            title: "Lương Cũ",
+            dataIndex: "luongCu",
+            key: "luongCu",
+            width: 150,
+            render: (text) => <Text strong>{Number(text).toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</Text>,
+            sorter: {
+                compare: (a, b) => Number(a.luongCu) - Number(b.luongCu),
+                multiple: 1,
+            },
+        },
+        {
+            title: "Lương Mới",
+            dataIndex: "luongMoi",
+            key: "luongMoi",
+            width: 150,
+            render: (text) => <Text strong>{Number(text).toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</Text>,
+            sorter: {
+                compare: (a, b) => Number(a.luongCu) - Number(b.luongCu),
+                multiple: 1,
+            },
+        },    
     ];
     return (
         <div
@@ -140,10 +136,10 @@ export default function LichSuPhongBanComponent() {
                             fontWeight: 700,
                         }}
                     >
-                        Quản Lý Lịch Sử Thay Đổi Phòng Ban
+                        Quản Lý Lịch Sử Thay Đổi Lương
                     </Title>
                     <Text type="secondary">
-                        Quản lý lịch sử các thay đổi của phòng ban của nhân viên (ví dụ: Người thay đổi, tên cũ, tên mới,...)
+                        Quản lý lịch sử các thay đổi về lương cơ bản của nhân viên
                     </Text>
                 </Card>
 

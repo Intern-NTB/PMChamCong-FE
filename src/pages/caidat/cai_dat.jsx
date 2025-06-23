@@ -26,7 +26,8 @@ export default function CaiDat() {
         { key: 'thuong', label: 'Thưởng' },
         { key: 'phat', label: 'Phạt' },
         { key: 'tai-khoan', label: 'Tài khoản' },
-        { key: 'lich-su-phong-ban', label: 'Lịch Sử Phòng Ban' }
+        { key: 'lich-su-phong-ban', label: 'Lịch Sử Phòng Ban' },
+        { key: 'lich-su-luong', label: 'Lịch Sử Lương' }
     ]
 
     // Chọn tab hiện tại từ URL

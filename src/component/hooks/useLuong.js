@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import {
   getAllLuongServices,
   createLuongServices,
-  createLuongByIdServices
+  createLuongByIdServices,
+  getAllLuongDieuChinhServices
 } from "../../services/luongServices";
 export const useLuong = () => {
   const [danhSachLuong, setDanhSachLuong] = useState([]);
   const [loadingLuong, setLoadingLuong] = useState(false);
+  const [danhSachLichSuThayDoi, setDanhSachLichSuThayDoi] = useState([])
   const [isCreatedLuong, setIsCreatedLuong] = useState(false);
   const [isCreatedByIdLuong, setIsCreatedByIdLuong] = useState(false);
 
@@ -14,8 +16,6 @@ export const useLuong = () => {
     setLoadingLuong(true);
     try {
       const res = await getAllLuongServices();
-      // Giải pháp thay thế an toàn
-      // Giải pháp thay thế an toàn
       setDanhSachLuong(Array.isArray(res) ? res : res?.data || []);
     } catch (error) {
       setDanhSachLuong([]);
@@ -53,6 +53,18 @@ export const useLuong = () => {
     }
   };
 
+  const historyChangeLuong = async () => {
+    setLoadingLuong(true)
+    try {
+      const response = await getAllLuongDieuChinhServices();
+      setDanhSachLichSuThayDoi(Array.isArray(response.data) ? response.data : []);
+    } catch {
+      setDanhSachLichSuThayDoi([]);
+    } finally {
+      setLoadingLuong(false)
+    }
+  }
+  
   useEffect(() => {
     getAllLuong();
   }, []);
@@ -69,9 +81,11 @@ export const useLuong = () => {
 
   return {
     danhSachLuong,
+    danhSachLichSuThayDoi,
     loadingLuong,
     getAllLuong,
     createLuong,
-    createLuongById
+    createLuongById,
+    historyChangeLuong,
   };
 };
