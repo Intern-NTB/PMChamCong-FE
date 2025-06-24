@@ -10,14 +10,18 @@ import {
   Select,
   InputNumber,
   message,
+  Switch, 
 } from "antd";
-import { useEffect, useCallback, useState } from "react"; 
+import { useEffect, useCallback, useState } from "react";
 import { usePhongBan } from "../../component/hooks/usePhongBan";
 import { useVaiTro } from "../../component/hooks/useVaiTro";
 import { useDoiTuongUuTien } from "../../component/hooks/useDoiTuongUuTien";
 import { useNhanVien } from "../../component/hooks/useNhanVien";
 import dayjs from "dayjs";
+import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { toLocalISOString } from "../../component/utils/format_date_iso";
+
+dayjs.extend(customParseFormat);
 
 const { Option } = Select;
 
@@ -32,6 +36,7 @@ const Popup = ({
 }) => {
   const [form] = Form.useForm();
   const [soDienThoaiWarning, setSoDienThoaiWarning] = useState(null);
+  const [hasPriority, setHasPriority] = useState(false); // New state for priority toggle
 
   const { danhSachPhongBan } = usePhongBan();
   const { danhSachVaiTro, loadingVaiTro, getAllVaiTro } = useVaiTro();
@@ -39,23 +44,63 @@ const Popup = ({
   const { danhSachNhanVien } = useNhanVien();
 
   const parseDate = useCallback((dateString) => {
-    return dateString ? dayjs(dateString) : null;
+    console.log("parseDate: Input dateString:", dateString);
+    if (!dateString) {
+      console.log("parseDate: dateString is empty/null, returning undefined.");
+      return undefined;
+    }
+
+    const formats = [
+      "YYYY-MM-DDTHH:mm:ss.SSSZ",
+      "YYYY-MM-DDTHH:mm:ssZ",
+      "YYYY-MM-DD HH:mm:ss",
+      "YYYY-MM-DD",
+      "DD/MM/YYYY",
+      "MM/DD/YYYY",
+      "DD-MM-YYYY",
+    ];
+
+    let parsed = null;
+    for (const format of formats) {
+      parsed = dayjs(dateString, format, true);
+      if (parsed.isValid()) {
+        console.log(`parseDate: Successfully parsed '${dateString}' with format '${format}' to:`, parsed.format('YYYY-MM-DD'));
+        return parsed;
+      }
+    }
+
+    parsed = dayjs(dateString);
+    if (parsed.isValid()) {
+        console.warn(`parseDate: Parsed '${dateString}' without explicit format. This might be less reliable. Result:`, parsed.format('YYYY-MM-DD'));
+        return parsed;
+    }
+
+    console.error("parseDate: Could not parse date string:", dateString, "using any known format. Returning undefined.");
+    return undefined;
   }, []);
 
   useEffect(() => {
     if (visible) {
+      console.log("Popup useEffect: visible is true. InitialValues:", initialValues);
       if (initialValues) {
+        console.log("Popup useEffect: initialValues.ngaySinh before parsing:", initialValues.ngaySinh);
         const parsedNgaySinh = parseDate(initialValues.ngaySinh);
-        const cmndToSet = initialValues.cmnd || null ;
+        console.log("Popup useEffect: parsedNgaySinh after parsing:", parsedNgaySinh);
 
-        form.setFieldsValue({
+        const cmndToSet = initialValues.cmnd || null;
+
+        setHasPriority(initialValues.maUuTien > 0); 
+
+        const fieldsToSet = {
           ...initialValues,
           ngaySinh: parsedNgaySinh,
           maPhongBan: initialValues.maPhongBan ?? maPhongBan ?? null,
           maVaiTro: initialValues.maVaiTro ?? maVaiTro ?? null,
           maUuTien: initialValues.maUuTien > 0 ? initialValues.maUuTien : undefined,
           cmnd: cmndToSet,
-        });
+        };
+        console.log("Popup useEffect: Setting form fields with:", fieldsToSet);
+        form.setFieldsValue(fieldsToSet);
 
         const effectiveMaPhongBan = initialValues.maPhongBan ?? maPhongBan;
         if (effectiveMaPhongBan) {
@@ -64,18 +109,22 @@ const Popup = ({
           form.setFieldValue("maVaiTro", null);
         }
       } else {
+        console.log("Popup useEffect: No initialValues, resetting form.");
         form.resetFields();
-        setSoDienThoaiWarning(null); 
+        setSoDienThoaiWarning(null);
+        setHasPriority(false); 
         if (maPhongBan) {
           form.setFieldValue("maPhongBan", maPhongBan);
           getAllVaiTro(maPhongBan);
         }
       }
+    } else {
+        console.log("Popup useEffect: visible is false, skipping form setup.");
     }
   }, [visible, initialValues, maPhongBan, maVaiTro, getAllVaiTro, parseDate, form]);
 
   useEffect(() => {
-    if (!visible) return; 
+    if (!visible) return;
 
     const checkDuplicatePhone = (value) => {
       if (!value) {
@@ -100,20 +149,23 @@ const Popup = ({
 
     const timer = setTimeout(() => {
       const currentSoDienThoai = form.getFieldValue('soDienThoai');
-      if (currentSoDienThoai !== soDienThoaiValue) { 
+      if (currentSoDienThoai !== soDienThoaiValue) {
         checkDuplicatePhone(currentSoDienThoai);
       }
-    }, 300); 
+    }, 300);
 
-    return () => clearTimeout(timer); 
+    return () => clearTimeout(timer);
 
-  }, [form, danhSachNhanVien, initialValues?.maNhanVien, visible]); 
+  }, [form, danhSachNhanVien, initialValues?.maNhanVien, visible]);
 
   const handleDateChange = useCallback((date) => {
+    console.log("handleDateChange: Selected date:", date);
     if (date && dayjs.isDayjs(date) && date.isValid()) {
       form.setFieldValue("ngaySinh", date);
+      console.log("handleDateChange: Set ngaySinh to valid date.");
     } else {
-      form.setFieldValue("ngaySinh", null);
+      form.setFieldValue("ngaySinh", undefined);
+      console.log("handleDateChange: Set ngaySinh to undefined (cleared).");
     }
   }, [form]);
 
@@ -170,7 +222,7 @@ const Popup = ({
 
         values.maPhongBan = values.maPhongBan ? Number(values.maPhongBan) : null;
         values.maVaiTro = values.maVaiTro ? Number(values.maVaiTro) : null;
-        values.maUuTien = values.maUuTien ? Number(values.maUuTien) : null;
+        values.maUuTien = hasPriority && values.maUuTien ? Number(values.maUuTien) : null;
         values.luongCoBan = values.luongCoBan ? Number(values.luongCoBan) : null;
         values.heSoTangCa = values.heSoTangCa ? Number(values.heSoTangCa) : null;
 
@@ -181,13 +233,14 @@ const Popup = ({
         console.log("Data submitted to API:", values);
         onOk(values);
         form.resetFields();
-        setSoDienThoaiWarning(null); 
+        setSoDienThoaiWarning(null);
+        setHasPriority(false); 
       })
       .catch((info) => {
         console.warn("Validation failed:", info);
         message.error("Vui lòng kiểm tra lại thông tin nhập liệu và các trường bị lỗi.");
       });
-  }, [form, onOk, initialValues?.maNhanVien, soDienThoaiWarning]); 
+  }, [form, onOk, initialValues?.maNhanVien, soDienThoaiWarning, hasPriority]); 
 
   const handleChangePhongBan = useCallback((value) => {
     form.setFieldValue("maPhongBan", value);
@@ -197,7 +250,13 @@ const Popup = ({
 
   const getUuTienValue = useCallback(() => {
     const currentMaUuTien = form.getFieldValue("maUuTien");
-    return currentMaUuTien > 0 ? currentMaUuTien : undefined;
+    return hasPriority && currentMaUuTien > 0 ? currentMaUuTien : undefined;
+  }, [form, hasPriority]); 
+  const handlePriorityToggle = useCallback((checked) => {
+    setHasPriority(checked);
+    if (!checked) {
+      form.setFieldsValue({ maUuTien: undefined });
+    }
   }, [form]);
 
   const dataSourceVaiTro = danhSachVaiTro.map((vt) => ({
@@ -214,7 +273,8 @@ const Popup = ({
       onCancel={() => {
         onCancel();
         form.resetFields();
-        setSoDienThoaiWarning(null); 
+        setSoDienThoaiWarning(null);
+        setHasPriority(false); 
       }}
       footer={[
         <Button
@@ -222,7 +282,8 @@ const Popup = ({
           onClick={() => {
             onCancel();
             form.resetFields();
-            setSoDienThoaiWarning(null); 
+            setSoDienThoaiWarning(null);
+            setHasPriority(false); 
           }}
         >
           Hủy
@@ -247,6 +308,7 @@ const Popup = ({
                   style={{ width: "100%" }}
                   format="DD/MM/YYYY"
                   placeholder="Chọn ngày sinh"
+                  value={form.getFieldValue("ngaySinh")}
                 />
               </Space>
             </Form.Item>
@@ -328,14 +390,27 @@ const Popup = ({
               />
             </Form.Item>
           </Col>
+
+          {/* New row for Priority toggle and Select */}
           <Col span={12}>
-            <Form.Item name="maUuTien" label="Ưu tiên">
+            <Form.Item label="Ưu tiên">
+              <Switch
+                checked={hasPriority}
+                onChange={handlePriorityToggle}
+                checkedChildren="Có"
+                unCheckedChildren="Không"
+              />
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item name="maUuTien" label="Loại ưu tiên">
               <Select
                 placeholder="Chọn ưu tiên"
                 style={{ width: "100%" }}
                 loading={loadingDoiTuongUuTien}
                 value={getUuTienValue()}
                 allowClear
+                disabled={!hasPriority}
               >
                 {Array.isArray(danhSachDoiTuongUuTien) ? (
                   danhSachDoiTuongUuTien.map((dtut) => (
@@ -349,6 +424,8 @@ const Popup = ({
               </Select>
             </Form.Item>
           </Col>
+          {/* End new row */}
+
           <Col span={12}>
             <Form.Item
               name="cmnd"
