@@ -12,7 +12,7 @@ import {
 import dayjs from "dayjs";
 
 // Import hook useCaLam (giống modal thêm)
-import { useCaLam } from "../../../component/hooks/useCaLam";
+import { useCaLamTrongTuan } from "../../../component/hooks/useCaLamTrongTuan";
 
 export default function ModalChinhSuaTangCa({
   isVisible,
@@ -24,7 +24,8 @@ export default function ModalChinhSuaTangCa({
   const [form] = Form.useForm();
 
   // ==== HOOKS ====
-  const { danhSachCaLamTrongTuan, getAllCaLamTrongTuan } = useCaLam();
+  const { danhSachCaLamTrongTuanTheoPhongBan, getAllCaLamTrongTuanByPhongBan } =
+    useCaLamTrongTuan();
 
   // ==== STATE ====
   const [isSelectedPhongBan, setIsSelectedPhongBan] = useState(0);
@@ -44,7 +45,7 @@ export default function ModalChinhSuaTangCa({
   // Gọi Api để lấy ca làm việc trong tuần
   useEffect(() => {
     if (isSelectedPhongBan !== 0 && isSelectedDateTangCa !== null) {
-      getAllCaLamTrongTuan(isSelectedPhongBan);
+      getAllCaLamTrongTuanByPhongBan(isSelectedPhongBan);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSelectedPhongBan, isSelectedDateTangCa]);
@@ -72,20 +73,21 @@ export default function ModalChinhSuaTangCa({
   const date = isSelectedDateTangCa ? new Date(isSelectedDateTangCa) : null;
   const dayOfWeek = date ? date.getDay() + 1 : null;
 
-  const danhSachCaLamTrongTuanFind = danhSachCaLamTrongTuan.find((cltt) => {
-    return cltt.maCa === isSelectedPhongBan && cltt.ngayTrongTuan === dayOfWeek;
-  });
+  const danhSachCaLamTrongTuanTheoPhongBanFind =
+    danhSachCaLamTrongTuanTheoPhongBan.find((cltt) => {
+      return cltt.ngayTrongTuan === dayOfWeek;
+    });
 
   //  ===== VALIDATE ====
   const validateGioBatDau = (_, value) => {
-    if (!danhSachCaLamTrongTuanFind) {
+    if (!danhSachCaLamTrongTuanTheoPhongBanFind) {
       return Promise.resolve();
     }
 
     // Giữ nguyên dayjs object, không format
     const valueConvert = dayjs(value);
     const gioKetThucCa = dayjs(
-      danhSachCaLamTrongTuanFind.gioKetThuc,
+      danhSachCaLamTrongTuanTheoPhongBanFind.gioKetThuc,
       "HH:mm:ss"
     );
 
@@ -99,14 +101,14 @@ export default function ModalChinhSuaTangCa({
   };
 
   const validateGioKetThuc = (_, value) => {
-    if (!danhSachCaLamTrongTuanFind) {
+    if (!danhSachCaLamTrongTuanTheoPhongBanFind) {
       return Promise.resolve();
     }
 
     // Giữ nguyên dayjs object, không format
     const valueConvert = dayjs(value);
     const gioKetThucCa = dayjs(
-      danhSachCaLamTrongTuanFind.gioKetThuc,
+      danhSachCaLamTrongTuanTheoPhongBanFind.gioKetThuc,
       "HH:mm:ss"
     );
 
@@ -241,8 +243,11 @@ export default function ModalChinhSuaTangCa({
               {isSelectedPhongBan !== 0 && date ? (
                 <Tag color="green">
                   Ca làm việc {weekdays[date.getDay()]}:{" "}
-                  {danhSachCaLamTrongTuanFind?.gioBatDau ?? "Không có"} -{" "}
-                  {danhSachCaLamTrongTuanFind?.gioKetThuc ?? "Không có"}
+                  {danhSachCaLamTrongTuanTheoPhongBanFind?.gioBatDau ??
+                    "Không có"}{" "}
+                  -{" "}
+                  {danhSachCaLamTrongTuanTheoPhongBanFind?.gioKetThuc ??
+                    "Không có"}
                 </Tag>
               ) : null}
             </div>

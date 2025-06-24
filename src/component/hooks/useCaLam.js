@@ -4,13 +4,11 @@ import {
   updateCaLamServices,
   deleteCaLamServices,
   createCaLamServices,
-  getCaLamTrongTuanServices
 } from "../../services/calamServices";
 
 export const useCaLam = () => {
   const [danhSachCaLam, setDanhSachCaLam] = useState([]);
-  const [danhSachCaLamTrongTuan, setDanhSachCaLamTrongTuan] = useState([]);
-  const [loadingCaLam, setLoadingCaLam] = useState(false); 
+  const [loadingCaLam, setLoadingCaLam] = useState(false);
   const [isUpdatedCaLam, setIsUpdatedCaLam] = useState(false);
   const [isCreatedCaLam, setIsCreatedCaLam] = useState(false);
   const [isDeletedCaLam, setIsDeletedCaLam] = useState(false);
@@ -28,28 +26,15 @@ export const useCaLam = () => {
     }
   };
 
-   const getAllCaLamTrongTuan = async (maCa) => {
-    setLoadingCaLam(true);
-    try {
-      const res = await getCaLamTrongTuanServices(maCa);
-      setDanhSachCaLamTrongTuan(res.data);
-    } catch (error) {
-      console.error("Lỗi khi lấy dữ liệu Ca Lam:", error);
-      setDanhSachCaLamTrongTuan([]);
-    } finally {
-      setLoadingCaLam(false);
-    }
-  };
-
   const updateCaLam = async (maCa, duLieuCaLam) => {
     setLoadingCaLam(true);
     try {
       await updateCaLamServices(maCa, duLieuCaLam);
-      setIsUpdatedCaLam(true); 
+      setIsUpdatedCaLam(true);
     } catch (error) {
       console.error("Lỗi khi cập nhật Ca Lam:", error);
       setIsUpdatedCaLam(false);
-      throw error; 
+      throw error;
     } finally {
       setLoadingCaLam(false);
     }
@@ -63,7 +48,7 @@ export const useCaLam = () => {
     } catch (error) {
       console.error("Lỗi khi xóa Ca Lam:", error);
       setIsDeletedCaLam(false);
-      throw error; 
+      throw error;
     } finally {
       setLoadingCaLam(false);
     }
@@ -73,11 +58,11 @@ export const useCaLam = () => {
     setLoadingCaLam(true);
     try {
       await createCaLamServices(duLieuCaLam);
-      setIsCreatedCaLam(true); 
+      setIsCreatedCaLam(true);
     } catch (error) {
       console.error("Lỗi khi tạo Ca Lam:", error);
-      setIsCreatedCaLam(false); 
-      throw error; 
+      setIsCreatedCaLam(false);
+      throw error;
     } finally {
       setLoadingCaLam(false);
     }
@@ -94,16 +79,14 @@ export const useCaLam = () => {
     setIsCreatedCaLam(false);
     setIsUpdatedCaLam(false);
     setIsDeletedCaLam(false);
-  }, [isUpdatedCaLam, isCreatedCaLam, isDeletedCaLam]); 
+  }, [isUpdatedCaLam, isCreatedCaLam, isDeletedCaLam]);
 
   return {
-    danhSachCaLamTrongTuan,
     danhSachCaLam,
     loadingCaLam,
     getAllCaLam,
     updateCaLam,
     deleteCaLam,
     createCaLam,
-    getAllCaLamTrongTuan
   };
 };

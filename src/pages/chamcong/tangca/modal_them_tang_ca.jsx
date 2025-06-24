@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 
 // ===== HOOKS TUỲ CHỈNH =====
-import { useCaLam } from "../../../component/hooks/useCaLam";
+import { useCaLamTrongTuan } from "../../../component/hooks/useCaLamTrongTuan";
 
 // ===== Ant Design =====
 import {
@@ -37,7 +37,8 @@ export default function ModalThemTangCa({
   getAllChamCongDetail,
 }) {
   // ==== HOOKS ====
-  const { danhSachCaLamTrongTuan, getAllCaLamTrongTuan } = useCaLam();
+  const { danhSachCaLamTrongTuanTheoPhongBan, getAllCaLamTrongTuanByPhongBan } =
+    useCaLamTrongTuan();
   // ==== STATE ====
   const [isSelectedPhongBan, setIsSelectedPhongBan] = useState(0);
   const [isSelectedDateTangCa, setIsSelectedDateTangCa] = useState(dayjs());
@@ -57,7 +58,7 @@ export default function ModalThemTangCa({
   // Gọi Api để lấy ca làm việc trong tuần
   useEffect(() => {
     if (isSelectedPhongBan !== 0 && isSelectedDateTangCa !== null) {
-      getAllCaLamTrongTuan(isSelectedPhongBan);
+      getAllCaLamTrongTuanByPhongBan(isSelectedPhongBan);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSelectedPhongBan, isSelectedDateTangCa]);
@@ -103,9 +104,10 @@ export default function ModalThemTangCa({
   const date = new Date(isSelectedDateTangCa);
   const dayOfWeek = date.getDay() + 1;
 
-  const danhSachCaLamTrongTuanFind = danhSachCaLamTrongTuan.find((cltt) => {
-    return cltt.maCa === isSelectedPhongBan && cltt.ngayTrongTuan === dayOfWeek;
-  });
+  const danhSachCaLamTrongTuanFind = danhSachCaLamTrongTuanTheoPhongBan.find(
+    (cltt) =>
+    cltt.ngayTrongTuan === dayOfWeek
+  );
 
   const handleCancel = () => {
     form.resetFields();

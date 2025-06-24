@@ -32,11 +32,3 @@ export const deleteCaLamServices = async (maCaLam) => {
   }
 };
 
-export const getCaLamTrongTuanServices = async (maCaLam) => {
-  try {
-    const res = await axiosInstance.get(`/calam/trongtuan/${maCaLam}`);
-    return res.data;
-  } catch (error) {
-    console.error(`Lỗi Axios Ca Làm : ${error}`);
-  }
-};
