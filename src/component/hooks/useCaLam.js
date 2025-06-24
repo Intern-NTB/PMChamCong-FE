@@ -4,10 +4,12 @@ import {
   updateCaLamServices,
   deleteCaLamServices,
   createCaLamServices,
+  getCaLamTrongTuanServices
 } from "../../services/calamServices";
 
 export const useCaLam = () => {
   const [danhSachCaLam, setDanhSachCaLam] = useState([]);
+  const [danhSachCaLamTrongTuan, setDanhSachCaLamTrongTuan] = useState([]);
   const [loadingCaLam, setLoadingCaLam] = useState(false); 
   const [isUpdatedCaLam, setIsUpdatedCaLam] = useState(false);
   const [isCreatedCaLam, setIsCreatedCaLam] = useState(false);
@@ -21,6 +23,19 @@ export const useCaLam = () => {
     } catch (error) {
       console.error("Lỗi khi lấy dữ liệu Ca Lam:", error);
       setDanhSachCaLam([]);
+    } finally {
+      setLoadingCaLam(false);
+    }
+  };
+
+   const getAllCaLamTrongTuan = async (maCa) => {
+    setLoadingCaLam(true);
+    try {
+      const res = await getCaLamTrongTuanServices(maCa);
+      setDanhSachCaLamTrongTuan(res.data);
+    } catch (error) {
+      console.error("Lỗi khi lấy dữ liệu Ca Lam:", error);
+      setDanhSachCaLamTrongTuan([]);
     } finally {
       setLoadingCaLam(false);
     }
@@ -82,11 +97,13 @@ export const useCaLam = () => {
   }, [isUpdatedCaLam, isCreatedCaLam, isDeletedCaLam]); 
 
   return {
+    danhSachCaLamTrongTuan,
     danhSachCaLam,
     loadingCaLam,
     getAllCaLam,
     updateCaLam,
     deleteCaLam,
     createCaLam,
+    getAllCaLamTrongTuan
   };
 };
