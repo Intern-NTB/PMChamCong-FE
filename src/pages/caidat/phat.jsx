@@ -650,7 +650,7 @@ export default function TruComponent() {
                   style={{ width: "100%", marginBottom: "16px" }}
                 >
                   <span>Chọn khoảng thời gian:</span>
-                  <div style={{ display: "flex", gap: "16px", width: "40%" }}>
+                  <div style={{ display: "flex", gap: "16px", width: "100%" }}>
                     <RangePicker
                       value={dateRange}
                       onChange={handleDateRangeChange}
