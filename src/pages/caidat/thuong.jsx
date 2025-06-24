@@ -808,7 +808,12 @@ export default function ThuongComponent() {
                     { required: true, message: "Vui lòng chọn loại thưởng!" },
                   ]}
                 >
-                  <Select placeholder="Chọn loại thưởng">
+                  <Select placeholder="Chọn loại thưởng"
+                    showSearch
+                    optionFilterProp="children"
+                    filterOption={(input, option) =>
+                      (option?.children ?? "").toLowerCase().includes(input.toLowerCase())
+                    }>
                     {danhSachLoaiTienThuong.map((item) => (
                       <Select.Option
                         key={item.maLoaiTienThuong}
@@ -831,6 +836,11 @@ export default function ThuongComponent() {
                     >
                       <Select
                         placeholder="Chọn nhân viên"
+                        showSearch
+                        optionFilterProp="label"
+                        filterOption={(input, option) =>
+                          (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
+                        }
                         options={danhSachNhanVien.map((nv) => ({
                           value: nv.maNhanVien,
                           label: `${nv.hoTen} - ${nv.cmnd}`,
@@ -920,7 +930,7 @@ export default function ThuongComponent() {
                   rules={[{ required: true, message: "Vui lòng chọn đơn vị!" }]}
                 >
                   <Select
-                    placeholder=""
+                    placeholder="Chọn đơn vị"
                     options={[
                       { value: "%", label: "%" },
                       { value: "VND", label: "VND" },
