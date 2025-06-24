@@ -26,7 +26,8 @@ export const createCaLamServices = async (duLieuCaLam) => {
 
 export const deleteCaLamServices = async (maCaLam) => {
   try {
-    await axiosInstance.delete(`/calam/:${maCaLam}`);
+    console.log("Debug CaLam: ",maCaLam)
+    await axiosInstance.delete(`/calam/${Number(maCaLam)}`);
   } catch (error) {
     console.error(`Lỗi Axios Ca Làm : ${error}`);
   }

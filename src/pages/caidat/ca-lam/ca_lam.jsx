@@ -35,6 +35,7 @@ const { Search } = Input;
 export default function CaLamComponent() {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
+  const [filteredList, setFilteredList] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [form] = Form.useForm();
   const [currentRecord, setCurrentRecord] = useState(null);
@@ -47,15 +48,32 @@ export default function CaLamComponent() {
   const { danhSachCaLam, loadingCaLam, createCaLam, updateCaLam, deleteCaLam } =
     useCaLam();
 
-  // Sử dụng hook useCaLamTrongTuan cho chi tiết ca làm theo tuần
   const {
     danhSachCaLamTrongTuanTheoPhongBan,
     loadingCaLamTrongTuan,
     getAllCaLamTrongTuanByPhongBan,
     updateCaLamTrongTuan,
+    createCaLamTrongTuan,
   } = useCaLamTrongTuan();
 
   const [tableScrollY, setTableScrollY] = useState(0);
+
+  useEffect(() => {
+    if (!searchText || searchText.trim() === "") {
+      setFilteredList(danhSachCaLam || []);
+    } else {
+      const filtered = (danhSachCaLam || []).filter(
+        (dscl) =>
+          dscl.tenCa.toLowerCase().includes(searchText.toLowerCase()) ||
+          dscl.maCa.toString().toLowerCase().includes(searchText.toLowerCase())
+      );
+      setFilteredList(filtered);
+    }
+  }, [searchText, danhSachCaLam]);
+
+    const handleSearchChange = (e) => {
+    setSearchText(e.target.value);
+  };
 
   useEffect(() => {
     const calculateTableHeight = () => {
@@ -71,7 +89,6 @@ export default function CaLamComponent() {
     };
   }, []);
 
-  // Fetch chi tiết ca làm trong tuần - FIX: Sử dụng useEffect để update shiftDetailsByDay
   const fetchAndSetShiftDetails = useCallback(
     async (maCa) => {
       setLoadingDetails(true);
@@ -87,10 +104,10 @@ export default function CaLamComponent() {
         setLoadingDetails(false);
       }
     },
-    [getAllCaLamTrongTuanByPhongBan, apiNotification]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [apiNotification]
   );
 
-  // FIX: Thêm useEffect để watch danhSachCaLamTrongTuanTheoPhongBan
   useEffect(() => {
     if (
       danhSachCaLamTrongTuanTheoPhongBan &&
@@ -117,36 +134,15 @@ export default function CaLamComponent() {
     }
   };
 
-  const dataSource = Array.isArray(danhSachCaLam)
-    ? danhSachCaLam.map((cl) => {
-        return {
-          key: cl.maCa,
-          maCa: cl.maCa,
-          tenCa: cl.tenCa,
-          gioBatDau: cl.gioBatDau,
-          gioKetThuc: cl.gioKetThuc,
-          gioNghiBatDau: cl.gioNghiBatDau,
-          gioNghiKetThuc: cl.gioNghiKetThuc,
-          soGioLamViec: cl.soGioLamViec || 0,
-          originalData: cl,
-        };
-      })
-    : [];
 
   // Xử lý submit form
   const handleSubmit = async (values) => {
     try {
       let shiftData = {};
-
       if (currentRecord) {
-        // Cập nhật ca làm
         shiftData = {
           maCa: currentRecord.maCa,
           tenCa: values.tenCa,
-          gioBatDau: currentRecord.gioBatDau,
-          gioKetThuc: currentRecord.gioKetThuc,
-          gioNghiBatDau: currentRecord.gioNghiBatDau,
-          gioNghiKetThuc: currentRecord.gioNghiKetThuc,
         };
         await updateCaLam(currentRecord.maCa, shiftData);
         apiNotification.success("Cập nhật ca làm thành công!");
@@ -154,10 +150,6 @@ export default function CaLamComponent() {
         // Tạo ca làm mới
         shiftData = {
           tenCa: values.tenCa,
-          gioBatDau: null,
-          gioKetThuc: null,
-          gioNghiBatDau: null,
-          gioNghiKetThuc: null,
         };
         await createCaLam(shiftData);
         apiNotification.success("Thêm ca làm thành công!");
@@ -191,14 +183,16 @@ export default function CaLamComponent() {
   // FIX: Xóa ca làm - sử dụng đúng field maCa
   const handleDelete = async (maCa) => {
     try {
+      console.log("DEBUG CALAM : MÃ CA: ", maCa);
       await deleteCaLam(maCa);
-      apiNotification.success("Xóa ca làm thành công!");
+      apiNotification.success({ message: "Xóa ca làm thành công!" });
     } catch (err) {
       console.error("Error deleting shift:", err);
-      apiNotification.error(
-        "Đã xảy ra lỗi khi xóa ca làm: " +
-          (err.response?.data?.message || err.message)
-      );
+      apiNotification.error({
+        message:
+          "Đã xảy ra lỗi khi xóa ca làm: " +
+          (err.response?.data?.message || err.message),
+      });
     }
   };
 
@@ -296,8 +290,8 @@ export default function CaLamComponent() {
   ];
 
   // Tính toán thống kê
-  const totalShifts = Array.isArray(dataSource) ? dataSource.length : 0;
-  const totalHours = dataSource.reduce(
+  const totalShifts = Array.isArray(filteredList) ? filteredList.length : 0;
+  const totalHours = filteredList.reduce(
     (acc, shift) => acc + (shift.soGioLamViec || 0),
     0
   );
@@ -378,15 +372,15 @@ export default function CaLamComponent() {
                 allowClear
                 enterButton={<SearchOutlined />}
                 size="large"
-                onSearch={setSearchText}
-                onChange={(e) => !e.target.value && setSearchText("")}
+                onSearch={(value) => setSearchText(value)}
+                onChange={handleSearchChange}
               />
             </Col>
           </Row>
 
           <Table
             columns={mainTableColumns}
-            dataSource={dataSource}
+            dataSource={filteredList}
             rowKey="maCa"
             loading={loadingCaLam}
             pagination={{
@@ -479,6 +473,8 @@ export default function CaLamComponent() {
           loadingDetails={loadingDetails || loadingCaLamTrongTuan}
           onSaveDailyShiftDetails={handleSaveDailyShiftDetails}
           fetchShiftDetailsByMaCa={fetchAndSetShiftDetails}
+          createCaLamTrongTuan={createCaLamTrongTuan}
+          updateCaLamTrongTuan={updateCaLamTrongTuan}
         />
       </div>
     </div>

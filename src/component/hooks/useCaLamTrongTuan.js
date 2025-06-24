@@ -3,6 +3,7 @@ import {
   getCaLamTrongTuanByPhongBanServices,
   updateCaLamTrongTuanServices,
   getCaLamTrongTuanServices,
+  createCaLamTrongTuanServices,
 } from "../../services/calamtrongtuanServices";
 
 export const useCaLamTrongTuan = () => {
@@ -13,6 +14,7 @@ export const useCaLamTrongTuan = () => {
     setDanhSachCaLamTrongTuanTheoPhongBan,
   ] = useState([]);
   const [isUpdatedCaLamTrongTuan, setIsUpdatedCaLamTrongTuan] = useState(false);
+  const [isCreatedCaLamTrongTuan, setIsCreatedCaLamTrongTuan] = useState(false);
   const [loadingCaLamTrongTuan, setLoadingCaLamTrongTuan] = useState(false);
 
   const getAllCaLamTrongTuan = async () => {
@@ -41,10 +43,23 @@ export const useCaLamTrongTuan = () => {
     }
   };
 
-  const updateCaLamTrongTuan = async (maCa, duLieuCaLam) => {
+  const createCaLamTrongTuan = async (dataCaLamTrongTuan) => {
     setLoadingCaLamTrongTuan(true);
     try {
-      await updateCaLamTrongTuanServices(maCa, duLieuCaLam);
+      await createCaLamTrongTuanServices(dataCaLamTrongTuan);
+      setIsCreatedCaLamTrongTuan(true);
+    } catch (error) {
+      console.error("Lỗi khi lấy dữ liệu Ca Lam Trong Tuần:", error);
+      setIsCreatedCaLamTrongTuan(false);
+    } finally {
+      setLoadingCaLamTrongTuan(false);
+    }
+  };
+
+  const updateCaLamTrongTuan = async (duLieuCaLam) => {
+    setLoadingCaLamTrongTuan(true);
+    try {
+      await updateCaLamTrongTuanServices(duLieuCaLam);
       setIsUpdatedCaLamTrongTuan(true);
     } catch (error) {
       console.error("Lỗi khi cập nhật Ca Lam Trong Tuần:", error);
@@ -60,11 +75,12 @@ export const useCaLamTrongTuan = () => {
   }, []);
 
   useEffect(() => {
-    if (isUpdatedCaLamTrongTuan) {
+    if (isUpdatedCaLamTrongTuan || isCreatedCaLamTrongTuan) {
       getAllCaLamTrongTuan();
     }
     setIsUpdatedCaLamTrongTuan(false);
-  }, [isUpdatedCaLamTrongTuan]);
+    setIsCreatedCaLamTrongTuan(false);
+  }, [isUpdatedCaLamTrongTuan, isCreatedCaLamTrongTuan]);
 
   return {
     danhSachCaLamTrongTuanTheoPhongBan,
@@ -73,5 +89,6 @@ export const useCaLamTrongTuan = () => {
     getAllCaLamTrongTuanByPhongBan,
     getAllCaLamTrongTuan,
     updateCaLamTrongTuan,
+    createCaLamTrongTuan,
   };
 };

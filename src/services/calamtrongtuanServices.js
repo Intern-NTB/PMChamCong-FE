@@ -18,9 +18,18 @@ export const getCaLamTrongTuanByPhongBanServices = async (maCaLam) => {
   }
 };
 
-export const updateCaLamTrongTuanServices = async (maCa, dataMaCa) => {
+export const createCaLamTrongTuanServices = async (dataCaLam) => {
   try {
-    await axiosInstance.put(`/calam/trongtuan/${maCa}`, dataMaCa);
+    await axiosInstance.post(`/calam/trongtuan/`, dataCaLam);
+  } catch (error) {
+    console.error(`Lỗi Axios Ca Làm : ${error}`);
+  }
+};
+
+export const updateCaLamTrongTuanServices = async (dataCaLam) => {
+  try {
+    console.log(`DEBUG SERVICES: /calam/trongtuan/${dataCaLam.maCa},${JSON.stringify(dataCaLam)}`)
+    await axiosInstance.put(`/calam/trongtuan/${dataCaLam.maCa}`, dataCaLam);
   } catch (error) {
     console.error(`Lỗi Axios Ca Làm : ${error}`);
   }
