@@ -177,12 +177,6 @@ export default function DoiTuongUuTienComponent() {
       });
     } else {
       try {
-        console.log("formattedValues:", formattedValues);
-
-        await updateNhanVien(formattedValues.maNhanVien, {
-          maUuTien: formattedValues.maUuTien,
-        });
-
         await createLichSuDoiTuongUuTien(formattedValues);
 
         api.success({
@@ -238,9 +232,11 @@ export default function DoiTuongUuTienComponent() {
         maNhanVien: record.maNhanVien,
         hoTen: record.hoTen,
         maUuTien: record.maUuTien,
-        thoiGianHieuLucBatDau: dayjs(record.thoiGianHieuLucBatDau),
+        thoiGianHieuLucBatDau: record.thoiGianHieuLucBatDau
+          ? dayjs(record.thoiGianHieuLucBatDau, "HH:mm:ss")
+          : null,
         thoiGianHieuLucKetThuc: record.thoiGianHieuLucKetThuc
-          ? dayjs(record.thoiGianHieuLucKetThuc)
+          ? dayjs(record.thoiGianHieuLucKetThuc, "HH:mm:ss")
           : null,
         lyDo: record.lyDo,
         trangThai: record.trangThai,
@@ -680,7 +676,7 @@ export default function DoiTuongUuTienComponent() {
           centered
           title={
             <Space>
-              <UserOutlined />
+              <UserOutlined style={{color: "black"}}/>
               {editingId
                 ? "Chỉnh Sửa Đối Tượng Ưu Tiên"
                 : "Thêm Đối Tượng Ưu Tiên"}
@@ -818,12 +814,12 @@ export default function DoiTuongUuTienComponent() {
         <Modal
           centered
           title={
-            <Space>
-              <HistoryOutlined />
-              {editingHistoryId
-                ? "Chỉnh Sửa Lịch Sử Ưu Tiên"
-                : "Thêm Lịch Sử Ưu Tiên"}
-            </Space>
+            <div style={{ textAlign: "center", fontSize: "18px", fontWeight: "bold" }}>
+              <Space>
+                <HistoryOutlined style={{ color: "black" }}/>
+                {editingHistoryId ? "Chỉnh Sửa Lịch Sử Ưu Tiên" : "Thêm Lịch Sử Ưu Tiên"}
+              </Space>
+            </div>
           }
           open={isHistoryModalVisible}
           onCancel={handleHistoryCancel}
@@ -831,7 +827,7 @@ export default function DoiTuongUuTienComponent() {
         >
           <Form form={historyForm} layout="vertical" onFinish={onHistoryFinish}>
             <Row gutter={16}>
-              <Col xs={24} sm={12}>
+              <Col xs={24} sm={24}>
                 <Form.Item
                   label="Họ tên nhân viên"
                   name="maNhanVien"
@@ -847,6 +843,7 @@ export default function DoiTuongUuTienComponent() {
                     placeholder="Họ tên nhân viên"
                     showSearch
                     optionFilterProp="label"
+                    style={{ width: "100%" }}
                     filterOption={(input, option) =>
                       (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
                     }
@@ -860,7 +857,7 @@ export default function DoiTuongUuTienComponent() {
             </Row>
 
             <Row gutter={16}>
-              <Col xs={24} sm={12}>
+              <Col xs={24} sm={24}>
                 <Form.Item
                   label="Đối tượng ưu tiên"
                   name="maUuTien"
@@ -872,10 +869,11 @@ export default function DoiTuongUuTienComponent() {
                   ]}
                 >
                   <Select
-                    disabled={editingHistoryId ? true : false}
+                    disabled={editingHistoryId ? false : false}
                     placeholder="Chọn đối tượng ưu tiên"
                     showSearch
                     optionFilterProp="children"
+                    style={{ width: "100%" }}
                     filterOption={(input, option) =>
                       (option?.children ?? "").toLowerCase().includes(input.toLowerCase())
                     }
@@ -891,7 +889,7 @@ export default function DoiTuongUuTienComponent() {
             </Row>
 
             <Row gutter={16}>
-              <Col xs={24} sm={12}>
+              <Col xs={24} sm={24}>
                 <Form.Item
                   label="Ngày bắt đầu"
                   name="thoiGianHieuLucBatDau"
@@ -905,11 +903,7 @@ export default function DoiTuongUuTienComponent() {
                   <DatePicker
                     style={{ width: "100%" }}
                     format="DD/MM/YYYY"
-                    placeholder={
-                      editingHistoryId
-                        ? "Chọn ngày bắt đầu"
-                        : "Mặc định là hôm nay"
-                    }
+                    placeholder="Chọn ngày bắt đầu"
                   />
                 </Form.Item>
               </Col>
