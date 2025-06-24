@@ -1,4 +1,4 @@
-import { Card, Form, InputNumber, Button, Spin, message } from "antd";
+import { Card, Form, InputNumber, Button, Spin } from "antd";
 import { useHeThong } from "../../component/hooks/useHeThong";
 import { useEffect, useState } from "react";
 
@@ -38,8 +38,6 @@ export default function HeThongComponent() {
 
     const onFinish = async (values) => {
         const rawTime = values.khoangCachGiuaCacLanChamCong;
-        const minutes = rawTime.hour() * 60 + rawTime.minute();
-
         const dataToSend = {
             ...values,
             khoangCachGiuaCacLanChamCong: rawTime.format("HH:mm:ss"),
