@@ -815,7 +815,12 @@ export default function TruComponent() {
                     { required: true, message: "Vui lòng chọn loại phạt!" },
                   ]}
                 >
-                  <Select placeholder="Chọn loại phạt">
+                  <Select placeholder="Chọn loại phạt"
+                    showSearch
+                    optionFilterProp="children"
+                    filterOption={(input, option) =>
+                      (option?.children ?? "").toLowerCase().includes(input.toLowerCase())
+                    }>
                     {danhSachLoaiTienTru.map((item) => (
                       <Select.Option
                         key={item.maLoaiTienTru}
@@ -840,6 +845,12 @@ export default function TruComponent() {
                       ]}
                     >
                       <Select
+                        placeholder="Chọn nhân viên"
+                        showSearch
+                        optionFilterProp="label"
+                        filterOption={(input, option) =>
+                          (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
+                        }
                         options={danhSachNhanVien.map((nv) => ({
                           value: nv.maNhanVien,
                           label: `${nv.hoTen} - ${nv.cmnd}`,
