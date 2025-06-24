@@ -53,6 +53,7 @@ export default function DoiTuongUuTienComponent() {
   const [searchHistoryText, setSearchHistoryText] = useState("");
   const [selectedHistoryKeys, setSelectedHistoryKeys] = useState([]);
   const [selectedKeys, setSelectedKeys] = useState([]);
+  const [phongBanNhanVien, setPhongBanNhanVien] = useState(null);
   const {
     danhSachDoiTuongUuTien,
     createDoiTuongUuTien,
@@ -291,6 +292,15 @@ export default function DoiTuongUuTienComponent() {
     setEditingHistoryId(null);
     historyForm.resetFields();
   };
+
+  const handleChangeNhanVien = (value) => {
+    const nhanVien = danhSachNhanVien.find(nv => nv.maNhanVien === value);
+    setPhongBanNhanVien(nhanVien?.maPhongBan || null);
+    historyForm.setFieldsValue({ maNhanVien: value });
+  };
+  const filteredDoiTuongUuTien = danhSachDoiTuongUuTien.filter(
+    item => item.maPhongBan === phongBanNhanVien
+  );
 
   const { Text } = Typography;
 
@@ -844,6 +854,7 @@ export default function DoiTuongUuTienComponent() {
                     showSearch
                     optionFilterProp="label"
                     style={{ width: "100%" }}
+                    onChange={handleChangeNhanVien}
                     filterOption={(input, option) =>
                       (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
                     }
@@ -878,7 +889,7 @@ export default function DoiTuongUuTienComponent() {
                       (option?.children ?? "").toLowerCase().includes(input.toLowerCase())
                     }
                   >
-                    {danhSachDoiTuongUuTien.map((item) => (
+                    {filteredDoiTuongUuTien.map((item) => (
                       <Select.Option key={item.maUuTien} value={item.maUuTien}>
                         {item.tenUuTien}
                       </Select.Option>
