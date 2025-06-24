@@ -1,4 +1,8 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState, useContext, useCallback } from "react";
+
+import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
+import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
+
 import {
   Table,
   Button,
@@ -17,7 +21,12 @@ import {
   Row,
   Col,
   Typography,
+  ConfigProvider
 } from "antd";
+
+import "dayjs/locale/vi";
+import viVN from "antd/locale/vi_VN";
+
 import {
   PlusOutlined,
   EditOutlined,
@@ -39,6 +48,11 @@ import { useAppNotification } from "../../component/ui/notification";
 import { ReloadContext } from "../../context/reloadContext";
 
 import dayjs from "dayjs";
+// ===== Cấu hình Day.js =====
+dayjs.extend(isSameOrAfter);
+dayjs.extend(isSameOrBefore);
+dayjs.locale("vi");
+const { RangePicker } = DatePicker;
 
 const { TabPane } = Tabs;
 const { TextArea } = Input;
@@ -64,6 +78,12 @@ export default function ThuongComponent() {
   // state
   const apiNotification = useAppNotification();
   const { setReload } = useContext(ReloadContext);
+
+  const [dateRange, setDateRange] = useState([
+    dayjs().startOf("day"),
+    dayjs().endOf("day"),
+  ]);
+  const [selectedMonth, setSelectedMonth] = useState(null);
 
   // Data Source
   const dataSourceDanhSachLichSuThuong = danhSachLichSuThuong.map((dsltt) => {
@@ -127,20 +147,45 @@ export default function ThuongComponent() {
   );
   const tongSoLanThuong = danhSachLichSuThuong.length;
 
-  // Hàm lọc dữ liệu cho tìm kiếm
+  // Hàm lọc dữ liệu cho tìm kiếm, lọc theo thời gian
   const getFilteredLichSu = () => {
-    if (!searchTextLichSu) return dataSourceDanhSachLichSuThuong;
-    return dataSourceDanhSachLichSuThuong.filter(
-      (item) =>
-        item.maNhanVien
-          .toLowerCase()
-          .includes(searchTextLichSu.toLowerCase()) ||
-        item.hoTen.toLowerCase().includes(searchTextLichSu.toLowerCase()) ||
-        getLoaiThuongName(item.maLoaiTienThuong)
-          .toLowerCase()
-          .includes(searchTextLichSu.toLowerCase()) ||
-        item.lyDo.toLowerCase().includes(searchTextLichSu.toLowerCase())
-    );
+    let filteredData = dataSourceDanhSachLichSuThuong;
+
+    // Lọc khoảng thời gian
+    if (dateRange[0] && dateRange[1]) {
+      filteredData = filteredData.filter((item) => {
+        const itemDate = dayjs(item.ngayTru);
+        return itemDate.isBetween(dateRange[0], dateRange[1], "day", "[]");
+      });
+    }
+
+    // Lọc tháng
+    if (selectedMonth) {
+      filteredData = filteredData.filter((item) => {
+        const itemDate = dayjs(item.ngayTru);
+        return (
+          itemDate.month() === selectedMonth.month() &&
+          itemDate.year() === selectedMonth.year()
+        );
+      });
+    }
+
+    // Lọc theo từ khóa tìm kiếm
+    if (searchTextLichSu) {
+      const searchLower = searchTextLichSu.toLowerCase();
+      filteredData = filteredData.filter((item) => {
+        return (
+          item.maNhanVien?.toLowerCase().includes(searchLower) ||
+          item.hoTen?.toLowerCase().includes(searchLower) ||
+          getLoaiThuongName(item.maLoaiTienThuong)
+            ?.toLowerCase()
+            .includes(searchLower) ||
+          item.lyDo?.toLowerCase().includes(searchLower)
+        );
+      });
+    }
+
+    return filteredData;
   };
 
   const getFilteredLoaiThuong = () => {
@@ -306,6 +351,23 @@ export default function ThuongComponent() {
       console.log("Validation failed:", error);
     }
   };
+
+  const handleDateRangeChange = useCallback((dates) => {
+    setDateRange(dates);
+    setSelectedMonth(null);
+  }, []);
+
+  const handleMonthChange = useCallback((month) => {
+    setSelectedMonth(month);
+
+    if (month) {
+      const startOfMonth = month.startOf("month");
+      const endOfMonth = month.endOf("month");
+      setDateRange([startOfMonth, endOfMonth]);
+    } else {
+      setDateRange([null, null]);
+    }
+  }, []);
 
   const getLoaiThuongName = (maLoaiTienThuong) => {
     const loaiThuong = dataSourceDanhSachLichSuThuong.find(
@@ -528,42 +590,65 @@ export default function ThuongComponent() {
               }
               key="lichsu"
             >
-              <div
-                style={{
-                  marginBottom: "16px",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  gap: "16px",
-                  flexWrap: "wrap",
-                }}
-              >
-                <Space>
-                  <Button
-                    type="primary"
-                    icon={<PlusOutlined />}
-                    onClick={handleAddLichSu}
-                  >
-                    Thêm thưởng cho nhân viên
-                  </Button>
-                  {selectedLichSuKeys.length > 0 && (
-                    <Button
-                      type="primary"
-                      danger
-                      icon={<DeleteOutlined />}
-                      onClick={handleDeleteMultipleLichSu}
-                    >
-                      Xóa {selectedLichSuKeys.length} mục đã chọn
-                    </Button>
-                  )}
-                </Space>
-                <Search
-                  placeholder="Tìm kiếm theo mã NV, tên, loại thưởng, lý do..."
-                  allowClear
-                  style={{ width: 350 }}
-                  onChange={(e) => setSearchTextLichSu(e.target.value)}
-                  prefix={<SearchOutlined />}
-                />
+              <div style={{ marginBottom: "16px" }}>
+                <Row gutter={[16, 16]} align="middle">
+                  <Col xs={24} md={12} lg={16}>
+                    <Space wrap>
+                      <Button
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        onClick={handleAddLichSu}
+                      >
+                        Thêm thưởng cho nhân viên
+                      </Button>
+                      {selectedLichSuKeys.length > 0 && (
+                        <Button
+                          type="primary"
+                          danger
+                          icon={<DeleteOutlined />}
+                          onClick={handleDeleteMultipleLichSu}
+                        >
+                          Xóa {selectedLichSuKeys.length} mục đã chọn
+                        </Button>
+                      )}
+                    </Space>
+                  </Col>
+                  <Col xs={24} md={10} lg={8}>
+                    <Search
+                      placeholder="Tìm kiếm theo mã NV, tên, loại thưởng, lý do..."
+                      allowClear
+                      style={{ width: "100%" }}
+                      onChange={(e) => setSearchTextLichSu(e.target.value)}
+                      prefix={<SearchOutlined />}
+                    />
+                  </Col>
+                  {/* Bộ lọc thời gian */}
+                  <Col xs={20} sm={20} md={18} lg={16} xl={12}>
+                    <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
+                      <span style={{ marginBottom: 8 }}>Chọn khoảng thời gian:</span>
+                      <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                        <RangePicker
+                          value={dateRange}
+                          onChange={handleDateRangeChange}
+                          format="DD/MM/YYYY"
+                          size="large"
+                          style={{ flex: 1, minWidth: 150 }}
+                        />
+                        <ConfigProvider locale={viVN}>
+                          <DatePicker
+                            placeholder="Chọn tháng"
+                            picker="month"
+                            value={selectedMonth}
+                            onChange={handleMonthChange}
+                            format="MM/YYYY"
+                            size="large"
+                            style={{ flex: 1, minWidth: 150 }}
+                          />
+                        </ConfigProvider>
+                      </div>
+                    </div>
+                  </Col>
+                </Row>
               </div>
 
               {selectedLichSuKeys.length > 0 && (
@@ -614,42 +699,46 @@ export default function ThuongComponent() {
               }
               key="loaithuong"
             >
-              <div
-                style={{
-                  marginBottom: "16px",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  gap: "16px",
-                  flexWrap: "wrap",
-                }}
-              >
-                <Space>
-                  <Button
-                    type="primary"
-                    icon={<PlusOutlined />}
-                    onClick={handleAddLoaiThuong}
-                  >
-                    Thêm loại thưởng
-                  </Button>
-                  {selectedLoaiThuongKeys.length > 0 && (
-                    <Button
-                      type="primary"
-                      danger
-                      icon={<DeleteOutlined />}
-                      onClick={handleDeleteMultipleLoaiThuong}
-                    >
-                      Xóa {selectedLoaiThuongKeys.length} mục đã chọn
-                    </Button>
-                  )}
-                </Space>
-                <Search
-                  placeholder="Tìm kiếm theo mã hoặc tên loại thưởng..."
-                  allowClear
-                  style={{ width: 350 }}
-                  onChange={(e) => setSearchTextLoaiThuong(e.target.value)}
-                  prefix={<SearchOutlined />}
-                />
+              <div style={{ marginBottom: "16px" }}>
+                <Row gutter={[16, 16]} align="middle">
+                  {/* Nhóm nút Thêm và Xóa */}
+                  <Col xs={24} md={16} lg={18}>
+                    <Space wrap>
+                      <Button
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        onClick={handleAddLoaiThuong}
+                      >
+                        Thêm loại thưởng
+                      </Button>
+                      {selectedLoaiThuongKeys.length > 0 && (
+                        <Button
+                          type="primary"
+                          danger
+                          icon={<DeleteOutlined />}
+                          onClick={handleDeleteMultipleLoaiThuong}
+                        >
+                          Xóa {selectedLoaiThuongKeys.length} mục đã chọn
+                        </Button>
+                      )}
+                    </Space>
+                  </Col>
+
+                  {/* Ô tìm kiếm */}
+                  <Col xs={24} md={8} lg={6}>
+                    <Search
+                      placeholder="Tìm kiếm theo mã hoặc tên loại thưởng..."
+                      allowClear
+                      prefix={<SearchOutlined />}
+                      onChange={(e) => setSearchTextLoaiThuong(e.target.value)}
+                      style={{
+                        width: "100%",
+                        maxWidth: 350,
+                        marginLeft: "auto", // Đẩy sát phải nếu còn dư không gian
+                      }}
+                    />
+                  </Col>
+                </Row>
               </div>
 
               {selectedLoaiThuongKeys.length > 0 && (
