@@ -1,4 +1,8 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState, useContext, useCallback } from "react";
+
+import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
+import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
+
 import {
   Table,
   Button,
@@ -17,7 +21,12 @@ import {
   Row,
   Col,
   Typography,
+  ConfigProvider
 } from "antd";
+
+import "dayjs/locale/vi";
+import viVN from "antd/locale/vi_VN";
+
 import {
   PlusOutlined,
   EditOutlined,
@@ -38,6 +47,12 @@ import { useAppNotification } from "../../component/ui/notification";
 import { ReloadContext } from "../../context/reloadContext";
 
 import dayjs from "dayjs";
+
+// ===== Cấu hình Day.js =====
+dayjs.extend(isSameOrAfter);
+dayjs.extend(isSameOrBefore);
+dayjs.locale("vi");
+const { RangePicker } = DatePicker;
 
 const { TabPane } = Tabs;
 const { TextArea } = Input;
@@ -63,6 +78,12 @@ export default function TruComponent() {
   // state
   const api = useAppNotification();
   const { setReload } = useContext(ReloadContext);
+
+  const [dateRange, setDateRange] = useState([
+    dayjs().startOf("day"),
+    dayjs().endOf("day"),
+  ]);
+  const [selectedMonth, setSelectedMonth] = useState(null);
 
   // Data Source
   const dataSourceDanhSachLichSuTru = danhSachLichSuTru.map((dsltt) => {
@@ -120,26 +141,49 @@ export default function TruComponent() {
     danhSachLichSuTru.map((item) => item.maNhanVien)
   ).size;
 
-  // Hàm lọc dữ liệu cho tìm kiếm
+  // Hàm lọc dữ liệu cho tìm kiếm, lọc theo thời gian( ngày, tháng )
   const getFilteredLichSu = () => {
-    if (!searchTextLichSu) return dataSourceDanhSachLichSuTru;
+    let filteredData = dataSourceDanhSachLichSuTru;
 
-    return dataSourceDanhSachLichSuTru.filter((item) => {
-      const maNhanVienStr = item.maNhanVien?.toString().toLowerCase() || "";
-      const hoTenStr = item.hoTen?.toLowerCase() || "";
-      const lyDoStr = item.lyDo?.toLowerCase() || "";
-      const loaiTruNameStr =
-        getLoaiTruName(item.maLoaiTienTru)?.toLowerCase() || "";
+    // Lọc khoảng thời gian
+    if (dateRange[0] && dateRange[1]) {
+      filteredData = filteredData.filter((item) => {
+        const itemDate = dayjs(item.ngayTru);
+        return itemDate.isBetween(dateRange[0], dateRange[1], "day", "[]");
+      });
+    }
 
+    // Lọc tháng
+    if (selectedMonth) {
+      filteredData = filteredData.filter((item) => {
+        const itemDate = dayjs(item.ngayTru);
+        return (
+          itemDate.month() === selectedMonth.month() &&
+          itemDate.year() === selectedMonth.year()
+        );
+      });
+    }
+
+    // Lọc từ khóa tìm kiếm
+    if (searchTextLichSu) {
       const searchLower = searchTextLichSu.toLowerCase();
+      filteredData = filteredData.filter((item) => {
+        const maNhanVienStr = item.maNhanVien?.toString().toLowerCase() || "";
+        const hoTenStr = item.hoTen?.toLowerCase() || "";
+        const lyDoStr = item.lyDo?.toLowerCase() || "";
+        const loaiTruNameStr =
+          getLoaiTruName(item.maLoaiTienTru)?.toLowerCase() || "";
 
-      return (
-        maNhanVienStr.includes(searchLower) ||
-        hoTenStr.includes(searchLower) ||
-        loaiTruNameStr.includes(searchLower) ||
-        lyDoStr.includes(searchLower)
-      );
-    });
+        return (
+          maNhanVienStr.includes(searchLower) ||
+          hoTenStr.includes(searchLower) ||
+          loaiTruNameStr.includes(searchLower) ||
+          lyDoStr.includes(searchLower)
+        );
+      });
+    }
+
+    return filteredData;
   };
 
   // Hàm tính tổng số lần trừ dựa trên danh sách đã lọc
@@ -318,6 +362,23 @@ export default function TruComponent() {
       console.log("Validation failed:", error);
     }
   };
+
+  const handleDateRangeChange = useCallback((dates) => {
+    setDateRange(dates);
+    setSelectedMonth(null);
+  }, []);
+
+  const handleMonthChange = useCallback((month) => {
+    setSelectedMonth(month);
+
+    if (month) {
+      const startOfMonth = month.startOf("month");
+      const endOfMonth = month.endOf("month");
+      setDateRange([startOfMonth, endOfMonth]);
+    } else {
+      setDateRange([null, null]);
+    }
+  }, []);
 
   const getLoaiTruName = (maLoaiTienTru) => {
     const loaiTru = dataSourceDanhSachLichSuTru.find(
@@ -545,43 +606,72 @@ export default function TruComponent() {
               }
               key="lichsu"
             >
-              <div
-                style={{
-                  marginBottom: "16px",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  gap: "16px",
-                  flexWrap: "wrap",
-                }}
-              >
-                <Space>
-                  <Button
-                    type="primary"
-                    icon={<PlusOutlined />}
-                    onClick={handleAddLichSu}
-                    danger
-                  >
-                    Thêm phạt cho nhân viên
-                  </Button>
-                  {selectedLichSuKeys.length > 0 && (
-                    <Button
-                      type="primary"
-                      danger
-                      icon={<DeleteOutlined />}
-                      onClick={handleDeleteMultipleLichSu}
-                    >
-                      Xóa {selectedLichSuKeys.length} mục đã chọn
-                    </Button>
-                  )}
-                </Space>
-                <Search
-                  placeholder="Tìm kiếm theo mã NV, tên, loại phạt, lý do..."
-                  allowClear
-                  style={{ width: 350 }}
-                  onChange={(e) => setSearchTextLichSu(e.target.value)}
-                  prefix={<SearchOutlined />}
-                />
+              <div style={{ marginBottom: "16px" }}>
+                <Row gutter={[16, 16]} align="middle">
+                  {/* Nút thêm và xóa */}
+                  <Col xs={24} md={12} lg={16}>
+                    <Space wrap>
+                      <Button
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        onClick={handleAddLichSu}
+                        danger
+                      >
+                        Thêm phạt cho nhân viên
+                      </Button>
+                      {selectedLichSuKeys.length > 0 && (
+                        <Button
+                          type="primary"
+                          danger
+                          icon={<DeleteOutlined />}
+                          onClick={handleDeleteMultipleLichSu}
+                        >
+                          Xóa {selectedLichSuKeys.length} mục đã chọn
+                        </Button>
+                      )}
+                    </Space>
+                  </Col>
+                  <Col xs={24} md={10} lg={8}>
+                    <Search
+                      placeholder="Tìm kiếm theo mã NV, tên, loại phạt, lý do..."
+                      allowClear
+                      prefix={<SearchOutlined />}
+                      onChange={(e) => setSearchTextLichSu(e.target.value)}
+                      style={{
+                        width: "100%",
+                        maxWidth: 350,
+                        marginLeft: "auto",
+                      }}
+                    />
+                  </Col>
+
+                  {/* Bộ lọc tháng + khoảng thời gian */}
+                  <Col xs={20} sm={20} md={18} lg={16} xl={12}>
+                    <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
+                      <span style={{ marginBottom: 8 }}>Chọn khoảng thời gian:</span>
+                      <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
+                        <RangePicker
+                          value={dateRange}
+                          onChange={handleDateRangeChange}
+                          format="DD/MM/YYYY"
+                          size="large"
+                          style={{ flex: 1, minWidth: 150 }}
+                        />
+                        <ConfigProvider locale={viVN}>
+                          <DatePicker
+                            placeholder="Chọn tháng"
+                            picker="month"
+                            value={selectedMonth}
+                            onChange={handleMonthChange}
+                            format="MM/YYYY"
+                            size="large"
+                            style={{ flex: 1, minWidth: 150 }}
+                          />
+                        </ConfigProvider>
+                      </div>
+                    </div>
+                  </Col>
+                </Row>
               </div>
 
               {selectedLichSuKeys.length > 0 && (
@@ -624,44 +714,39 @@ export default function TruComponent() {
             </TabPane>
 
             <TabPane tab={<span>Loại phạt</span>} key="loaiphat">
-              <div
-                style={{
-                  marginBottom: "16px",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  gap: "16px",
-                  flexWrap: "wrap",
-                }}
-              >
-                <Space>
-                  <Button
-                    type="primary"
-                    icon={<PlusOutlined />}
-                    onClick={handleAddLoaiTru}
-                    danger
-                  >
-                    Thêm loại phạt
-                  </Button>
-                  {selectedLoaiTruKeys.length > 0 && (
+              <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
+                <Col xs={24} sm={24} md={16}>
+                  <Space wrap>
                     <Button
                       type="primary"
+                      icon={<PlusOutlined />}
+                      onClick={handleAddLoaiTru}
                       danger
-                      icon={<DeleteOutlined />}
-                      onClick={handleDeleteMultipleLoaiTru}
                     >
-                      Xóa {selectedLoaiTruKeys.length} mục đã chọn
+                      Thêm loại phạt
                     </Button>
-                  )}
-                </Space>
-                <Search
-                  placeholder="Tìm kiếm theo mã hoặc tên loại phạt..."
-                  allowClear
-                  style={{ width: 350 }}
-                  onChange={(e) => setSearchTextLoaiTru(e.target.value)}
-                  prefix={<SearchOutlined />}
-                />
-              </div>
+                    {selectedLoaiTruKeys.length > 0 && (
+                      <Button
+                        type="primary"
+                        danger
+                        icon={<DeleteOutlined />}
+                        onClick={handleDeleteMultipleLoaiTru}
+                      >
+                        Xóa {selectedLoaiTruKeys.length} mục đã chọn
+                      </Button>
+                    )}
+                  </Space>
+                </Col>
+                <Col xs={24} sm={24} md={8}>
+                  <Search
+                    placeholder="Tìm kiếm theo mã hoặc tên loại phạt..."
+                    allowClear
+                    style={{ width: "100%" }}
+                    onChange={(e) => setSearchTextLoaiTru(e.target.value)}
+                    prefix={<SearchOutlined />}
+                  />
+                </Col>
+              </Row>
 
               {selectedLoaiTruKeys.length > 0 && (
                 <div
@@ -730,7 +815,12 @@ export default function TruComponent() {
                     { required: true, message: "Vui lòng chọn loại phạt!" },
                   ]}
                 >
-                  <Select placeholder="Chọn loại phạt">
+                  <Select placeholder="Chọn loại phạt"
+                    showSearch
+                    optionFilterProp="children"
+                    filterOption={(input, option) =>
+                      (option?.children ?? "").toLowerCase().includes(input.toLowerCase())
+                    }>
                     {danhSachLoaiTienTru.map((item) => (
                       <Select.Option
                         key={item.maLoaiTienTru}
@@ -755,6 +845,12 @@ export default function TruComponent() {
                       ]}
                     >
                       <Select
+                        placeholder="Chọn nhân viên"
+                        showSearch
+                        optionFilterProp="label"
+                        filterOption={(input, option) =>
+                          (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
+                        }
                         options={danhSachNhanVien.map((nv) => ({
                           value: nv.maNhanVien,
                           label: `${nv.hoTen} - ${nv.cmnd}`,
