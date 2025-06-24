@@ -65,8 +65,7 @@ export default function DoiTuongUuTienComponent() {
   const api = useAppNotification();
   const { danhSachNhanVien, updateNhanVien } = useNhanVien();
   const { danhSachPhongBan, loading } = usePhongBan();
-  const { danhSachLichSuUuTien, updateLichSuUuTien, deleteLichSuUuTien } =
-    useLichSuUuTien();
+  const { danhSachLichSuUuTien, createLichSuDoiTuongUuTien, updateLichSuUuTien, deleteLichSuUuTien } = useLichSuUuTien();
   const dataSourceLichSuUuTien = danhSachLichSuUuTien.map((lsut) => {
     const dataNhanVienFind = danhSachNhanVien.find(
       (nv) => nv.maNhanVien === lsut.maNhanVien
@@ -161,12 +160,13 @@ export default function DoiTuongUuTienComponent() {
       thoiGianHieuLucBatDau: values.thoiGianHieuLucBatDau
         ? dayjs(values.thoiGianHieuLucBatDau).format("YYYY-MM-DD")
         : null,
-      thoiGianHieuLucKetThuc: values.thoiGianHieuLucBatDau
+      thoiGianHieuLucKetThuc: values.thoiGianHieuLucKetThuc
         ? dayjs(values.thoiGianHieuLucKetThuc).format("YYYY-MM-DD")
         : null,
     };
+
     if (editingHistoryId) {
-      updateLichSuUuTien(
+      await updateLichSuUuTien(
         editingHistoryId,
         formattedValues.maNhanVien,
         formattedValues
@@ -177,22 +177,26 @@ export default function DoiTuongUuTienComponent() {
       });
     } else {
       try {
-        console.log("formattedValues: ", formattedValues);
-        // Cập nhật vai trò cho nhân viên
+        console.log("formattedValues:", formattedValues);
+
         await updateNhanVien(formattedValues.maNhanVien, {
           maUuTien: formattedValues.maUuTien,
         });
 
-        // Nếu có thời gian bắt đầu hiệu lực thì cập nhật bên lịch sử ưu tiên
-        await updateLichSuUuTien(
-          formattedValues.maNhanVien,
-          formattedValues.maUuTien,
-          formattedValues
-        );
-      } catch {
-        api.error({ message: "Lỗi khi thêm ưu tiên cho nhân viên " });
+        await createLichSuDoiTuongUuTien(formattedValues);
+
+        api.success({
+          message: "Thành công",
+          description: "Thêm mới lịch sử ưu tiên thành công!",
+        });
+      } catch (error) {
+        api.error({
+          message: "Lỗi khi thêm ưu tiên cho nhân viên",
+          description: error?.response?.data?.message || error.message,
+        });
       }
     }
+
     handleHistoryCancel();
   };
 
@@ -494,7 +498,7 @@ export default function DoiTuongUuTienComponent() {
         {/* Statistics */}
         <Row gutter={[16, 16]} style={{ marginBottom: "24px" }}>
           <Col xs={24} sm={6}>
-            <Card>
+            <Card style={{ height: "100%" }}>
               <Statistic
                 title="Tổng Đối Tượng"
                 value={totalObjects}
@@ -504,7 +508,7 @@ export default function DoiTuongUuTienComponent() {
             </Card>
           </Col>
           <Col xs={24} sm={6}>
-            <Card>
+            <Card style={{ height: "100%" }}>
               <Statistic
                 title="Đang Hoạt Động"
                 value={activeObjects}
@@ -514,7 +518,7 @@ export default function DoiTuongUuTienComponent() {
             </Card>
           </Col>
           <Col xs={24} sm={6}>
-            <Card>
+            <Card style={{ height: "100%" }}>
               <Statistic
                 title="Lịch Sử Đang Áp Dụng"
                 value={activeHistoryCount}
@@ -524,7 +528,7 @@ export default function DoiTuongUuTienComponent() {
             </Card>
           </Col>
           <Col xs={24} sm={6}>
-            <Card>
+            <Card style={{ height: "100%" }}>
               <Statistic
                 title="Tổng Lịch Sử"
                 value={totalHistoryCount}
@@ -841,6 +845,11 @@ export default function DoiTuongUuTienComponent() {
                   <Select
                     disabled={editingHistoryId ? true : false}
                     placeholder="Họ tên nhân viên"
+                    showSearch
+                    optionFilterProp="label"
+                    filterOption={(input, option) =>
+                      (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
+                    }
                     options={danhSachNhanVien.map((nv) => ({
                       value: nv.maNhanVien,
                       label: `${nv.hoTen} - ${nv.cmnd}`,
@@ -866,6 +875,10 @@ export default function DoiTuongUuTienComponent() {
                     disabled={editingHistoryId ? true : false}
                     placeholder="Chọn đối tượng ưu tiên"
                     showSearch
+                    optionFilterProp="children"
+                    filterOption={(input, option) =>
+                      (option?.children ?? "").toLowerCase().includes(input.toLowerCase())
+                    }
                   >
                     {danhSachDoiTuongUuTien.map((item) => (
                       <Select.Option key={item.maUuTien} value={item.maUuTien}>

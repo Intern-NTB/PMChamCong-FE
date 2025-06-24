@@ -3,11 +3,13 @@ import {
   getAllLichSuUuTienServices,
   updateLichSuUuTienServices,
   deleteLichSuUuTienServices,
+  createLichSuUuTienServices,
 } from "../../services/lichsuuutienServices";
 
 export const useLichSuUuTien = () => {
   const [danhSachLichSuUuTien, setDanhSachLichSuUuTien] = useState([]);
   const [loadingLichSuUuTien, setLoadingLichSuUuTien] = useState(false);
+  const [isCreatedLichSuUuTien, setIsCreatedLichSuUuTien] = useState(false);
   const [isUpdatedLichSuUuTien, setIsUpdatedLichSuUuTien] = useState(false);
   const [isDeletedLichSuUuTien, setIsDeletedLichSuUuTien] = useState(false);
 
@@ -23,6 +25,15 @@ export const useLichSuUuTien = () => {
       setLoadingLichSuUuTien(false);
     }
   };
+
+  const createLichSuDoiTuongUuTien = async (duLieuUuTien) => {
+      try {
+        await createLichSuUuTienServices(duLieuUuTien);
+        getAllLichSuUuTien();
+      } catch (error) {
+        console.error("Lỗi thêm đối tượng ưu tiên:", error);
+      }
+    };
 
   const updateLichSuUuTien = async (maNhanVien, maUuTien,duLieuCapNhat) => {
     setLoadingLichSuUuTien(true);
@@ -70,5 +81,6 @@ export const useLichSuUuTien = () => {
     getAllLichSuUuTien,
     updateLichSuUuTien,
     deleteLichSuUuTien,
+    createLichSuDoiTuongUuTien
   };
 };
