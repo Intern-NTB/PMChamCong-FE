@@ -1,6 +1,6 @@
 import { Card, Form, InputNumber, Button, Spin, message } from "antd";
 import { useHeThong } from "../../component/hooks/useHeThong";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import { TimePicker } from "antd";
 import dayjs from "dayjs";
@@ -10,6 +10,8 @@ dayjs.extend(duration);
 import { useAppNotification } from "../../component/ui/notification";
 
 export default function HeThongComponent() {
+
+    const [selectedTime, setSelectedTime] = useState(null);
     const apiNotification = useAppNotification();
 
     const {
@@ -28,7 +30,11 @@ export default function HeThongComponent() {
                 khoangCachGiuaCacLanChamCong: dayjs(item.khoangCachGiuaCacLanChamCong, "HH:mm:ss"),
             });
         }
-    }, [danhSachHeThong]);
+        const initialTime = form.getFieldValue("khoangCachGiuaCacLanChamCong");
+        if (initialTime) {
+            setSelectedTime(initialTime);
+        }
+    }, [danhSachHeThong, form]);
 
     const onFinish = async (values) => {
         const rawTime = values.khoangCachGiuaCacLanChamCong;
@@ -56,6 +62,18 @@ export default function HeThongComponent() {
         }
     };
 
+    const handleChange = (value) => {
+        setSelectedTime(value);
+    };
+    const convertToDecimalHours = (value) => {
+        if (!value) return "";
+        const hours = value.hour();
+        const minutes = value.minute();
+        const seconds = value.second();
+        const decimalHours = (hours + minutes / 60 + seconds / 3600).toFixed(2);
+        return `${parseFloat(decimalHours)} giờ`;
+    };
+
     return (
         <Card title="Cài đặt hệ thống">
             {loadingHeThong ? (
@@ -66,20 +84,32 @@ export default function HeThongComponent() {
                     layout="vertical"
                     onFinish={onFinish}
                 >
-                    <Form.Item
-                        name="khoangCachGiuaCacLanChamCong"
-                        label="Khoảng cách giữa các lần chấm công (phút)"
-                        rules={[{ required: true, message: "Vui lòng nhập thời gian" }]}
-                    >
-                        <TimePicker format="HH:mm:ss" minuteStep={5} style={{ width: "100%" }} />
-                    </Form.Item>
+                        <Form.Item
+                            name="khoangCachGiuaCacLanChamCong"
+                            label={
+                                <>
+                                    Khoảng cách giữa các lần chấm công (<span style={{ color: "#888" }}>
+                                        {selectedTime ? convertToDecimalHours(selectedTime) : " (giờ)"}
+                                    </span>)
+                                    
+                                </>
+                            }
+                            rules={[{ required: true, message: "Vui lòng nhập thời gian" }]}
+                        >
+                            <TimePicker
+                                format="HH:mm:ss"
+                                minuteStep={1}
+                                onChange={handleChange}
+                                style={{ width: "100%" }}
+                            />
+                        </Form.Item>
 
                     <Form.Item
                         name="congNgayChuNhat"
                         label="Công ngày Chủ Nhật"
                         rules={[{ required: true, message: "Vui lòng nhập số" }]}
                     >
-                        <InputNumber min={1} style={{ width: "100%" }} />
+                        <InputNumber min={0.1} step={0.1} style={{ width: "100%" }} />
                     </Form.Item>
 
                     <Form.Item
@@ -87,15 +117,15 @@ export default function HeThongComponent() {
                         label="Số ngày phép trong năm"
                         rules={[{ required: true, message: "Vui lòng nhập số" }]}
                     >
-                        <InputNumber min={0} max={12} style={{ width: "50%" }} addonAfter="ngày"/>
+                        <InputNumber min={1} max={12} style={{ width: "50%" }} addonAfter="ngày"/>
                     </Form.Item>
 
                     <Form.Item
                         name="nguongThoiGianPheDuyetNgayNghi"
-                        label="Ngưỡng thời gian phê duyệt ngày nghỉ (giờ)"
-                        rules={[{ required: true, message: "Vui lòng nhập số giờ" }]}
+                        label="Ngưỡng thời gian phê duyệt ngày nghỉ (ngày)"
+                        rules={[{ required: true, message: "Vui lòng nhập số ngày" }]}
                     >
-                        <InputNumber min={0} max={24} style={{ width: "50%" }} addonAfter="giờ"/>
+                        <InputNumber min={1} max={365} style={{ width: "50%" }} addonAfter="ngày"/>
                     </Form.Item>
 
                     <Form.Item>
