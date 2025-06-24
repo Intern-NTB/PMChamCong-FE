@@ -115,7 +115,7 @@ export default function HeThongComponent() {
                         label="Số ngày phép trong năm"
                         rules={[{ required: true, message: "Vui lòng nhập số" }]}
                     >
-                        <InputNumber min={1} max={12} style={{ width: "50%" }} addonAfter="ngày"/>
+                        <InputNumber min={1} style={{ width: "50%" }} addonAfter="ngày"/>
                     </Form.Item>
 
                     <Form.Item

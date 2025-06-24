@@ -13,7 +13,7 @@ export const getAllTangCaServices = async () => {
 export const updateTangCaServices = async (duLieuTangCa) => {
   try {
     const res = await axiosInstance.put(
-      `/tangca/${duLieuTangCa.ngayChamCong}`,
+      `/tangca/${duLieuTangCa.maPhongBan}`,
       duLieuTangCa
     );
     return res.data;

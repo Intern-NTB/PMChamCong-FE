@@ -190,8 +190,11 @@ export default function ModalThemTangCa({
             >
               <ConfigProvider locale={locale}>
                 <DatePicker
-                  defaultValue={isSelectedDateTangCa}
-                  onChange={(value) => setIsSelectedDateTangCa(dayjs(value))}
+                  value={isSelectedDateTangCa}
+                  onChange={(value) => {
+                    setIsSelectedDateTangCa(dayjs(value));
+                    form.setFieldValue("ngayChamCongTangCa", value);
+                  }}
                   style={{ width: "100%" }}
                   format="DD/MM/YYYY"
                   placeholder="Chọn ngày tăng ca"

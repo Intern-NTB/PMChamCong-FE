@@ -1,109 +1,254 @@
-import { useEffect } from "react";
-import { Modal, Form, DatePicker, TimePicker, Select, Button, message } from "antd";
+import { useEffect, useState } from "react";
+import {
+  Modal,
+  Form,
+  DatePicker,
+  TimePicker,
+  Select,
+  Tag,
+  Row,
+  Col,
+} from "antd";
 import dayjs from "dayjs";
+
+// Import hook useCaLam (giống modal thêm)
+import { useCaLam } from "../../../component/hooks/useCaLam";
+
 export default function ModalChinhSuaTangCa({
-    isVisible,
-    onCancel,
-    record,         // bản ghi cần chỉnh sửa
-    updateTangCa,   // hàm gọi update từ hook/service
-    danhSachPhongBan
+  isVisible,
+  onCancel,
+  record, // bản ghi cần chỉnh sửa
+  updateTangCa, // hàm gọi update từ hook/service
+  danhSachPhongBan,
 }) {
-    const [form] = Form.useForm();
+  const [form] = Form.useForm();
 
-    useEffect(() => {
-        if (record) {
-            form.setFieldsValue({
-                ngayChamCongTangCa: dayjs(record.ngayChamCongTangCa),
-                gioTangCaBatDau: dayjs(record.gioTangCaBatDau, "HH:mm"),
-                gioTangCaKetThuc: dayjs(record.gioTangCaKetThuc, "HH:mm"),
-                maPhongBan: record.maPhongBan,
-            });
-        } else {
-            form.resetFields();
-        }
-    }, [record, form]);
+  // ==== HOOKS ====
+  const { danhSachCaLamTrongTuan, getAllCaLamTrongTuan } = useCaLam();
 
+  // ==== STATE ====
+  const [isSelectedPhongBan, setIsSelectedPhongBan] = useState(0);
+  const [isSelectedDateTangCa, setIsSelectedDateTangCa] = useState(null);
 
-    const handleOk = async () => {
-        try {
-            const values = await form.validateFields();
+  // ===== VARIABLE ====
+  const weekdays = [
+    "Chủ Nhật",
+    "Thứ Hai",
+    "Thứ Ba",
+    "Thứ Tư",
+    "Thứ Năm",
+    "Thứ Sáu",
+    "Thứ Bảy",
+  ];
 
-            const start = values.gioTangCaBatDau;
-            const end = values.gioTangCaKetThuc;
+  // Gọi Api để lấy ca làm việc trong tuần
+  useEffect(() => {
+    if (isSelectedPhongBan !== 0 && isSelectedDateTangCa !== null) {
+      getAllCaLamTrongTuan(isSelectedPhongBan);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSelectedPhongBan, isSelectedDateTangCa]);
 
-            if (start.isSameOrAfter(end)) {
-                message.error("Giờ bắt đầu phải nhỏ hơn giờ kết thúc");
-                return;
-            }
+  useEffect(() => {
+    if (record) {
+      const ngayChamCong = dayjs(record.ngayChamCongTangCa);
+      setIsSelectedPhongBan(record.maPhongBan);
+      setIsSelectedDateTangCa(ngayChamCong);
 
-            // Chuẩn bị dữ liệu gửi lên API
-            const payload = {
-                ...record,
-                ngayChamCongTangCa: values.ngayChamCongTangCa.format("YYYY-MM-DD"),
-                gioTangCaBatDau: values.gioTangCaBatDau.format("HH:mm:ss"),
-                gioTangCaKetThuc: values.gioTangCaKetThuc.format("HH:mm:ss"),
-                maPhongBan: values.maPhongBan
-            };
+      form.setFieldsValue({
+        ngayChamCongTangCa: ngayChamCong,
+        gioTangCaBatDau: dayjs(record.gioTangCaBatDau, "HH:mm"),
+        gioTangCaKetThuc: dayjs(record.gioTangCaKetThuc, "HH:mm"),
+        maPhongBan: record.maPhongBan,
+      });
+    } else {
+      form.resetFields();
+      setIsSelectedPhongBan(0);
+      setIsSelectedDateTangCa(null);
+    }
+  }, [record, form]);
 
+  // Tính toán ca làm trong tuần
+  const date = isSelectedDateTangCa ? new Date(isSelectedDateTangCa) : null;
+  const dayOfWeek = date ? date.getDay() + 1 : null;
 
-            await updateTangCa(payload);
-            onCancel();
-        } catch (errorInfo) {
-            console.log("Validate Failed:", errorInfo);
-        }
-    };
+  const danhSachCaLamTrongTuanFind = danhSachCaLamTrongTuan.find((cltt) => {
+    return cltt.maCa === isSelectedPhongBan && cltt.ngayTrongTuan === dayOfWeek;
+  });
 
-    return (
-        <Modal
-            title="Chỉnh sửa tăng ca"
-            open={isVisible}
-            onCancel={onCancel}
-            onOk={handleOk}
-            okText="Lưu"
-            cancelText="Hủy"
-            centered
-        >
-            <Form form={form} layout="vertical">
-                <Form.Item
-                    label="Ngày tăng ca"
-                    name="ngayChamCongTangCa"
-                    rules={[{ required: true, message: "Vui lòng chọn ngày tăng ca" }]}
-                >
-                    <DatePicker style={{ width: "100%" }} disabled={true} />
-                </Form.Item>
+  //  ===== VALIDATE ====
+  const validateGioBatDau = (_, value) => {
+    if (!danhSachCaLamTrongTuanFind) {
+      return Promise.resolve();
+    }
 
-                <Form.Item
-                    label="Giờ tăng ca bắt đầu"
-                    name="gioTangCaBatDau"
-                    rules={[{ required: true, message: "Vui lòng chọn giờ bắt đầu" }]}
-                >
-                    <TimePicker format="HH:mm" style={{ width: "100%" }} />
-                </Form.Item>
-
-                <Form.Item
-                    label="Giờ tăng ca kết thúc"
-                    name="gioTangCaKetThuc"
-                    rules={[{ required: true, message: "Vui lòng chọn giờ kết thúc" }]}
-                >
-                    <TimePicker format="HH:mm" style={{ width: "100%" }} />
-                </Form.Item>
-
-                <Form.Item
-                    label="Phòng ban"
-                    name="maPhongBan"
-                    rules={[{ required: true, message: "Vui lòng chọn phòng ban" }]}
-
-                >
-                    <Select
-                        disabled={true}
-                        placeholder="Chọn phòng ban"
-                        options={danhSachPhongBan.map(pb => ({
-                            value: pb.maPhongBan,
-                            label: pb.tenPhongBan,
-                        }))}
-                    />
-                </Form.Item>
-            </Form>
-        </Modal>
+    // Giữ nguyên dayjs object, không format
+    const valueConvert = dayjs(value);
+    const gioKetThucCa = dayjs(
+      danhSachCaLamTrongTuanFind.gioKetThuc,
+      "HH:mm:ss"
     );
+
+    if (valueConvert.isBefore(gioKetThucCa)) {
+      return Promise.reject(
+        "Thời gian không hợp lệ! Giờ bắt đầu tăng ca phải lớn hơn giờ kết thúc ca"
+      );
+    }
+
+    return Promise.resolve();
+  };
+
+  const validateGioKetThuc = (_, value) => {
+    if (!danhSachCaLamTrongTuanFind) {
+      return Promise.resolve();
+    }
+
+    // Giữ nguyên dayjs object, không format
+    const valueConvert = dayjs(value);
+    const gioKetThucCa = dayjs(
+      danhSachCaLamTrongTuanFind.gioKetThuc,
+      "HH:mm:ss"
+    );
+
+    // Kiểm tra giờ kết thúc tăng ca phải lớn hơn giờ kết thúc ca
+    if (
+      valueConvert.isBefore(gioKetThucCa) ||
+      valueConvert.isSame(gioKetThucCa)
+    ) {
+      return Promise.reject(
+        "Thời gian không hợp lệ! Giờ kết thúc tăng ca phải lớn hơn giờ kết thúc ca"
+      );
+    }
+
+    // Kiểm tra giờ kết thúc tăng ca phải lớn hơn giờ bắt đầu tăng ca
+    const gioBatDau = form.getFieldValue("gioTangCaBatDau");
+    if (
+      gioBatDau &&
+      (valueConvert.isBefore(dayjs(gioBatDau)) ||
+        valueConvert.isSame(dayjs(gioBatDau)))
+    ) {
+      return Promise.reject(
+        "Thời gian không hợp lệ! Giờ kết thúc tăng ca phải lớn hơn giờ tăng ca bắt đầu"
+      );
+    }
+
+    return Promise.resolve();
+  };
+
+  const handleOk = async () => {
+    try {
+      const values = await form.validateFields();
+
+      // Chuẩn bị dữ liệu gửi lên API
+      const payload = {
+        ...record,
+        ngayChamCongTangCa: values.ngayChamCongTangCa.format("YYYY-MM-DD"),
+        gioTangCaBatDau: values.gioTangCaBatDau.format("HH:mm:ss"),
+        gioTangCaKetThuc: values.gioTangCaKetThuc.format("HH:mm:ss"),
+        maPhongBan: values.maPhongBan,
+      };
+      await updateTangCa(payload);
+      onCancel();
+    } catch (errorInfo) {
+      console.log("Validate Failed:", errorInfo);
+    }
+  };
+
+  return (
+    <Modal
+      title="Chỉnh sửa tăng ca"
+      open={isVisible}
+      onCancel={onCancel}
+      onOk={handleOk}
+      okText="Lưu"
+      cancelText="Hủy"
+      centered
+      width={600}
+    >
+      <Form form={form} layout="vertical">
+        <Row gutter={16}>
+          <Col span={24}>
+            <Form.Item
+              label="Ngày tăng ca"
+              name="ngayChamCongTangCa"
+              rules={[
+                { required: true, message: "Vui lòng chọn ngày tăng ca" },
+              ]}
+            >
+              <DatePicker
+                style={{ width: "100%" }}
+                disabled={true}
+                format="DD/MM/YYYY"
+              />
+            </Form.Item>
+          </Col>
+        </Row>
+
+        <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item
+              label="Giờ bắt đầu"
+              name="gioTangCaBatDau"
+              rules={[
+                { required: true, message: "Vui lòng chọn giờ bắt đầu" },
+                { validator: validateGioBatDau },
+              ]}
+            >
+              <TimePicker
+                format="HH:mm"
+                style={{ width: "100%" }}
+                placeholder="Chọn giờ bắt đầu"
+              />
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item
+              label="Giờ kết thúc"
+              name="gioTangCaKetThuc"
+              rules={[
+                { required: true, message: "Vui lòng chọn giờ kết thúc" },
+                { validator: validateGioKetThuc },
+              ]}
+            >
+              <TimePicker
+                format="HH:mm"
+                style={{ width: "100%" }}
+                placeholder="Chọn giờ kết thúc"
+              />
+            </Form.Item>
+          </Col>
+        </Row>
+
+        <Row gutter={16}>
+          <Col span={24}>
+            <Form.Item
+              label="Phòng ban"
+              name="maPhongBan"
+              rules={[{ required: true, message: "Vui lòng chọn phòng ban" }]}
+            >
+              <Select
+                disabled={true}
+                placeholder="Chọn phòng ban"
+                options={danhSachPhongBan.map((pb) => ({
+                  value: pb.maPhongBan,
+                  label: pb.tenPhongBan,
+                }))}
+              />
+            </Form.Item>
+
+            {/* Hiển thị thông tin ca làm việc */}
+            <div>
+              {isSelectedPhongBan !== 0 && date ? (
+                <Tag color="green">
+                  Ca làm việc {weekdays[date.getDay()]}:{" "}
+                  {danhSachCaLamTrongTuanFind?.gioBatDau ?? "Không có"} -{" "}
+                  {danhSachCaLamTrongTuanFind?.gioKetThuc ?? "Không có"}
+                </Tag>
+              ) : null}
+            </div>
+          </Col>
+        </Row>
+      </Form>
+    </Modal>
+  );
 }
