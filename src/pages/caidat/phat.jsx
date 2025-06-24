@@ -606,71 +606,72 @@ export default function TruComponent() {
               }
               key="lichsu"
             >
-              <div
-                style={{
-                  marginBottom: "16px",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  gap: "16px",
-                  flexWrap: "wrap",
-                }}
-              >
-                <Space>
-                  <Button
-                    type="primary"
-                    icon={<PlusOutlined />}
-                    onClick={handleAddLichSu}
-                    danger
-                  >
-                    Thêm phạt cho nhân viên
-                  </Button>
-                  {selectedLichSuKeys.length > 0 && (
-                    <Button
-                      type="primary"
-                      danger
-                      icon={<DeleteOutlined />}
-                      onClick={handleDeleteMultipleLichSu}
-                    >
-                      Xóa {selectedLichSuKeys.length} mục đã chọn
-                    </Button>
-                  )}
-                </Space>
-                <Search
-                  placeholder="Tìm kiếm theo mã NV, tên, loại phạt, lý do..."
-                  allowClear
-                  style={{ width: 350 }}
-                  onChange={(e) => setSearchTextLichSu(e.target.value)}
-                  prefix={<SearchOutlined />}
-                />
-
-                {/*Bộ lọc tháng*/}
-                <Space
-                  direction="vertical"
-                  style={{ width: "100%", marginBottom: "16px" }}
-                >
-                  <span>Chọn khoảng thời gian:</span>
-                  <div style={{ display: "flex", gap: "16px", width: "100%" }}>
-                    <RangePicker
-                      value={dateRange}
-                      onChange={handleDateRangeChange}
-                      format="DD/MM/YYYY"
-                      style={{ flex: 1 }}
-                      size="large"
+              <div style={{ marginBottom: "16px" }}>
+                <Row gutter={[16, 16]} align="middle">
+                  {/* Nút thêm và xóa */}
+                  <Col xs={24} md={12} lg={16}>
+                    <Space wrap>
+                      <Button
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        onClick={handleAddLichSu}
+                        danger
+                      >
+                        Thêm phạt cho nhân viên
+                      </Button>
+                      {selectedLichSuKeys.length > 0 && (
+                        <Button
+                          type="primary"
+                          danger
+                          icon={<DeleteOutlined />}
+                          onClick={handleDeleteMultipleLichSu}
+                        >
+                          Xóa {selectedLichSuKeys.length} mục đã chọn
+                        </Button>
+                      )}
+                    </Space>
+                  </Col>
+                  <Col xs={24} md={10} lg={8}>
+                    <Search
+                      placeholder="Tìm kiếm theo mã NV, tên, loại phạt, lý do..."
+                      allowClear
+                      prefix={<SearchOutlined />}
+                      onChange={(e) => setSearchTextLichSu(e.target.value)}
+                      style={{
+                        width: "100%",
+                        maxWidth: 350,
+                        marginLeft: "auto",
+                      }}
                     />
-                    <ConfigProvider locale={viVN}>
-                      <DatePicker
-                        placeholder="Chọn tháng"
-                        picker="month"
-                        value={selectedMonth}
-                        onChange={handleMonthChange}
-                        format="MM/YYYY"
-                        style={{ flex: 1 }}
-                        size="large"
-                      />
-                    </ConfigProvider>
-                  </div>
-                </Space>
+                  </Col>
+
+                  {/* Bộ lọc tháng + khoảng thời gian */}
+                  <Col xs={20} sm={20} md={18} lg={16} xl={12}>
+                    <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
+                      <span style={{ marginBottom: 8 }}>Chọn khoảng thời gian:</span>
+                      <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
+                        <RangePicker
+                          value={dateRange}
+                          onChange={handleDateRangeChange}
+                          format="DD/MM/YYYY"
+                          size="large"
+                          style={{ flex: 1, minWidth: 150 }}
+                        />
+                        <ConfigProvider locale={viVN}>
+                          <DatePicker
+                            placeholder="Chọn tháng"
+                            picker="month"
+                            value={selectedMonth}
+                            onChange={handleMonthChange}
+                            format="MM/YYYY"
+                            size="large"
+                            style={{ flex: 1, minWidth: 150 }}
+                          />
+                        </ConfigProvider>
+                      </div>
+                    </div>
+                  </Col>
+                </Row>
               </div>
 
               {selectedLichSuKeys.length > 0 && (
@@ -713,44 +714,39 @@ export default function TruComponent() {
             </TabPane>
 
             <TabPane tab={<span>Loại phạt</span>} key="loaiphat">
-              <div
-                style={{
-                  marginBottom: "16px",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  gap: "16px",
-                  flexWrap: "wrap",
-                }}
-              >
-                <Space>
-                  <Button
-                    type="primary"
-                    icon={<PlusOutlined />}
-                    onClick={handleAddLoaiTru}
-                    danger
-                  >
-                    Thêm loại phạt
-                  </Button>
-                  {selectedLoaiTruKeys.length > 0 && (
+              <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
+                <Col xs={24} sm={24} md={16}>
+                  <Space wrap>
                     <Button
                       type="primary"
+                      icon={<PlusOutlined />}
+                      onClick={handleAddLoaiTru}
                       danger
-                      icon={<DeleteOutlined />}
-                      onClick={handleDeleteMultipleLoaiTru}
                     >
-                      Xóa {selectedLoaiTruKeys.length} mục đã chọn
+                      Thêm loại phạt
                     </Button>
-                  )}
-                </Space>
-                <Search
-                  placeholder="Tìm kiếm theo mã hoặc tên loại phạt..."
-                  allowClear
-                  style={{ width: 350 }}
-                  onChange={(e) => setSearchTextLoaiTru(e.target.value)}
-                  prefix={<SearchOutlined />}
-                />
-              </div>
+                    {selectedLoaiTruKeys.length > 0 && (
+                      <Button
+                        type="primary"
+                        danger
+                        icon={<DeleteOutlined />}
+                        onClick={handleDeleteMultipleLoaiTru}
+                      >
+                        Xóa {selectedLoaiTruKeys.length} mục đã chọn
+                      </Button>
+                    )}
+                  </Space>
+                </Col>
+                <Col xs={24} sm={24} md={8}>
+                  <Search
+                    placeholder="Tìm kiếm theo mã hoặc tên loại phạt..."
+                    allowClear
+                    style={{ width: "100%" }}
+                    onChange={(e) => setSearchTextLoaiTru(e.target.value)}
+                    prefix={<SearchOutlined />}
+                  />
+                </Col>
+              </Row>
 
               {selectedLoaiTruKeys.length > 0 && (
                 <div
