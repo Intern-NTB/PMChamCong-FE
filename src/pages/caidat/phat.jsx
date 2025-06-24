@@ -1,4 +1,8 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState, useContext, useCallback } from "react";
+
+import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
+import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
+
 import {
   Table,
   Button,
@@ -17,7 +21,12 @@ import {
   Row,
   Col,
   Typography,
+  ConfigProvider
 } from "antd";
+
+import "dayjs/locale/vi";
+import viVN from "antd/locale/vi_VN";
+
 import {
   PlusOutlined,
   EditOutlined,
@@ -38,6 +47,12 @@ import { useAppNotification } from "../../component/ui/notification";
 import { ReloadContext } from "../../context/reloadContext";
 
 import dayjs from "dayjs";
+
+// ===== Cấu hình Day.js =====
+dayjs.extend(isSameOrAfter);
+dayjs.extend(isSameOrBefore);
+dayjs.locale("vi");
+const { RangePicker } = DatePicker;
 
 const { TabPane } = Tabs;
 const { TextArea } = Input;
@@ -63,6 +78,12 @@ export default function TruComponent() {
   // state
   const api = useAppNotification();
   const { setReload } = useContext(ReloadContext);
+
+  const [dateRange, setDateRange] = useState([
+    dayjs().startOf("day"),
+    dayjs().endOf("day"),
+  ]);
+  const [selectedMonth, setSelectedMonth] = useState(null);
 
   // Data Source
   const dataSourceDanhSachLichSuTru = danhSachLichSuTru.map((dsltt) => {
@@ -120,26 +141,49 @@ export default function TruComponent() {
     danhSachLichSuTru.map((item) => item.maNhanVien)
   ).size;
 
-  // Hàm lọc dữ liệu cho tìm kiếm
+  // Hàm lọc dữ liệu cho tìm kiếm, lọc theo thời gian( ngày, tháng )
   const getFilteredLichSu = () => {
-    if (!searchTextLichSu) return dataSourceDanhSachLichSuTru;
+    let filteredData = dataSourceDanhSachLichSuTru;
 
-    return dataSourceDanhSachLichSuTru.filter((item) => {
-      const maNhanVienStr = item.maNhanVien?.toString().toLowerCase() || "";
-      const hoTenStr = item.hoTen?.toLowerCase() || "";
-      const lyDoStr = item.lyDo?.toLowerCase() || "";
-      const loaiTruNameStr =
-        getLoaiTruName(item.maLoaiTienTru)?.toLowerCase() || "";
+    // Lọc khoảng thời gian
+    if (dateRange[0] && dateRange[1]) {
+      filteredData = filteredData.filter((item) => {
+        const itemDate = dayjs(item.ngayTru);
+        return itemDate.isBetween(dateRange[0], dateRange[1], "day", "[]");
+      });
+    }
 
+    // Lọc tháng
+    if (selectedMonth) {
+      filteredData = filteredData.filter((item) => {
+        const itemDate = dayjs(item.ngayTru);
+        return (
+          itemDate.month() === selectedMonth.month() &&
+          itemDate.year() === selectedMonth.year()
+        );
+      });
+    }
+
+    // Lọc từ khóa tìm kiếm
+    if (searchTextLichSu) {
       const searchLower = searchTextLichSu.toLowerCase();
+      filteredData = filteredData.filter((item) => {
+        const maNhanVienStr = item.maNhanVien?.toString().toLowerCase() || "";
+        const hoTenStr = item.hoTen?.toLowerCase() || "";
+        const lyDoStr = item.lyDo?.toLowerCase() || "";
+        const loaiTruNameStr =
+          getLoaiTruName(item.maLoaiTienTru)?.toLowerCase() || "";
 
-      return (
-        maNhanVienStr.includes(searchLower) ||
-        hoTenStr.includes(searchLower) ||
-        loaiTruNameStr.includes(searchLower) ||
-        lyDoStr.includes(searchLower)
-      );
-    });
+        return (
+          maNhanVienStr.includes(searchLower) ||
+          hoTenStr.includes(searchLower) ||
+          loaiTruNameStr.includes(searchLower) ||
+          lyDoStr.includes(searchLower)
+        );
+      });
+    }
+
+    return filteredData;
   };
 
   // Hàm tính tổng số lần trừ dựa trên danh sách đã lọc
@@ -318,6 +362,23 @@ export default function TruComponent() {
       console.log("Validation failed:", error);
     }
   };
+
+  const handleDateRangeChange = useCallback((dates) => {
+    setDateRange(dates);
+    setSelectedMonth(null);
+  }, []);
+
+  const handleMonthChange = useCallback((month) => {
+    setSelectedMonth(month);
+
+    if (month) {
+      const startOfMonth = month.startOf("month");
+      const endOfMonth = month.endOf("month");
+      setDateRange([startOfMonth, endOfMonth]);
+    } else {
+      setDateRange([null, null]);
+    }
+  }, []);
 
   const getLoaiTruName = (maLoaiTienTru) => {
     const loaiTru = dataSourceDanhSachLichSuTru.find(
@@ -582,6 +643,34 @@ export default function TruComponent() {
                   onChange={(e) => setSearchTextLichSu(e.target.value)}
                   prefix={<SearchOutlined />}
                 />
+
+                {/*Bộ lọc tháng*/}
+                <Space
+                  direction="vertical"
+                  style={{ width: "100%", marginBottom: "16px" }}
+                >
+                  <span>Chọn khoảng thời gian:</span>
+                  <div style={{ display: "flex", gap: "16px", width: "40%" }}>
+                    <RangePicker
+                      value={dateRange}
+                      onChange={handleDateRangeChange}
+                      format="DD/MM/YYYY"
+                      style={{ flex: 1 }}
+                      size="large"
+                    />
+                    <ConfigProvider locale={viVN}>
+                      <DatePicker
+                        placeholder="Chọn tháng"
+                        picker="month"
+                        value={selectedMonth}
+                        onChange={handleMonthChange}
+                        format="MM/YYYY"
+                        style={{ flex: 1 }}
+                        size="large"
+                      />
+                    </ConfigProvider>
+                  </div>
+                </Space>
               </div>
 
               {selectedLichSuKeys.length > 0 && (
