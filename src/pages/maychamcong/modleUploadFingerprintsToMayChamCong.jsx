@@ -1,17 +1,27 @@
-import { Modal, Table, Progress, message, Button, Space, Tooltip } from "antd";
-import { useState } from "react";
-import { UploadOutlined, InfoCircleOutlined } from "@ant-design/icons";
+import { Modal, Table, Progress, message, Button, Space, Input } from "antd"; 
+import { useState, useMemo } from "react"; 
+import { UploadOutlined, InfoCircleOutlined, SearchOutlined } from "@ant-design/icons"; 
+
+const removeAccents = (str) => {
+  if (!str) return "";
+  return str
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D");
+};
 
 export const ModalUploadFingerPrintsToMayChamCong = ({
   isVisible = false,
-  dataSourceNhanVienMayChamCon,
-  NhanVienChamCongEmployyes,
+  dataSourceNhanVienMayChamCon, 
+  NhanVienChamCongEmployyes, 
   onCancel,
-  onOk, // Callback để parent component xử lý sau khi upload
+  onOk, 
   apiReload,
 }) => {
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [selectedRows, setSelectedRows] = useState([]);
+  const [searchText, setSearchText] = useState(""); 
 
   const handleOnOk = async () => {
     if (selectedRows.length === 0) {
@@ -19,10 +29,8 @@ export const ModalUploadFingerPrintsToMayChamCong = ({
       return;
     }
 
-    // Gọi onOk để upload vân tay
     await onOk?.(selectedRows);
 
-    // Reset selection
     setSelectedRows([]);
     setSelectedRowKeys([]);
 
@@ -38,11 +46,46 @@ export const ModalUploadFingerPrintsToMayChamCong = ({
   };
 
   const handleCancel = () => {
-    // Reset selection khi đóng modal
     setSelectedRows([]);
     setSelectedRowKeys([]);
+    setSearchText(""); 
     onCancel?.();
   };
+
+  const filteredDataSource = useMemo(() => {
+    if (!searchText) {
+      return dataSourceNhanVienMayChamCon;
+    }
+
+    const processedSearchText = removeAccents(searchText).toLowerCase();
+
+    return dataSourceNhanVienMayChamCon?.filter((record) => {
+      const maNhanVienString = removeAccents(String(record.maNhanVien || "")).toLowerCase();
+      const hoTenString = removeAccents(String(record.hoTen || "")).toLowerCase();
+      const viTriNgonTayString = String(record.viTriNgonTay || "").toLowerCase();
+
+      const fingerMapValue = {
+        0: "ngon ut trai",
+        1: "ngon ap ut trai",
+        2: "ngon giua trai",
+        3: "ngon tro trai",
+        4: "ngon cai trai",
+        5: "ngon cai phai",
+        6: "ngon tro phai",
+        7: "ngon giua phai",
+        8: "ngon ap ut phai",
+        9: "ngon ut phai",
+      }[record.viTriNgonTay]?.toLowerCase();
+
+      const maNhanVienMatch = maNhanVienString.includes(processedSearchText);
+      const hoTenMatch = hoTenString.includes(processedSearchText);
+      const viTriNgonTayNumberMatch = viTriNgonTayString.includes(processedSearchText);
+      const fingerPositionTextMatch = fingerMapValue?.includes(processedSearchText);
+
+      return maNhanVienMatch || hoTenMatch || viTriNgonTayNumberMatch || fingerPositionTextMatch;
+    });
+  }, [dataSourceNhanVienMayChamCon, searchText]);
+
 
   return (
     <Modal
@@ -95,14 +138,26 @@ export const ModalUploadFingerPrintsToMayChamCong = ({
           vân tay để upload
         </span>
         <span style={{ fontSize: "12px", color: "#666" }}>
-          Tổng số: {dataSourceNhanVienMayChamCon?.length || 0} vân tay
+          Tổng số: {filteredDataSource?.length || 0} vân tay
         </span>
+      </div>
+
+      <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'flex-start' }}>
+        <Input
+          placeholder="Tìm kiếm..."
+          prefix={<SearchOutlined />}
+          allowClear
+          size="small"
+          style={{ width: 180 }} 
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
+        />
       </div>
 
       <Table
         rowSelection={rowSelection}
-        columns={NhanVienChamCongEmployyes}
-        dataSource={dataSourceNhanVienMayChamCon}
+        columns={NhanVienChamCongEmployyes} 
+        dataSource={filteredDataSource} 
         rowKey={(record) => `${record.maNhanVien}-${record.viTriNgonTay}`}
         pagination={{
           pageSize: 8,
