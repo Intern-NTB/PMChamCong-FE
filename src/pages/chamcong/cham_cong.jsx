@@ -552,16 +552,6 @@ export default function GiaLapChamCong() {
               <Col span={12}>
                 <Card size="small">
                   <Statistic
-                    title="Tổng bản ghi"
-                    value={statistics.totalRecords}
-                    prefix={<UserOutlined />}
-                    valueStyle={{ fontSize: "16px" }}
-                  />
-                </Card>
-              </Col>
-              <Col span={12}>
-                <Card size="small">
-                  <Statistic
                     title="Đang làm việc"
                     value={statistics.workingNow}
                     valueStyle={{ color: "#1890ff", fontSize: "16px" }}
@@ -804,13 +794,6 @@ export default function GiaLapChamCong() {
           <Col span={8}>
             <Card title={`Thống kê hôm nay (${dayjs().format("DD/MM/YYYY")})`}>
               <Row gutter={16}>
-                <Col span={24}>
-                  <Statistic
-                    title="Tổng bản ghi"
-                    value={statistics.totalRecords}
-                    prefix={<UserOutlined />}
-                  />
-                </Col>
                 <Col span={24} style={{ marginTop: "16px" }}>
                   <Statistic
                     title="Đang làm việc"

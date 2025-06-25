@@ -303,7 +303,7 @@ export default function DoiTuongUuTienComponent() {
       render: (text) => (text ? <Text strong>{text}</Text> : "N/A"),
     },
     {
-      title: "Giờ vào",
+      title: "Giờ vào muộn",
       dataIndex: "thoiGianBatDauCa",
       key: "thoiGianBatDauCa",
       width: 150,
@@ -320,7 +320,7 @@ export default function DoiTuongUuTienComponent() {
       },
     },
     {
-      title: "Giờ ra",
+      title: "Giờ ra sớm",
       dataIndex: "thoiGianKetThucCa",
       key: "thoiGianKetThucCa",
       width: 150,
