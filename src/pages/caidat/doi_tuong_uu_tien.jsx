@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import {
   Table,
   Button,
@@ -298,9 +298,19 @@ export default function DoiTuongUuTienComponent() {
     setPhongBanNhanVien(nhanVien?.maPhongBan || null);
     historyForm.setFieldsValue({ maNhanVien: value });
   };
-  const filteredDoiTuongUuTien = danhSachDoiTuongUuTien.filter(
-    item => item.maPhongBan === phongBanNhanVien
-  );
+  const filteredDoiTuongUuTien = useMemo(() => {
+    return danhSachDoiTuongUuTien.filter(
+      item => item.maPhongBan === phongBanNhanVien
+    );
+  }, [danhSachDoiTuongUuTien, phongBanNhanVien]);
+
+  useEffect(() => {
+    if (editingHistoryId && historyForm.getFieldValue("maNhanVien")) {
+      const maNV = historyForm.getFieldValue("maNhanVien");
+      const nhanVien = danhSachNhanVien.find(nv => nv.maNhanVien === maNV);
+      setPhongBanNhanVien(nhanVien?.maPhongBan || null);
+    }
+  }, [editingHistoryId, historyForm, danhSachNhanVien]);
 
   const { Text } = Typography;
 
@@ -844,7 +854,7 @@ export default function DoiTuongUuTienComponent() {
                   rules={[
                     {
                       required: true,
-                      message: "Vui lòng chọn đối tượng ưu tiên!",
+                      message: "Vui lòng chọn nhân viên!",
                     },
                   ]}
                 >
