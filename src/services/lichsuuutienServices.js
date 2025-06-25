@@ -9,14 +9,14 @@ export const getAllLichSuUuTienServices = async () => {
     }
 };
 
-// export const createLichSuUuTienServices = async (duLieuUuTien) => {
-//     try {
-//         const res = await axiosInstance.post('/lichsuuutien',duLieuUuTien)
-//         return res.data
-//     } catch (error) {
-//         console.log(error)
-//     }
-// };
+export const createLichSuUuTienServices = async (duLieuUuTien) => {
+    try {
+        const res = await axiosInstance.post('/lichsuuutien', duLieuUuTien)
+        return res.data
+    } catch (error) {
+        console.log(error)
+    }
+};
 
 
 export const updateLichSuUuTienServices = async (maNhanVien,maUuTien,duLieuCapNhat) => {
