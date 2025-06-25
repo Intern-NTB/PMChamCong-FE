@@ -19,6 +19,7 @@ import TaiKhoanComponent from '../pages/caidat/tai_khoan.jsx';
 import LichSuPhongBanComponent from '../pages/caidat/lich_su_phong_ban.jsx';
 import LichSuLuongComponent from '../pages/caidat/lich_su_luong.jsx';
 import HeThongComponent from '../pages/caidat/he_thong.jsx';
+import PhuCapComponent from '../pages/caidat/phu_cap.jsx';
 // Thêm import cho thành phần Máy chấm công
 import MayChamCong from '../pages/maychamcong/maychamcong.jsx'; 
 
@@ -87,6 +88,10 @@ export const privateRoutes = [
                     {
                         path: 'lich-su-luong',
                         element: <LichSuLuongComponent />
+                    },
+                    {
+                        path: 'phu-cap',
+                        element: <PhuCapComponent />
                     }
                 ]
             },
