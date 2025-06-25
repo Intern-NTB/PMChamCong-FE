@@ -1,6 +1,15 @@
-import { Modal, Table, Progress, message, Button, Space, Tooltip } from "antd";
-import { useState } from "react";
-import { DeleteOutlined, WarningOutlined } from "@ant-design/icons";
+import { Modal, Table, Progress, message, Button, Space, Input } from "antd";
+import { useState, useMemo } from "react";
+import { DeleteOutlined, WarningOutlined, SearchOutlined } from "@ant-design/icons";
+
+const removeAccents = (str) => {
+  if (!str) return "";
+  return str
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D");
+};
 
 export const ModalDeleteFingerprints = ({
   isDelete,
@@ -8,11 +17,12 @@ export const ModalDeleteFingerprints = ({
   isVisible = false,
   dataSourceNhanVienVanTay,
   onCancel,
-  onOk, // Callback để parent component xử lý sau khi xóa
+  onOk,
   apiReload,
 }) => {
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [selectedRows, setSelectedRows] = useState([]);
+  const [searchText, setSearchText] = useState("");
 
   const handleOnOk = async () => {
     if (selectedRows.length === 0) {
@@ -20,10 +30,8 @@ export const ModalDeleteFingerprints = ({
       return;
     }
 
-    // Gọi onOk để xóa vân tay
     await onOk?.(selectedRows);
 
-    // Reset selection
     setSelectedRows([]);
     setSelectedRowKeys([]);
 
@@ -44,14 +52,14 @@ export const ModalDeleteFingerprints = ({
       dataIndex: "maNhanVien",
       key: "maNhanVien",
       width: 120,
-      sorter: (a, b) => a.maNhanVien.localeCompare(b.maNhanVien),
+      sorter: (a, b) => String(a.maNhanVien).localeCompare(String(b.maNhanVien)),
     },
     {
       title: "Tên nhân viên",
       dataIndex: "hoTen",
       key: "hoTen",
       width: 150,
-      sorter: (a, b) => (a.hoTen || "").localeCompare(b.hoTen || ""), // SỬA: Đổi từ tenNhanVien thành hoTen
+      sorter: (a, b) => String(a.hoTen || "").localeCompare(String(b.hoTen || "")),
     },
     {
       title: "Vị trí vân tay",
@@ -77,11 +85,45 @@ export const ModalDeleteFingerprints = ({
   ];
 
   const handleCancel = () => {
-    // Reset selection khi đóng modal
     setSelectedRows([]);
     setSelectedRowKeys([]);
+    setSearchText("");
     onCancel?.();
   };
+
+  const filteredDataSource = useMemo(() => {
+    if (!searchText) {
+      return dataSourceNhanVienVanTay;
+    }
+
+    const processedSearchText = removeAccents(searchText).toLowerCase();
+
+    return dataSourceNhanVienVanTay?.filter((record) => {
+      const maNhanVienString = removeAccents(String(record.maNhanVien || "")).toLowerCase();
+      const hoTenString = removeAccents(String(record.hoTen || "")).toLowerCase();
+      const viTriNgonTayString = String(record.viTriNgonTay || "").toLowerCase();
+
+      const fingerMapValue = {
+        0: "ngon ut trai",
+        1: "ngon ap ut trai",
+        2: "ngon giua trai",
+        3: "ngon tro trai",
+        4: "ngon cai trai",
+        5: "ngon cai phai",
+        6: "ngon tro phai",
+        7: "ngon giua phai",
+        8: "ngon ap ut phai",
+        9: "ngon ut phai",
+      }[record.viTriNgonTay]?.toLowerCase();
+      
+      const maNhanVienMatch = maNhanVienString.includes(processedSearchText);
+      const hoTenMatch = hoTenString.includes(processedSearchText);
+      const viTriNgonTayNumberMatch = viTriNgonTayString.includes(processedSearchText); 
+      const fingerPositionTextMatch = fingerMapValue?.includes(processedSearchText);
+
+      return maNhanVienMatch || hoTenMatch || viTriNgonTayNumberMatch || fingerPositionTextMatch;
+    });
+  }, [dataSourceNhanVienVanTay, searchText]);
 
   return (
     <Modal
@@ -134,9 +176,18 @@ export const ModalDeleteFingerprints = ({
           vân tay để xóa
         </span>
         <span style={{ fontSize: "12px", color: "#666" }}>
-          Tổng số: {dataSourceNhanVienVanTay?.length || 0} vân tay
+          Tổng số: {filteredDataSource?.length || 0} vân tay
         </span>
       </div>
+
+      <Input
+        placeholder="Tìm kiếm..."
+        prefix={<SearchOutlined />}
+        value={searchText}
+        onChange={(e) => setSearchText(e.target.value)}
+        style={{ marginBottom: 16, width: 180 }}
+        allowClear
+      />
 
       {isDelete && (
         <Progress
@@ -150,7 +201,7 @@ export const ModalDeleteFingerprints = ({
       <Table
         rowSelection={rowSelection}
         columns={NhanVienVanTayColumns}
-        dataSource={dataSourceNhanVienVanTay}
+        dataSource={filteredDataSource}
         rowKey={(record) => `${record.maNhanVien}-${record.viTriNgonTay}`}
         pagination={{
           pageSize: 8,

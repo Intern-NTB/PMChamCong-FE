@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react"; // Import useMemo
 import {
   Card,
   Input,
@@ -23,6 +23,7 @@ import {
   ClockCircleOutlined,
   WarningOutlined,
   ReloadOutlined,
+  SearchOutlined, 
 } from "@ant-design/icons";
 import "./maychamcong.css";
 import { useMayChamCong } from "../../component/hooks/useMayChamCong";
@@ -32,6 +33,15 @@ import { ModalDeleteEmployee } from "./modleHandleDeleteNhanVien";
 import { ModalDeleteFingerprints } from "./modleHandleDeleteVanTay";
 import { ModalUploadFingerPrintsToMayChamCong } from "./modleUploadFingerprintsToMayChamCong";
 const { Title, Text } = Typography;
+
+const removeAccents = (str) => {
+  if (!str) return "";
+  return str
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D");
+};
 
 const MayChamCong = () => {
   const [connectionStatus, setConnectionStatus] = useState("Chưa kết nối");
@@ -46,7 +56,7 @@ const MayChamCong = () => {
   ] = useState(false);
   const [isDeleteTingModalVanTay, setIsDeleteTingModalVanTay] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [showEmployeeModal, setShowEmployeeModal] = useState(false);
+  const [showEmployeeModal, setShowEmployeeModal] = useState(false); 
   const [isVisibleModalDeleteEmployee, setIsVisibleModalDeleteEmployee] =
     useState(false);
   const [isVisibleModalDeleteVanTay, setIsVisibleModalDeleteVanTay] =
@@ -54,6 +64,8 @@ const MayChamCong = () => {
   const [isVisibleModalUploadVanTay, setIsVisibleModalUploadVanTay] =
     useState(false);
   const [selectedDbEmployees, setSelectedDbEmployees] = useState([]);
+  const [searchDbEmployeeText, setSearchDbEmployeeText] = useState(""); 
+
   const {
     danhSachNhanVienMayChamCong,
     isLoadingMayChamCong,
@@ -71,6 +83,7 @@ const MayChamCong = () => {
     danhSachVanTayNhanVien,
     getAllFingerprintsOfNhanVien,
   } = useNhanVien();
+
   const dataSourceNhanVien = danhSachNhanVien.map((nv) => {
     return {
       maNhanVien: nv.maNhanVien,
@@ -91,6 +104,7 @@ const MayChamCong = () => {
       };
     }
   );
+
   const dataSourceNhanVienMayChamCong = danhSachNhanVienMayChamCong.map(
     (nv) => {
       return {
@@ -102,18 +116,39 @@ const MayChamCong = () => {
     }
   );
 
-  const handleOkModalUploadNhanVien = async (selectedRows) => {
-    setLogs((prev) => [...prev, "Bắt đầu cập nhật vân tay lên  máy chấm công"]);
-    setProgress(0);
+  const filteredDataSourceNhanVienDB = useMemo(() => {
+    if (!searchDbEmployeeText) {
+      return dataSourceNhanVien;
+    }
 
+    const processedSearchText = removeAccents(searchDbEmployeeText).toLowerCase();
+
+    return dataSourceNhanVien.filter((record) => {
+      const maNhanVienString = removeAccents(String(record.maNhanVien || "")).toLowerCase();
+      const hoTenString = removeAccents(String(record.hoTen || "")).toLowerCase();
+      const trangThaiString = removeAccents(String(record.trangThai || "")).toLowerCase();
+
+      return (
+        maNhanVienString.includes(processedSearchText) ||
+        hoTenString.includes(processedSearchText) ||
+        trangThaiString.includes(processedSearchText)
+      );
+    });
+  }, [dataSourceNhanVien, searchDbEmployeeText]);
+
+  // --- Handlers ---
+  const handleOkModalUploadNhanVien = async (selectedRows) => {
+    setLogs((prev) => [...prev, "Bắt đầu cập nhật vân tay lên máy chấm công"]);
+    setProgress(0);
 
     await uploadFingerprintsToMayChamCong(selectedRows);
 
     setIsVisibleModalUploadVanTay(false);
   };
+
   const handleReloadNhanVienMayChamCong = async () => {
     try {
-      setLogs((prev) => [...prev, "Đang tải lại dữ liệu nhân viên  !"]);
+      setLogs((prev) => [...prev, "Đang tải lại dữ liệu nhân viên !"]);
       const isReloadedGetAllNhanVienMayChamCong =
         await getAllNhanVienMayChamCong();
       if (isReloadedGetAllNhanVienMayChamCong) {
@@ -123,12 +158,12 @@ const MayChamCong = () => {
       setLogs((prev) => [...prev, "Tải lại dữ liêu nhân viên Thất bại !"]);
     }
   };
+
   const handleConnect = async () => {
     const values = await form.validateFields();
     const { ipAddress, port } = values;
     console.log("Connect Đến Máy chấm Công .....");
 
-    // Cập nhật UI trước khi kết nối
     setConnectionStatus("Đang kết nối...");
     setIsFunctionEnabled(false);
     setLogs((prev) => [
@@ -136,7 +171,6 @@ const MayChamCong = () => {
       `Đang cố gắng kết nối đến ${ipAddress}:${port}...`,
     ]);
 
-    // Đợi kết quả từ checkConnection
     const isSuccess = await checkConnection(ipAddress, port);
 
     if (isSuccess) {
@@ -158,6 +192,7 @@ const MayChamCong = () => {
       setLogs((prev) => [...prev, "Kết nối thất bại!"]);
     }
   };
+
   const handeCancelModelDeleteVanTay = () => {
     setIsVisibleModalDeleteVanTay(false);
   };
@@ -170,7 +205,7 @@ const MayChamCong = () => {
       if (isCreatedNhanVienMayChamCong) {
         setLogs((prev) => [
           ...prev,
-          `Đã gửi  nhân viên  thành công lên máy chấm công.`,
+          `Đã gửi nhân viên thành công lên máy chấm công.`,
         ]);
       } else {
         setLogs((prev) => [
@@ -181,15 +216,17 @@ const MayChamCong = () => {
     } catch (error) {
       setLogs((prev) => [
         ...prev,
-        `Lỗi trong quá trình gửi  nhân viên lên máy chấm công : ${error}`,
+        `Lỗi trong quá trình gửi nhân viên lên máy chấm công : ${error}`,
       ]);
     }
   };
 
   const handleUploadEmployees = async () => {
-    handleUpload(selectedDbEmployees);
+    await handleUpload(selectedDbEmployees); 
     setShowEmployeeModal(false);
     setSelectedDbEmployees([]);
+    setSearchDbEmployeeText(""); 
+    await handleReloadNhanVienMayChamCong();
   };
 
   const handleUploadFingerprints = async () => {
@@ -222,11 +259,14 @@ const MayChamCong = () => {
     setIsVisibleModalDeleteVanTay(false);
     setIsDeleteTingModalVanTay(false);
   };
-  const handleDownloadAttendance = async () => {};
+
+  const handleDownloadAttendance = async () => {
+    setLogs((prev) => [...prev, "Chức năng tải dữ liệu chấm công đang được phát triển."]);
+  };
 
   const handleDownloadFingerprints = async () => {
     try {
-      setIsSyncing(true); // Bắt đầu loading
+      setIsSyncing(true); 
       setLogs((prev) => [
         ...prev,
         "Đang đồng bộ dữ liệu vân tay từ máy chấm công về DB hệ thống",
@@ -234,12 +274,12 @@ const MayChamCong = () => {
 
       await syncFingerprintsToDB();
 
-      // Gọi lại để lấy dữ liệu vân tay của nhân viên
       await getAllFingerprintsOfNhanVien();
       setLogs((prev) => [...prev, "Đồng bộ dữ liệu vân tay hoàn tất"]);
-      setIsSyncing(false); // Kết thúc loading
+      setIsSyncing(false); 
     } catch (error) {
       setLogs((prev) => [...prev, `Lỗi khi đồng bộ dữ liệu vân tay: ${error}`]);
+      setIsSyncing(false); 
     }
   };
 
@@ -270,7 +310,7 @@ const MayChamCong = () => {
     );
 
     await Promise.allSettled(deletePromises);
-    await getAllNhanVienMayChamCong();
+    await getAllNhanVienMayChamCong(); 
     setIsVisibleModalDeleteEmployee(false);
     setIsDeleteTingModalNhanVienMayChamCong(false);
   };
@@ -298,6 +338,7 @@ const MayChamCong = () => {
       width: 150,
     },
   ];
+
   const NhanVienMayChamCongColumns = [
     {
       title: "Mã Nhân viên",
@@ -397,6 +438,7 @@ const MayChamCong = () => {
               icon={<UploadOutlined />}
               onClick={() => {
                 setShowEmployeeModal(true);
+                setSearchDbEmployeeText(""); 
               }}
               disabled={!isFunctionEnabled}
               className="button"
@@ -453,7 +495,7 @@ const MayChamCong = () => {
               <Text type="secondary">Chưa có thao tác nào.</Text>
             ) : (
               logs.map((log, index) => (
-                <p maNhanVien={index} className="logEntry">
+                <p key={index} className="logEntry"> {/* Added key prop */}
                   <ClockCircleOutlined className="logIcon" />
                   {log}
                 </p>
@@ -489,20 +531,30 @@ const MayChamCong = () => {
           dataSourceNhanVienVanTay={dataSourceDanhSachVanTayNhanVien}
           apiReload={getAllFingerprintsOfNhanVien}
         />
+
+        {/* Modal "Tải Nhân viên lên Máy Chấm Công" */}
         <Modal
           title="Tải Nhân viên lên Máy Chấm Công"
           open={showEmployeeModal}
-          onCancel={() => setShowEmployeeModal(false)}
+          onCancel={() => {
+            setShowEmployeeModal(false);
+            setSearchDbEmployeeText(""); 
+            setSelectedDbEmployees([]); 
+          }}
           footer={[
             <Button
-              maNhanVien="back"
-              onClick={() => setShowEmployeeModal(false)}
+              key="back" 
+              onClick={() => {
+                setShowEmployeeModal(false);
+                setSearchDbEmployeeText(""); 
+                setSelectedDbEmployees([]); 
+              }}
               className="button"
             >
               Hủy
             </Button>,
             <Button
-              maNhanVien="submit"
+              key="submit" 
               type="primary"
               onClick={handleUploadEmployees}
               disabled={selectedDbEmployees.length === 0}
@@ -518,11 +570,23 @@ const MayChamCong = () => {
               <Title level={5} className="modalTableTitle">
                 Nhân viên trong hệ thống (DB)
               </Title>
+              {/* Search bar for DB employees */}
+              <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'flex-start' }}>
+                <Input
+                  placeholder="Tìm kiếm trong DB..."
+                  prefix={<SearchOutlined />}
+                  allowClear
+                  size="small"
+                  style={{ width: 180 }}
+                  value={searchDbEmployeeText}
+                  onChange={(e) => setSearchDbEmployeeText(e.target.value)}
+                />
+              </div>
               <Table
                 rowKey={"maNhanVien"}
                 rowSelection={rowSelection}
                 columns={NhanVienDBColumns}
-                dataSource={dataSourceNhanVien}
+                dataSource={filteredDataSourceNhanVienDB}
                 pagination={{ pageSize: 5 }}
                 size="small"
                 scroll={{ y: 300 }}
