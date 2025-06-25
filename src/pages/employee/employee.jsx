@@ -13,6 +13,7 @@ import {
   Badge,
   Menu,
   AutoComplete,
+  Form, 
 } from "antd";
 import { useEffect, useState, useContext, useMemo } from "react";
 import {
@@ -35,12 +36,13 @@ import "./employee.css";
 import MyAlert from "../../component/ui/alert";
 import ModalChiTietChamCong from "../chamcong/modal_chi_tiet_cham_cong";
 import dayjs from "dayjs";
+
 const { Option } = Select;
 const { Search } = Input;
 
 export default function NhanVien() {
+  // Hook và Context
   const { danhSachChamCongChiTiet } = useChamCong();
-
   const {
     danhSachNhanVien,
     loading,
@@ -51,13 +53,14 @@ export default function NhanVien() {
   } = useNhanVien();
   const { setReload } = useContext(ReloadContext);
 
-  const [isModalVisible, setIsModalVisible] = useState(false);
+  // State
+  const [isModalVisible, setIsModalVisible] = useState(false); 
   const [isModalChamCongChiTietVisible, setIsModalChamCongChiTietVisible] =
-    useState(false);
+    useState(false); 
   const [selectedNhanVien, setSelectedNhanVien] = useState(null);
   const [isModalCreateNhanVienVisible, setIsModalCreateNhanVienVisible] =
-    useState(false);
-  const [currentRecord, setCurrentRecord] = useState(null);
+    useState(false); 
+  const [currentRecord, setCurrentRecord] = useState(null); 
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [pageSize, setPageSize] = useState(10);
   const [isMobile, setIsMobile] = useState(false);
@@ -76,37 +79,51 @@ export default function NhanVien() {
     trangThai: null,
   });
   const [highlightedText, setHighlightedText] = useState("");
-
   const [tableScrollY, setTableScrollY] = useState(0);
 
+  const formFields = [
+    { name: "hoTen", label: "Họ Tên", type: "text", rules: [{ required: true, message: "Vui lòng nhập họ tên!" }] },
+    { name: "cmnd", label: "Số CCCD", type: "text", rules: [{ required: true, message: "Vui lòng nhập CCCD!" }] },
+    { name: "ngaySinh", label: "Ngày Sinh", type: "date", rules: [{ required: true, message: "Vui lòng chọn ngày sinh!" }] },
+    { name: "diaChi", label: "Địa Chỉ", type: "textarea" },
+    { name: "soDienThoai", label: "Số Điện Thoại", type: "text", rules: [{ required: true, message: "Vui lòng nhập số điện thoại!" }] },
+    { name: "trangThai", label: "Trạng Thái", type: "select", options: ["Đang làm", "Nghỉ việc", "Mới đăng ký"] },
+    { name: "ngayVaoLam", label: "Ngày Vào Làm", type: "date", rules: [{ required: true, message: "Vui lòng chọn ngày vào làm!" }] },
+    { name: "luongCoBan", label: "Lương Cơ Bản", type: "number", rules: [{ required: true, message: "Vui lòng nhập lương cơ bản!" }] },
+    { name: "heSoTangCa", label: "Hệ Số Tăng Ca", type: "number", rules: [{ required: true, message: "Vui lòng nhập hệ số tăng ca!" }] },
+ 
+  ];
+
+  // Effects
   useEffect(() => {
-    setReload(() => fetchNhanVien());
+    fetchNhanVien();
+
     const checkScreenSize = () => {
       setIsMobile(window.innerWidth < 880);
     };
 
     const calculateTableHeight = () => {
-      const headerOffset = isMobile ? 250 : 220; 
-      const paginationOffset = 64; 
+      const headerOffset = isMobile ? 250 : 220;
+      const paginationOffset = 64;
       const totalOffset = headerOffset + paginationOffset;
       setTableScrollY(window.innerHeight - totalOffset);
     };
 
     checkScreenSize();
-    calculateTableHeight(); 
+    calculateTableHeight();
     window.addEventListener("resize", () => {
-      checkScreenSize();
-      calculateTableHeight(); 
-    });
-    return () => window.removeEventListener("resize", () => {
       checkScreenSize();
       calculateTableHeight();
     });
-  }, [isMobile]); 
+    return () =>
+      window.removeEventListener("resize", () => {
+        checkScreenSize();
+        calculateTableHeight();
+      });
+  }, [isMobile, fetchNhanVien]);
 
   useEffect(() => {
     const savedSearchHistory = localStorage.getItem("employeeSearchHistory");
-
     if (savedSearchHistory) {
       setSearchHistory(JSON.parse(savedSearchHistory));
     }
@@ -116,6 +133,7 @@ export default function NhanVien() {
     if (!Array.isArray(danhSachNhanVien)) return [];
 
     let filtered = danhSachNhanVien.map((nhanVien) => ({
+      ...nhanVien, 
       maNhanVien: nhanVien.maNhanVien,
       hoTen: nhanVien.hoTen || "N/A",
       cmnd: nhanVien.cmnd || "",
@@ -132,7 +150,7 @@ export default function NhanVien() {
       tenPhongBan: nhanVien.tenPhongBan || "N/A",
       tenVaiTro: nhanVien.tenVaiTro || "N/A",
       tenUuTien: nhanVien.tenUuTien || "N/A",
-      originalData: nhanVien,
+      originalData: nhanVien, 
     }));
 
     if (currentFilter.phongBan) {
@@ -245,9 +263,9 @@ export default function NhanVien() {
       key: "ngaySinh",
       width: 150,
       render: (text) =>
-        dayjs(highlightText(text)).isValid()
-          ? dayjs(highlightText(text)).format("DD/MM/YYYY")
-          : "",
+        dayjs(text).isValid()
+          ? dayjs(text).format("DD/MM/YYYY")
+          : highlightText(text),
     },
     {
       title: "CCCD",
@@ -349,20 +367,24 @@ export default function NhanVien() {
           <div style={{ fontWeight: "bold", marginBottom: "4px" }}>
             {highlightText(record.hoTen)}
           </div>
-          <div style={{ fontSize: "12px", color: "#666", marginBottom: "4px" }}>
-            cmnd: {highlightText(record.cmnd)}
+          <div
+            style={{ fontSize: "12px", color: "#666", marginBottom: "4px" }}
+          >
+            CCCD: {highlightText(record.cmnd)}
           </div>
           <div style={{ fontSize: "12px", marginBottom: "4px" }}>
             {highlightText(record.tenVaiTro)} -{" "}
             {highlightText(record.tenPhongBan)}
           </div>
-          <div style={{ fontSize: "12px", color: "#666", marginBottom: "8px" }}>
+          <div
+            style={{ fontSize: "12px", color: "#666", marginBottom: "8px" }}
+          >
             SĐT: {highlightText(record.soDienThoai)}
           </div>
           <div
             style={{
               display: "flex",
-              justifyContent: "center",
+              justifyContent: "space-between",
               alignItems: "center",
             }}
           >
@@ -432,7 +454,6 @@ export default function NhanVien() {
     </Menu>
   );
 
-  // Event handlers
   const handleGlobalSearch = (value) => {
     setGlobalSearchValue(value);
     if (value && !searchHistory.includes(value)) {
@@ -461,11 +482,10 @@ export default function NhanVien() {
 
   const handleSaveCreateNhanVien = async (values) => {
     try {
-      console.log(values)
       await addNhanVien(values);
       showAlert("success", "Thành công", "Thêm nhân viên thành công!");
       setIsModalCreateNhanVienVisible(false);
-      await fetchNhanVien();
+      await fetchNhanVien(); 
     } catch (error) {
       console.error("Lỗi khi thêm nhân viên:", error);
       showAlert("error", "Lỗi", "Thêm nhân viên thất bại. Vui lòng thử lại.");
@@ -473,16 +493,16 @@ export default function NhanVien() {
   };
 
   const handleEdit = (record) => {
+    console.log("Chỉnh sửa nhân viên:", record); 
     setCurrentRecord(record);
-    setIsModalVisible(true);
+    setIsModalVisible(true); 
   };
 
   const handleDelete = async (maNhanVien) => {
     try {
-      console.log(maNhanVien)
       await deleteNhanVien(maNhanVien);
       showAlert("success", "Thành công", "Xoá nhân viên thành công!");
-      await fetchNhanVien();
+      await fetchNhanVien(); 
     } catch (error) {
       console.error("Lỗi khi xóa nhân viên:", error);
       showAlert("error", "Lỗi", "Xoá nhân viên thất bại. Vui lòng thử lại.");
@@ -494,7 +514,7 @@ export default function NhanVien() {
       await updateNhanVien(currentRecord.maNhanVien, values);
       showAlert("success", "Thành công", "Cập nhật nhân viên thành công!");
       setIsModalVisible(false);
-      await fetchNhanVien();
+      await fetchNhanVien(); 
     } catch (error) {
       console.error("Lỗi khi cập nhật:", error);
       showAlert(
@@ -711,10 +731,11 @@ export default function NhanVien() {
             <Table
               onRow={(record) => {
                 return {
-                  onClick: () => {
-                    console.log(record);
-                    setSelectedNhanVien(record);
-                    setIsModalChamCongChiTietVisible(true);
+                  onClick: (event) => {
+                    if (event.target.closest("button, .ant-dropdown-trigger")) {
+                      return;
+                    }
+                    handleEdit(record); 
                   },
                 };
               }}
@@ -900,9 +921,13 @@ export default function NhanVien() {
               <Table
                 onRow={(record) => {
                   return {
-                    onClick: () => {
-                      setSelectedNhanVien(record);
-                      setIsModalChamCongChiTietVisible(true);
+                    onClick: (event) => {
+                      if (
+                        event.target.closest("button, .ant-dropdown-trigger")
+                      ) {
+                        return;
+                      }
+                      handleEdit(record); 
                     },
                   };
                 }}
@@ -930,6 +955,7 @@ export default function NhanVien() {
         </Row>
       )}
 
+      {/* Modal chi tiết chấm công (vẫn giữ nguyên) */}
       <ModalChiTietChamCong
         isVisible={isModalChamCongChiTietVisible}
         onCancel={() => setIsModalChamCongChiTietVisible(false)}
@@ -937,24 +963,33 @@ export default function NhanVien() {
         danhSachChamCongChiTiet={danhSachChamCongChiTiet}
       />
 
+      {/* Popup chỉnh sửa nhân viên */}
       <Popup
         visible={isModalVisible}
-        onCancel={() => setIsModalVisible(false)}
+        onCancel={() => {
+          setIsModalVisible(false);
+          setCurrentRecord(null); 
+        }}
         onOk={handleSave}
-        initialValues={currentRecord?.originalData}
+        initialValues={currentRecord ? currentRecord.originalData : null} 
+        title="Chỉnh sửa nhân viên"
+        formFields={formFields} 
+        isEditMode={true} 
         maPhongBan={currentRecord?.maPhongBan}
         maVaiTro={currentRecord?.maVaiTro}
-        title="Chỉnh sửa nhân viên"
       />
 
+      {/* Popup thêm mới nhân viên */}
       <Popup
         visible={isModalCreateNhanVienVisible}
         onCancel={() => {
           setIsModalCreateNhanVienVisible(false);
         }}
         onOk={handleSaveCreateNhanVien}
-        title="Thêm nhân viên"
-        initialValues={{}}
+        title="Thêm nhân viên mới"
+        initialValues={{}} 
+        formFields={formFields} 
+        isEditMode={false} 
       />
     </div>
   );
