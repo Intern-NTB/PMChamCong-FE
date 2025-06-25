@@ -47,7 +47,6 @@ const calculateAmount = (value, unit, baseSalary) => {
 // Hàm tạo các dòng chi tiết thưởng (đã cập nhật)
 const createBonusRows = (bonusData, startIndex, baseSalary = 0) => {
   const rows = [];
-
   if (!bonusData) {
     return [[`${startIndex}`, "Chi tiết Thưởng", "Không có thưởng"]];
   }
@@ -225,7 +224,7 @@ export const generateDetailedSalaryPDF = (employeeData, monthYear = "") => {
     ["4", "Năm", employeeData.nam || "-"],
     ["5", "Tháng", employeeData.thang || "-"],
     ["6", "Lương cơ bản", formatCurrency(baseSalary)],
-    ["7", "Số ngày làm việc", employeeData.soNgayCong || 0],
+    ["7", "Số ngày công làm việc", employeeData.soNgayCong || 0],
     ["8", "Công chuẩn của tháng", employeeData.congChuanCuaThang || 0],
     ["9", "Số ngày nghỉ", employeeData.soNgayNghi + employeeData.soNgayLe || 0],
     ["10", "Số ngày nghỉ lễ", employeeData.soNgayLe || 0],
@@ -468,7 +467,7 @@ export const generateSinglePDFMultiplePages = (
       ["4", "Năm", employeeData.nam || "-"],
       ["5", "Tháng", employeeData.thang || "-"],
       ["6", "Lương cơ bản", formatCurrency(baseSalary)],
-      ["7", "Số ngày làm việc", employeeData.soNgayCong || 0],
+      ["7", "Số ngày công làm việc", employeeData.soNgayCong || 0],
       ["8", "Công chuẩn của tháng", employeeData.congChuanCuaThang || 0],
       [
         "9",

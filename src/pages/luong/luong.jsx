@@ -97,7 +97,7 @@ export default function Luong() {
 
     const danhSachLichSuTruFind = danhSachLichSuTru.filter((lst) => {
       if (lst.maNhanVien !== dsl.maNhanVien) return false;
-      const ngayTru = dayjs(lst.ngayTao, "DD/MM/YYYY");
+      const ngayTru = dayjs(lst.ngayTao, "YYYY-MM-DD");
       return (
         ngayTru.month() + 1 === selectedMonthYear.month() + 1 &&
         ngayTru.year() === selectedMonthYear.year()
@@ -112,7 +112,6 @@ export default function Luong() {
         ngayThuong.year() === selectedMonthYear.year()
       );
     });
-    console.log(danhSachLichSuThuongFind);
     const danhSachLichSuTruFinal = danhSachLichSuTruFind.map((tru) => {
       const loaiTru = danhSachLoaiTienTru.find(
         (ltt) => ltt.maLoaiTienTru === tru.maLoaiTienTru

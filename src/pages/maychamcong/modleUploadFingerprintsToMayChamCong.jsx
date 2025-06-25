@@ -129,7 +129,7 @@ export const ModalUploadFingerPrintsToMayChamCong = ({
           <div style={{ marginTop: 8, maxHeight: 100, overflowY: "auto" }}>
             {selectedRows.map((row, index) => (
               <div key={index} style={{ fontSize: "12px", color: "#666" }}>
-                • {row.maNhanVien} - {row.hoTen || "N/A"} - Vị trí:{" "}
+                • {row.maNhanVien} - {row.hoTen || "N/A"}
                 {row.viTriNgonTay}
               </div>
             ))}

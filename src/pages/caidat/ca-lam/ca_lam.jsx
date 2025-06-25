@@ -71,7 +71,7 @@ export default function CaLamComponent() {
     }
   }, [searchText, danhSachCaLam]);
 
-    const handleSearchChange = (e) => {
+  const handleSearchChange = (e) => {
     setSearchText(e.target.value);
   };
 
@@ -133,7 +133,6 @@ export default function CaLamComponent() {
       throw error;
     }
   };
-
 
   // Xử lý submit form
   const handleSubmit = async (values) => {
@@ -291,12 +290,12 @@ export default function CaLamComponent() {
 
   // Tính toán thống kê
   const totalShifts = Array.isArray(filteredList) ? filteredList.length : 0;
-  const totalHours = filteredList.reduce(
-    (acc, shift) => acc + (shift.soGioLamViec || 0),
-    0
-  );
-  const averageHours =
-    totalShifts > 0 ? (totalHours / totalShifts).toFixed(1) : 0;
+  // const totalHours = filteredList.reduce(
+  //   (acc, shift) => acc + (shift.soGioLamViec || 0),
+  //   0
+  // );
+  // const averageHours =
+  //   totalShifts > 0 ? (totalHours / totalShifts).toFixed(1) : 0;
 
   return (
     <div
@@ -340,7 +339,7 @@ export default function CaLamComponent() {
               />
             </Card>
           </Col>
-          <Col xs={24} sm={8}>
+          {/* <Col xs={24} sm={8}>
             <Card>
               <Statistic
                 title="Trung Bình Giờ/Ca"
@@ -361,7 +360,7 @@ export default function CaLamComponent() {
                 valueStyle={{ color: "#722ed1" }}
               />
             </Card>
-          </Col>
+          </Col> */}
         </Row>
 
         <Card>

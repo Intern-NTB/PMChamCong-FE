@@ -66,11 +66,16 @@ export default function DoiTuongUuTienComponent() {
   const api = useAppNotification();
   const { danhSachNhanVien, updateNhanVien } = useNhanVien();
   const { danhSachPhongBan, loading } = usePhongBan();
-  const { danhSachLichSuUuTien, createLichSuDoiTuongUuTien, updateLichSuUuTien, deleteLichSuUuTien } = useLichSuUuTien();
+  const {
+    danhSachLichSuUuTien,
+    createLichSuDoiTuongUuTien,
+    updateLichSuUuTien,
+    deleteLichSuUuTien,
+  } = useLichSuUuTien();
   const dataSourceLichSuUuTien = danhSachLichSuUuTien.map((lsut) => {
     const dataNhanVienFind = danhSachNhanVien.find(
       (nv) => nv.maNhanVien === lsut.maNhanVien
-    );    
+    );
     const dataDoiTuongUuTienFilter = danhSachDoiTuongUuTien.find(
       (dtut) => dtut.maUuTien === lsut.maUuTien
     );
@@ -81,12 +86,14 @@ export default function DoiTuongUuTienComponent() {
       thoiGianHieuLucKetThuc: lsut.thoiGianHieuLucKetThuc,
       hoTen: dataNhanVienFind?.hoTen || "N/A",
       tenUuTien: dataDoiTuongUuTienFilter?.tenUuTien || "N/A",
-      phongBan: dataNhanVienFind?.tenPhongBan || "N/A"
+      phongBan: dataNhanVienFind?.tenPhongBan || "N/A",
     };
   });
   // Data source mapping cho đối tượng ưu tiên
   const dataSource = danhSachDoiTuongUuTien.map((item) => {
-    const phongBan = danhSachPhongBan.find(pb => pb.maPhongBan === item.maPhongBan);
+    const phongBan = danhSachPhongBan.find(
+      (pb) => pb.maPhongBan === item.maPhongBan
+    );
     return {
       maUuTien: item.maUuTien,
       tenUuTien: item.tenUuTien,
@@ -94,12 +101,12 @@ export default function DoiTuongUuTienComponent() {
       thoiGianKetThucCa: item.thoiGianKetThucCa,
       thoiGianHieuLuc: item.thoiGianHieuLuc,
       maPhongBan: item.maPhongBan,
-      tenPhongBan: phongBan?.tenPhongBan || "Không xác định"
+      tenPhongBan: phongBan?.tenPhongBan || "Không xác định",
     };
   });
   const datasourcePhongBan = danhSachPhongBan.map((pb) => ({
     maPhongBans: pb.maPhongBan,
-    tenPhongBans: pb.tenPhongBan
+    tenPhongBans: pb.tenPhongBan,
   }));
 
   // Hàm lọc dữ liệu cho tìm kiếm lịch sử
@@ -137,7 +144,7 @@ export default function DoiTuongUuTienComponent() {
         maUuTien: editingId,
         thoiGianBatDauCa: values.thoiGianBatDauCa?.format("HH:mm:ss"),
         thoiGianKetThucCa: values.thoiGianKetThucCa?.format("HH:mm:ss"),
-        thoiGianHieuLuc: values.thoiGianHieuLuc,
+        thoiGianHieuLuc: parseInt(values.thoiGianHieuLuc),
         phongBan: values.phongBan,
       };
       await updateDoiTuongUuTien(formatedValues);
@@ -147,6 +154,7 @@ export default function DoiTuongUuTienComponent() {
         ...values,
         thoiGianBatDauCa: values.thoiGianBatDauCa?.format("HH:mm:ss"),
         thoiGianKetThucCa: values.thoiGianKetThucCa?.format("HH:mm:ss"),
+        thoiGianHieuLuc: parseInt(values.thoiGianHieuLuc),
         phongBan: values.phongBan,
       };
       await createDoiTuongUuTien(formatedValues);
@@ -294,20 +302,20 @@ export default function DoiTuongUuTienComponent() {
   };
 
   const handleChangeNhanVien = (value) => {
-    const nhanVien = danhSachNhanVien.find(nv => nv.maNhanVien === value);
+    const nhanVien = danhSachNhanVien.find((nv) => nv.maNhanVien === value);
     setPhongBanNhanVien(nhanVien?.maPhongBan || null);
     historyForm.setFieldsValue({ maNhanVien: value });
   };
   const filteredDoiTuongUuTien = useMemo(() => {
     return danhSachDoiTuongUuTien.filter(
-      item => item.maPhongBan === phongBanNhanVien
+      (item) => item.maPhongBan === phongBanNhanVien
     );
   }, [danhSachDoiTuongUuTien, phongBanNhanVien]);
 
   useEffect(() => {
     if (editingHistoryId && historyForm.getFieldValue("maNhanVien")) {
       const maNV = historyForm.getFieldValue("maNhanVien");
-      const nhanVien = danhSachNhanVien.find(nv => nv.maNhanVien === maNV);
+      const nhanVien = danhSachNhanVien.find((nv) => nv.maNhanVien === maNV);
       setPhongBanNhanVien(nhanVien?.maPhongBan || null);
     }
   }, [editingHistoryId, historyForm, danhSachNhanVien]);
@@ -696,7 +704,7 @@ export default function DoiTuongUuTienComponent() {
           centered
           title={
             <Space>
-              <UserOutlined style={{color: "black"}}/>
+              <UserOutlined style={{ color: "black" }} />
               {editingId
                 ? "Chỉnh Sửa Đối Tượng Ưu Tiên"
                 : "Thêm Đối Tượng Ưu Tiên"}
@@ -738,7 +746,8 @@ export default function DoiTuongUuTienComponent() {
                       required: true,
                       message: "Vui lòng chọn phòng ban",
                     },
-                  ]}>
+                  ]}
+                >
                   <Select
                     placeholder="Chọn phòng ban"
                     size="large"
@@ -834,10 +843,18 @@ export default function DoiTuongUuTienComponent() {
         <Modal
           centered
           title={
-            <div style={{ textAlign: "center", fontSize: "18px", fontWeight: "bold" }}>
+            <div
+              style={{
+                textAlign: "center",
+                fontSize: "18px",
+                fontWeight: "bold",
+              }}
+            >
               <Space>
-                <HistoryOutlined style={{ color: "black" }}/>
-                {editingHistoryId ? "Chỉnh Sửa Lịch Sử Ưu Tiên" : "Thêm Lịch Sử Ưu Tiên"}
+                <HistoryOutlined style={{ color: "black" }} />
+                {editingHistoryId
+                  ? "Chỉnh Sửa Lịch Sử Ưu Tiên"
+                  : "Thêm Lịch Sử Ưu Tiên"}
               </Space>
             </div>
           }
@@ -866,7 +883,9 @@ export default function DoiTuongUuTienComponent() {
                     style={{ width: "100%" }}
                     onChange={handleChangeNhanVien}
                     filterOption={(input, option) =>
-                      (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
+                      (option?.label ?? "")
+                        .toLowerCase()
+                        .includes(input.toLowerCase())
                     }
                     options={danhSachNhanVien.map((nv) => ({
                       value: nv.maNhanVien,
@@ -896,7 +915,9 @@ export default function DoiTuongUuTienComponent() {
                     optionFilterProp="children"
                     style={{ width: "100%" }}
                     filterOption={(input, option) =>
-                      (option?.children ?? "").toLowerCase().includes(input.toLowerCase())
+                      (option?.children ?? "")
+                        .toLowerCase()
+                        .includes(input.toLowerCase())
                     }
                   >
                     {filteredDoiTuongUuTien.map((item) => (
