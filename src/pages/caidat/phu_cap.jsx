@@ -57,6 +57,16 @@ export default function PhuCapComponent() {
     const [modalType, setModalType] = useState("");
     const [form] = Form.useForm();
 
+    //State chọn nhân viên để lấy vai trò rồi suy ra Phụ cấp
+    const [selectedMaNhanVien, setSelectedMaNhanVien] = useState(null);
+    const selectedNhanVien = danhSachNhanVien.find(nv => nv.maNhanVien === selectedMaNhanVien);
+    const maVaiTro = selectedNhanVien?.maVaiTro;
+
+    const danhSachPhuCapTheoVaiTro = useMemo(() => {
+        if (!maVaiTro) return [];
+        return danhSachLoaiPhuCap.filter(pc => pc.maVaiTro === maVaiTro);
+    }, [maVaiTro, danhSachLoaiPhuCap]);
+
     // state
     const apiNotification = useAppNotification();
     const { setReload } = useContext(ReloadContext);
@@ -99,6 +109,7 @@ export default function PhuCapComponent() {
                 key: dslspc.maPhuCap,
                 maPhuCap: dslspc.maPhuCap,
                 tenPhuCap: phuCapFind?.tenPhuCap,
+                tenPhuCapTheovaiTro: vaiTroFind?.tenPhuCap,
                 maNhanVien: dslspc.maNhanVien,
                 hoTen: nhanVienFind?.hoTen,
                 soTienPhuCap: `${phuCapFind.soTienPhuCap.toLocaleString()} VNĐ`,
@@ -702,7 +713,8 @@ export default function PhuCapComponent() {
                                         ]}
                                     >
                                         <Select
-                                            disabled={editingId ? true : false}
+                                            disabled={false}
+                                            onChange={(value) => setSelectedMaNhanVien(value)}
                                             showSearch
                                             placeholder="Họ tên nhân viên" filterOption={(input, option) =>
                                                 (option?.children ?? "").toLowerCase().includes(input.toLowerCase())
@@ -730,11 +742,11 @@ export default function PhuCapComponent() {
                                         ]}
                                     >
                                         <Select
-                                            disabled={editingId ? true : false}
+                                            disabled={!selectedMaNhanVien}
                                             placeholder="Chọn phụ cấp"
                                             showSearch
                                         >
-                                            {danhSachLoaiPhuCap.map((phucap) => (
+                                            {danhSachPhuCapTheoVaiTro.map((phucap) => (
                                                 <Select.Option key={phucap.maPhuCap} value={phucap.maPhuCap}>
                                                     {phucap.tenPhuCap}
                                                 </Select.Option>
