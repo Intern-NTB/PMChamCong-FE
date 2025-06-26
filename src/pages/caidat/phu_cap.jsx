@@ -103,13 +103,13 @@ export default function PhuCapComponent() {
 
     // State cho tìm kiếm
     const [searchTextLichSu, setSearchTextLichSu] = useState("");
-    const [searchTextLoaiThuong, setSearchTextLoaiThuong] = useState("");
+    const [searchTextLoaiPhuCap, setSearchTextLoaiPhuCap] = useState("");
 
     // State cho select nhiều dòng
     const [selectedLichSuKeys, setSelectedLichSuKeys] = useState([]);
-    const [selectedLoaiThuongKeys, setSelectedLoaiThuongKeys] = useState([]);
+    const [selectedLoaiPhuCapKeys, setSelectedLoaiPhuCapKeys] = useState([]);
 
-    const getFilteredLoaiPhuCap = () => {
+    const getFilteredLichSuPhuCap = () => {
         let filteredData = dataSourceLoaiPhuCap;
         // Lọc theo từ khóa tìm kiếm
         if (searchTextLichSu) {
@@ -126,6 +126,16 @@ export default function PhuCapComponent() {
                 );
             });
         }
+    };
+    const getFilteredLoaiPhuCap = () => {
+        if (!searchTextLoaiPhuCap) return dataSourceLoaiPhuCap;
+        return dataSourceLoaiPhuCap.filter(
+            (item) =>
+                item.tenPhuCap
+                    .toLowerCase()
+                    .includes(searchTextLoaiPhuCap.toLowerCase()) ||
+                item.maPhuCap.toString().includes(searchTextLoaiPhuCap)
+        );
     };
 
     const getLoaiPhuCapName = (maLoaiPhuCap) => {
@@ -230,6 +240,41 @@ export default function PhuCapComponent() {
         setIsModalVisible(true);
         form.resetFields();
     };
+
+    const handleDeleteMultipleLoaiPhuCap = () => {
+        Modal.confirm({
+            title: `Bạn có chắc chắn muốn xóa ${selectedLoaiPhuCapKeys.length} loại thưởng đã chọn?`,
+            content: "Hành động này không thể hoàn tác.",
+            okText: "Xóa",
+            okType: "danger",
+            cancelText: "Hủy",
+            onOk() {
+                selectedLoaiPhuCapKeys.forEach(async (maPhuCap, maVaiTro) => {
+                    try {
+                        await deleteLoaiPhuCap(maPhuCap, maVaiTro);
+                    } catch (error) {
+                        console.error("Error deleting:", error);
+                    }
+                });
+                setSelectedLoaiPhuCapKeys([]);
+                apiNotification.success(`Đã xóa ${selectedLoaiPhuCapKeys.length} loại thưởng!`);
+            },
+        });
+    };
+
+    //Hàm xử lý chọn nhiều 
+    const loaiPhuCapRowSelection = {
+    selectedRowKeys: selectedLoaiPhuCapKeys,
+    onChange: (selectedRowKeys) => {
+      setSelectedLoaiPhuCapKeys(selectedRowKeys);
+    },
+    onSelectAll: (selected, selectedRows, changeRows) => {
+      console.log("Select all:", selected, selectedRows, changeRows);
+    },
+    onSelect: (record, selected, selectedRows) => {
+      console.log("Select:", record, selected, selectedRows);
+    },
+  };
 
     const columns = [
         {
@@ -446,32 +491,6 @@ export default function PhuCapComponent() {
                                         prefix={<SearchOutlined />}
                                     />
                                 </Col>
-                                {/* Bộ lọc thời gian
-                                <Col xs={20} sm={20} md={18} lg={16} xl={12}>
-                                    <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
-                                        <span style={{ marginBottom: 8 }}>Chọn khoảng thời gian:</span>
-                                        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                                            <RangePicker
-                                                value={dateRange}
-                                                onChange={handleDateRangeChange}
-                                                format="DD/MM/YYYY"
-                                                size="large"
-                                                style={{ flex: 1, minWidth: 150 }}
-                                            />
-                                            <ConfigProvider locale={viVN}>
-                                                <DatePicker
-                                                    placeholder="Chọn tháng"
-                                                    picker="month"
-                                                    value={selectedMonth}
-                                                    onChange={handleMonthChange}
-                                                    format="MM/YYYY"
-                                                    size="large"
-                                                    style={{ flex: 1, minWidth: 150 }}
-                                                />
-                                            </ConfigProvider>
-                                        </div>
-                                    </div>
-                                </Col>*/}
                             </Row>
                         </div>
 
@@ -535,16 +554,16 @@ export default function PhuCapComponent() {
                                         >
                                             Thêm loại phụ cấp
                                         </Button>
-                                        {/*selectedLoaiThuongKeys.length > 0 && (
+                                        {selectedLoaiPhuCapKeys.length > 0 && (
                                             <Button
                                                 type="primary"
                                                 danger
                                                 icon={<DeleteOutlined />}
-                                                onClick={handleDeleteMultipleLoaiThuong}
+                                                onClick={handleDeleteMultipleLoaiPhuCap}
                                             >
-                                                Xóa {selectedLoaiThuongKeys.length} mục đã chọn
+                                                Xóa {selectedLoaiPhuCapKeys.length} mục đã chọn
                                             </Button>
-                                        )*/}
+                                        )}
                                     </Space>
                                 </Col>
 
@@ -554,7 +573,7 @@ export default function PhuCapComponent() {
                                         placeholder="Tìm kiếm theo tên vai trò, tên phụ cấp, số tiền..."
                                         allowClear
                                         prefix={<SearchOutlined />}
-                                        onChange={(e) => setSearchTextLoaiThuong(e.target.value)}
+                                        onChange={(e) => setSearchTextLoaiPhuCap(e.target.value)}
                                         style={{
                                             width: "100%",
                                             maxWidth: 350,
@@ -565,7 +584,7 @@ export default function PhuCapComponent() {
                             </Row>
                         </div>
 
-                        {selectedLoaiThuongKeys.length > 0 && (
+                        {selectedLoaiPhuCapKeys.length > 0 && (
                             <div
                                 style={{
                                     marginBottom: "16px",
@@ -576,12 +595,12 @@ export default function PhuCapComponent() {
                                 }}
                             >
                                 <Text type="secondary">
-                                    Đã chọn {selectedLoaiThuongKeys.length} mục
+                                    Đã chọn {selectedLoaiPhuCapKeys.length} mục
                                 </Text>
                                 <Button
                                     type="link"
                                     size="small"
-                                    onClick={() => setSelectedLoaiThuongKeys([])}
+                                    onClick={() => setSelectedLoaiPhuCapKeys([])}
                                 >
                                     Bỏ chọn tất cả
                                 </Button>
@@ -590,10 +609,10 @@ export default function PhuCapComponent() {
 
                         <Table
                             columns={columns}
-                            dataSource={dataSourceLoaiPhuCap}
+                            dataSource={getFilteredLoaiPhuCap()}
                             loading={loadingLoaiPhuCap}
                             rowKey="maLoaiPhuCap"
-                            //rowSelection={loaiThuongRowSelection}
+                            rowSelection={loaiPhuCapRowSelection}
                             pagination={{
                                 pageSize: 10,
                                 showSizeChanger: true,
@@ -606,7 +625,7 @@ export default function PhuCapComponent() {
                 </Tabs>
             </Card>
 
-            {/* Modal Form cho Lịch sử ưu tiên */}
+            {/* Modal Form */}
             <Modal
                 centered
                 title={
