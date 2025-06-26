@@ -46,7 +46,7 @@ import { ReloadContext } from "../../context/reloadContext";
 
 export default function PhuCapComponent() {
 
-    const { danhSachLoaiPhuCap, getAllLoaiPhuCap, createLoaiPhuCap } = useLoaiPhuCap();
+    const { danhSachLoaiPhuCap, loadingLoaiPhuCap, getAllLoaiPhuCap, createLoaiPhuCap } = useLoaiPhuCap();
     const { danhSachLichSuPhuCap, getAllLichSuPhuCap, createLichSuPhuCap } = useLichSuPhuCap();
     const { danhSachVaiTro } = useVaiTro();
     const { danhSachNhanVien } = useNhanVien();
@@ -127,6 +127,7 @@ export default function PhuCapComponent() {
             });
         }
     };
+
     const getLoaiPhuCapName = (maLoaiPhuCap) => {
         const phucap = dataSourceLoaiPhuCap.find(
             (item) => item.maPhuCap === maLoaiPhuCap
@@ -134,57 +135,60 @@ export default function PhuCapComponent() {
         return phucap ? phucap.tenPhuCap : "Không xác định";
     };
 
-    const onFinish = async () => {
-        try {
-            const values = await form.validateFields();
+    const onFinish = useCallback(
+        async () => {
+            try {
+                const values = await form.validateFields();
 
-            if (modalType === "lichsu") {
-                const formattedValues = {
-                    ...values,
-                };
-
-                if (editingId) {
-                    await updateLichSuThuong(values);
-                    apiNotification.success({ message: "Cập nhật lịch sử thưởng thành công!" });
-                } else {
-                    await createLichSuThuong(formattedValues);
-                    apiNotification.success({ message: "Thêm lịch sử thưởng thành công!" });
-                }
-            } else {
-                if (editingId) {
-                    const updateValues = {
+                if (modalType === "lichsu") {
+                    const formattedValues = {
                         ...values,
-                        maLoaiTienThuong: editingId.maLoaiTienThuong,
                     };
-                    try {
-                        await updateLoaiTienThuong(updateValues);
-                        apiNotification.success({ message: "Cập nhật thành công!" });
-                    } catch (error) {
-                        apiNotification.error({
-                            message: "Cập nhật không thành công!",
-                            descriptions: error,
-                        });
+
+                    if (editingId) {
+                        await updateLichSuThuong(values);
+                        apiNotification.success({ message: "Cập nhật lịch sử thưởng thành công!" });
+                    } else {
+                        await createLichSuThuong(formattedValues);
+                        apiNotification.success({ message: "Thêm lịch sử thưởng thành công!" });
                     }
                 } else {
-                    try {
-                        await createLoaiPhuCap(values);
-                        apiNotification.success({ message: "Thêm thành công!" });
-                    } catch (error) {
-                        apiNotification.error({
-                            message: "Thêm Không thành công!",
-                            descriptions: error,
-                        });
+                    if (editingId) {
+                        const updateValues = {
+                            ...values,
+                            maLoaiTienThuong: editingId.maLoaiTienThuong,
+                        };
+                        try {
+                            await updateLoaiTienThuong(updateValues);
+                            apiNotification.success({ message: "Cập nhật thành công!" });
+                        } catch (error) {
+                            apiNotification.error({
+                                message: "Cập nhật không thành công!",
+                                descriptions: error,
+                            });
+                        }
+                    } else {
+                        try {
+                            await createLoaiPhuCap(values);
+                            apiNotification.success({ message: "Thêm thành công!" });
+                        } catch (error) {
+                            apiNotification.error({
+                                message: "Thêm Không thành công!",
+                                descriptions: error,
+                            });
+                        }
                     }
                 }
-            }
-
-            setIsModalVisible(false);
-            form.resetFields();
-        } catch (error) {
-            console.log("Validation failed:", error);
-        }
-        handleCancel();
-    };
+                setIsModalVisible(false);
+                form.resetFields();
+                handleCancel();
+                getAllLoaiPhuCap();
+            } catch (error) {
+                console.log("Validation failed:", error);
+            }    
+        },
+        [apiNotification, createLoaiPhuCap, getAllLoaiPhuCap, editingId]
+    );
 
     const handleAdd = () => {
         setEditingId(null);
@@ -193,11 +197,19 @@ export default function PhuCapComponent() {
         setIsModalVisible(true);
     };
 
-    const handleEdit = useCallback(
-        (record) => {
-        },
-        [form]
+    const handleEdit = (record) => {
+        setEditingId(record);
+        setModalType("loaiphucap");
+        setIsModalVisible(true);
+        form.setFieldsValue(record);
+    };
+
+    const handleDelete = (maPhuCap) => {
+    danhSachLoaiPhuCap.filter(
+      (item) => item.maPhuCap !== maPhuCap
     );
+    apiNotification.success({ message: "Xóa thành công!" });
+  };
 
     const handleCancel = () => {
         setIsModalVisible(false);
@@ -573,6 +585,7 @@ export default function PhuCapComponent() {
                         <Table
                             columns={columns}
                             dataSource={dataSourceLoaiPhuCap}
+                            loading={loadingLoaiPhuCap}
                             rowKey="maLoaiPhuCap"
                             //rowSelection={loaiThuongRowSelection}
                             pagination={{
@@ -679,7 +692,7 @@ export default function PhuCapComponent() {
                                         ]}
                                     >
                                         <Input
-                                            disabled={editingId ? true : false}
+                                            disabled={false}
                                             placeholder="Tên phụ cấp"
                                         />
                                     </Form.Item>
@@ -699,7 +712,7 @@ export default function PhuCapComponent() {
                                         ]}
                                     >
                                             <Select
-                                                disabled={editingId ? true : false}
+                                                disabled={false}
                                                 placeholder="Chọn vai trò"
                                                 showSearch
                                                 filterOption={(input, option) =>
@@ -728,12 +741,13 @@ export default function PhuCapComponent() {
                                         ]}
                                     >
                                         <InputNumber
-                                            disabled={editingId ? true : false}
+                                            disabled={false}
                                             placeholder="Số tiền phụ cấp"
+                                            min={0}
                                             step={10000}
                                             style={{ width: "100%" }}
                                             formatter={(value) =>
-                                                `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ".") + " VNĐ"
+                                                `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ".")
                                             }
                                             parser={(value) => value.replace(/\D/g, "")}
                                         />
