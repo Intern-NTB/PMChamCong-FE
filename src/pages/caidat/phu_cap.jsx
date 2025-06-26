@@ -46,7 +46,7 @@ import { ReloadContext } from "../../context/reloadContext";
 
 export default function PhuCapComponent() {
 
-    const { danhSachLoaiPhuCap, loadingLoaiPhuCap, getAllLoaiPhuCap, createLoaiPhuCap } = useLoaiPhuCap();
+    const { danhSachLoaiPhuCap, loadingLoaiPhuCap, getAllLoaiPhuCap, createLoaiPhuCap, updateLoaiPhuCap, deleteLoaiPhuCap } = useLoaiPhuCap();
     const { danhSachLichSuPhuCap, getAllLichSuPhuCap, createLichSuPhuCap } = useLichSuPhuCap();
     const { danhSachVaiTro } = useVaiTro();
     const { danhSachNhanVien } = useNhanVien();
@@ -156,10 +156,10 @@ export default function PhuCapComponent() {
                     if (editingId) {
                         const updateValues = {
                             ...values,
-                            maLoaiTienThuong: editingId.maLoaiTienThuong,
+                            maPhuCap: editingId.maPhuCap,
                         };
                         try {
-                            await updateLoaiTienThuong(updateValues);
+                            await updateLoaiPhuCap(updateValues);
                             apiNotification.success({ message: "Cập nhật thành công!" });
                         } catch (error) {
                             apiNotification.error({
@@ -204,12 +204,18 @@ export default function PhuCapComponent() {
         form.setFieldsValue(record);
     };
 
-    const handleDelete = (maPhuCap) => {
-    danhSachLoaiPhuCap.filter(
-      (item) => item.maPhuCap !== maPhuCap
-    );
-    apiNotification.success({ message: "Xóa thành công!" });
-  };
+    const handleDelete = async (maPhuCap, maVaiTro) => {
+        try {
+            await deleteLoaiPhuCap(maPhuCap, maVaiTro);
+
+            // Cập nhật lại danh sách
+            getAllLoaiPhuCap();
+
+            apiNotification.success({ message: "Xóa thành công!" });
+        } catch (error) {
+            apiNotification.error({ message: "Xóa thất bại!" });
+        };
+    }
 
     const handleCancel = () => {
         setIsModalVisible(false);
@@ -269,8 +275,8 @@ export default function PhuCapComponent() {
                     />
                     <Popconfirm
                         title="Xóa tài khoản"
-                        description="Bạn có chắc chắn muốn xóa tài khoản này?"
-                        onConfirm={() => handleDelete(record.maNhanVien)}
+                        description="Bạn có chắc chắn muốn xóa loại phụ cấp này?"
+                        onConfirm={() => handleDelete(record.maPhuCap, record.maVaiTro)}
                         okText="Có"
                         cancelText="Không"
                     >

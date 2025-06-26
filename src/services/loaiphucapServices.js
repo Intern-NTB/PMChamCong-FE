@@ -19,3 +19,21 @@ export const createLoaiPhuCapServices = async (duLieuLoaiPhuCap) => {
         console.log(`AXIOS lỗi khi tạo loại phụ cấp`, error);
     }
 }
+
+export const updateLoaiPhuCapServices = async (duLieuLoaiPhuCap) => {
+    try{
+        const res = await axiosInstance.put(`/phucap/${duLieuLoaiPhuCap.maPhuCap}`, duLieuLoaiPhuCap);
+        return res.data;
+    } catch (error) {
+        console.log(`AXIOS Lỗi khi cập nhật loại tiền thưởng`, error);
+    }
+}
+
+export const deleteLoaiPhuCapServices = async (maPhuCap, maVaiTro) => {
+    try{
+        const res = await axiosInstance.delete(`/phucap/${maPhuCap}/${maVaiTro}`);
+        return res.data;
+    } catch (error) {
+        console.log(`AXIOS Lỗi khi xóa loại tiền thưởng`, error);
+    }
+}
