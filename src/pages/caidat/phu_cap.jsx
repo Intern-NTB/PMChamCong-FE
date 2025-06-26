@@ -47,7 +47,7 @@ import { ReloadContext } from "../../context/reloadContext";
 export default function PhuCapComponent() {
 
     const { danhSachLoaiPhuCap, loadingLoaiPhuCap, getAllLoaiPhuCap, createLoaiPhuCap, updateLoaiPhuCap, deleteLoaiPhuCap } = useLoaiPhuCap();
-    const { danhSachLichSuPhuCap, getAllLichSuPhuCap, createLichSuPhuCap } = useLichSuPhuCap();
+    const { danhSachLichSuPhuCap, getAllLichSuPhuCap, createLichSuPhuCap, deleteLichSuPhuCap } = useLichSuPhuCap();
     const { danhSachVaiTro } = useVaiTro();
     const { danhSachNhanVien } = useNhanVien();
 
@@ -60,6 +60,20 @@ export default function PhuCapComponent() {
     // state
     const apiNotification = useAppNotification();
     const { setReload } = useContext(ReloadContext);
+
+    // Tính toán thống kê
+    const tongSoCacPhuCap = new Set(
+        danhSachLoaiPhuCap.map((item) => item.maPhuCap)
+    ).size;
+    const tongDangPhuCap = new Set(
+        danhSachLichSuPhuCap.map((item) => item.maNhanVien)
+    ).size;
+    const tongTienPhuCap = danhSachLichSuPhuCap.reduce((total, item) => {
+        const loaiPhuCap = danhSachLoaiPhuCap.find(
+            (lpc) => lpc.maPhuCap === item.maPhuCap
+        );
+        return total + (loaiPhuCap?.soTienPhuCap || 0);
+    }, 0);
 
     // Data Source
     const dataSourceLoaiPhuCap = useMemo(() => {
@@ -77,21 +91,21 @@ export default function PhuCapComponent() {
     }, [danhSachLoaiPhuCap, danhSachVaiTro]);
 
     const dataSourceLichSuPhuCap = useMemo(() => {
-        return danhSachNhanVien.flatMap((nv) => {
-            const vaiTro = danhSachVaiTro.find((vt) => vt.maVaiTro === nv.maVaiTro);
-            const danhSachPhuCap = danhSachLoaiPhuCap.filter((pc) => pc.maVaiTro === nv.maVaiTro);
-
-            return danhSachPhuCap.map((pc) => ({
-                key: `${nv.maNhanVien}-${pc.maPhuCap}`,
-                maNhanVien: nv.maNhanVien,
-                hoTen: nv.hoTen,
-                maVaiTro: vaiTro?.maVaiTro,
-                tenVaiTro: vaiTro?.tenVaiTro || "Không xác định",
-                tenPhuCap: pc.tenPhuCap,
-                soTienPhuCap: `${pc.soTienPhuCap.toLocaleString()} VNĐ`
-            }));
-        });
-    }, [danhSachNhanVien, danhSachVaiTro, danhSachLoaiPhuCap]);
+        return danhSachLichSuPhuCap.map((dslspc) => {
+            const nhanVienFind = danhSachNhanVien.find((nv) => nv.maNhanVien === dslspc.maNhanVien);
+            const vaiTroFind = danhSachVaiTro.find((vt) => vt.maVaiTro === nhanVienFind?.maVaiTro);
+            const phuCapFind = danhSachLoaiPhuCap.find((pc) => pc.maPhuCap === dslspc.maPhuCap)
+            return {
+                key: dslspc.maPhuCap,
+                maPhuCap: dslspc.maPhuCap,
+                tenPhuCap: phuCapFind?.tenPhuCap,
+                maNhanVien: dslspc.maNhanVien,
+                hoTen: nhanVienFind?.hoTen,
+                soTienPhuCap: `${phuCapFind.soTienPhuCap.toLocaleString()} VNĐ`,
+                tenVaiTro: vaiTroFind?.tenVaiTro
+            }
+        })
+    }, [danhSachLichSuPhuCap, danhSachNhanVien, danhSachLoaiPhuCap]);
 
     useEffect(() => {
         getAllLoaiPhuCap();
@@ -110,14 +124,13 @@ export default function PhuCapComponent() {
     const [selectedLoaiPhuCapKeys, setSelectedLoaiPhuCapKeys] = useState([]);
 
     const getFilteredLichSuPhuCap = () => {
-        let filteredData = dataSourceLoaiPhuCap;
+        let filteredData = dataSourceLichSuPhuCap;
         // Lọc theo từ khóa tìm kiếm
         if (searchTextLichSu) {
             const searchLower = searchTextLichSu.toLowerCase();
             filteredData = filteredData.filter((item) => {
                 return (
                     item.tenPhuCap?.toLowerCase().includes(searchLower) ||
-                    item.tenVaiTro?.toLowerCase().includes(searchLower) ||
                     item.hoTen?.toLowerCase().includes(searchLower) ||
                     getLoaiPhuCapName(item.maLoaiTienThuong)
                         ?.toLowerCase()
@@ -126,6 +139,7 @@ export default function PhuCapComponent() {
                 );
             });
         }
+        return filteredData;
     };
     const getFilteredLoaiPhuCap = () => {
         if (!searchTextLoaiPhuCap) return dataSourceLoaiPhuCap;
@@ -138,9 +152,9 @@ export default function PhuCapComponent() {
         );
     };
 
-    const getLoaiPhuCapName = (maLoaiPhuCap) => {
+    const getLoaiPhuCapName = (maPhuCap) => {
         const phucap = dataSourceLoaiPhuCap.find(
-            (item) => item.maPhuCap === maLoaiPhuCap
+            (item) => item.maPhuCap === maPhuCap
         );
         return phucap ? phucap.tenPhuCap : "Không xác định";
     };
@@ -151,16 +165,18 @@ export default function PhuCapComponent() {
                 const values = await form.validateFields();
 
                 if (modalType === "lichsu") {
-                    const formattedValues = {
-                        ...values,
-                    };
+                    try {
+                        const values = await form.validateFields();
+                        const { maNhanVien, maPhuCap } = values;
 
-                    if (editingId) {
-                        await updateLichSuThuong(values);
-                        apiNotification.success({ message: "Cập nhật lịch sử thưởng thành công!" });
-                    } else {
-                        await createLichSuThuong(formattedValues);
-                        apiNotification.success({ message: "Thêm lịch sử thưởng thành công!" });
+                        if (modalType === "lichsu") {
+                            await createLichSuPhuCap(maNhanVien, maPhuCap);
+                            getAllLichSuPhuCap();
+                            apiNotification.success({ message: "Thêm thành công!" });
+                        }
+                    } catch (err) {
+                        console.error("Lỗi khi submit form:", err);
+                        apiNotification.error({ message: "Thêm không thành công!" });
                     }
                 } else {
                     if (editingId) {
@@ -197,7 +213,7 @@ export default function PhuCapComponent() {
                 console.log("Validation failed:", error);
             }    
         },
-        [apiNotification, createLoaiPhuCap, getAllLoaiPhuCap, editingId]
+        [apiNotification, createLoaiPhuCap, getAllLoaiPhuCap, getAllLichSuPhuCap, editingId]
     );
 
     const handleAdd = () => {
@@ -217,10 +233,7 @@ export default function PhuCapComponent() {
     const handleDelete = async (maPhuCap, maVaiTro) => {
         try {
             await deleteLoaiPhuCap(maPhuCap, maVaiTro);
-
-            // Cập nhật lại danh sách
             getAllLoaiPhuCap();
-
             apiNotification.success({ message: "Xóa thành công!" });
         } catch (error) {
             apiNotification.error({ message: "Xóa thất bại!" });
@@ -233,17 +246,28 @@ export default function PhuCapComponent() {
         form.resetFields();
     };
 
-    // Hàm xử lý CRUD cho Lịch sử thưởng
+    // Hàm xử lý CRUD cho Lịch sử phụ cấp
     const handleAddLichSu = () => {
         setEditingId(null);
         setModalType("lichsu");
         setIsModalVisible(true);
         form.resetFields();
     };
+    const handleDelleteLichSu = async (maNhanVien, maPhuCap) => {
+        try {
+            await deleteLichSuPhuCap(maNhanVien, maPhuCap);
+            getAllLichSuPhuCap();
+            apiNotification.success({ message: "Xóa thành công!" });
+        } catch (error) {
+            apiNotification.error({ message: "Xóa thất bại!" });
+        };
+    }
 
+    //xóa nhiều dòng
+    const handleDeleteMultipleLichSu = () => {apiNotification.error({message: 'Có lỗi xảy ra', description: 'Chưa hổ trợ được tính năng này'})};
     const handleDeleteMultipleLoaiPhuCap = () => {
         Modal.confirm({
-            title: `Bạn có chắc chắn muốn xóa ${selectedLoaiPhuCapKeys.length} loại thưởng đã chọn?`,
+            title: `Bạn có chắc chắn muốn xóa ${selectedLoaiPhuCapKeys.length} loại phụ cấp đã chọn?`,
             content: "Hành động này không thể hoàn tác.",
             okText: "Xóa",
             okType: "danger",
@@ -257,12 +281,25 @@ export default function PhuCapComponent() {
                     }
                 });
                 setSelectedLoaiPhuCapKeys([]);
-                apiNotification.success(`Đã xóa ${selectedLoaiPhuCapKeys.length} loại thưởng!`);
+                apiNotification.success(`Đã xóa ${selectedLoaiPhuCapKeys.length} loại phụ cấp!`);
             },
         });
     };
 
-    //Hàm xử lý chọn nhiều 
+    //Hàm xử lý chọn nhiều
+    const lichSuRowSelection = {
+        selectedRowKeys: selectedLichSuKeys,
+        onChange: (selectedRowKeys) => {
+            setSelectedLichSuKeys(selectedRowKeys);
+        },
+        onSelectAll: (selected, selectedRows, changeRows) => {
+            console.log("Select all:", selected, selectedRows, changeRows);
+        },
+        onSelect: (record, selected, selectedRows) => {
+            console.log("Select:", record, selected, selectedRows);
+        },
+    };
+    
     const loaiPhuCapRowSelection = {
     selectedRowKeys: selectedLoaiPhuCapKeys,
     onChange: (selectedRowKeys) => {
@@ -290,6 +327,8 @@ export default function PhuCapComponent() {
             key: "tenVaiTro",
             width: 150,
             render: (text) => <Text strong>{text}</Text>,
+            sorter: (a, b) =>
+            a.tenVaiTro.toLowerCase().localeCompare(b.tenVaiTro.toLowerCase()),
         },
         {
             title: "Tên Phụ Cấp",
@@ -297,6 +336,8 @@ export default function PhuCapComponent() {
             key: "tenPhuCap",
             width: 150,
             render: (text) => <Text strong>{text}</Text>,
+            sorter: (a, b) =>
+            a.tenPhuCap.toLowerCase().localeCompare(b.tenPhuCap.toLowerCase()),
         },
         {
             title: "Tiền phụ cấp",
@@ -345,6 +386,8 @@ export default function PhuCapComponent() {
             title: "Tên nhân viên",
             dataIndex: "hoTen",
             key: "hoTen ",
+            sorter: (a, b) =>
+            a.hoTen.toLowerCase().localeCompare(b.hoTen.toLowerCase()),
         },
         {
             title: "Vai trò",
@@ -366,18 +409,12 @@ export default function PhuCapComponent() {
             key: "action",
             render: (_, record) => (
                 <Space size="middle">
-                    <Button
-                        ghost
-                        size="middle"
-                        icon={<EditOutlined />}
-                        onClick={() => handleEditLichSu(record)}
-                    />
                     <Popconfirm
                         title="Bạn có chắc chắn muốn xóa?"
                         onConfirm={() =>
-                            handleDeleteLichSuThuong(
+                            handleDelleteLichSu(
                                 record.maNhanVien,
-                                record.maLoaiTienThuong
+                                record.maPhuCap
                             )
                         }
                         okText="Có"
@@ -418,22 +455,33 @@ export default function PhuCapComponent() {
 
             {/* Statistics Cards */}
             <Row gutter={24} style={{ marginBottom: "32px" }}>
-                <Col xs={24} sm={12}>
+                <Col xs={24} sm={8}>
                     <Card style={{ height: "100%" }}>
                         <Statistic
                             title="Tổng các phụ cấp"
-                            value={0}
+                            value={tongSoCacPhuCap}
                             prefix={<UserOutlined />}
                             valueStyle={{ color: "#1890ff", cursor: "pointer" }}
                             onClick={() => setIsModalVisible(true)}
                         />
                     </Card>
                 </Col>
-                <Col xs={24} sm={12}>
+                <Col xs={24} sm={8}>
+                    <Card style={{ height: "100%" }}>
+                        <Statistic
+                            title="Tổng đang phụ cấp"
+                            value={tongDangPhuCap}
+                            prefix={<UserOutlined />}
+                            valueStyle={{ color: "#B8860B", cursor: "pointer" }}
+                            onClick={() => setIsModalVisible(true)}
+                        />
+                    </Card>
+                </Col>
+                <Col xs={24} sm={8}>
                     <Card style={{ height: "100%" }}>
                         <Statistic
                             title="Tổng số tiền phụ cấp"
-                            value={0}
+                            value={tongTienPhuCap}
                             prefix={<DollarOutlined />}
                             valueStyle={{ color: "#52c41a" }}
                             formatter={(value) =>
@@ -470,7 +518,7 @@ export default function PhuCapComponent() {
                                         >
                                             Thêm phụ cấp cho nhân viên
                                         </Button>
-                                        {/* selectedLichSuKeys.length > 0 && (
+                                        {selectedLichSuKeys.length > 0 && (
                                             <Button
                                                 type="primary"
                                                 danger
@@ -479,7 +527,7 @@ export default function PhuCapComponent() {
                                             >
                                                 Xóa {selectedLichSuKeys.length} mục đã chọn
                                             </Button>
-                                        )*/}
+                                        )}
                                     </Space>
                                 </Col>
                                 <Col xs={24} md={10} lg={8}>
@@ -494,7 +542,7 @@ export default function PhuCapComponent() {
                             </Row>
                         </div>
 
-                        {/*selectedLichSuKeys.length > 0 && (
+                        {selectedLichSuKeys.length > 0 && (
                             <div
                                 style={{
                                     marginBottom: "16px",
@@ -515,13 +563,13 @@ export default function PhuCapComponent() {
                                     Bỏ chọn tất cả
                                 </Button>
                             </div>
-                        )*/}
+                        )}
 
                         <Table
                             columns={lichSuColumns}
-                            dataSource={dataSourceLichSuPhuCap}
-                            rowKey="maPhuCap"
-                            //rowSelection={lichSuRowSelection}
+                            dataSource={getFilteredLichSuPhuCap()}
+                            rowKey="maNhanVien"
+                            rowSelection={lichSuRowSelection}
                             pagination={{
                                 pageSize: 10,
                                 showSizeChanger: true,
@@ -631,9 +679,7 @@ export default function PhuCapComponent() {
                 title={
                     <Space>
                         <HistoryOutlined style={{ color: "black" }} />
-                        {editingId
-                            ? "Chỉnh Sửa"
-                            : "Thêm Mới"}
+                        Thêm mới
                     </Space>
                 }
                 open={isModalVisible}
@@ -657,8 +703,16 @@ export default function PhuCapComponent() {
                                     >
                                         <Select
                                             disabled={editingId ? true : false}
-                                            placeholder="Họ tên nhân viên"
-                                        />
+                                            showSearch
+                                            placeholder="Họ tên nhân viên" filterOption={(input, option) =>
+                                                (option?.children ?? "").toLowerCase().includes(input.toLowerCase())
+                                        }>                                        
+                                            {danhSachNhanVien.map((nhanvien) => (
+                                                <Select.Option key={nhanvien.maNhanVien} value={nhanvien.maNhanVien}>
+                                                    {nhanvien.hoTen}
+                                                </Select.Option>
+                                            ))}
+                                        </Select>
                                     </Form.Item>
                                 </Col>
                             </Row>
@@ -667,7 +721,7 @@ export default function PhuCapComponent() {
                                 <Col xs={24} sm={24}>
                                     <Form.Item
                                         label="Tên Phụ Cấp"
-                                        name="maUuTien"
+                                        name="maPhuCap"
                                         rules={[
                                             {
                                                 required: true,
@@ -680,6 +734,11 @@ export default function PhuCapComponent() {
                                             placeholder="Chọn phụ cấp"
                                             showSearch
                                         >
+                                            {danhSachLoaiPhuCap.map((phucap) => (
+                                                <Select.Option key={phucap.maPhuCap} value={phucap.maPhuCap}>
+                                                    {phucap.tenPhuCap}
+                                                </Select.Option>
+                                            ))}
                                         </Select>
                                     </Form.Item>
                                 </Col>
@@ -743,12 +802,12 @@ export default function PhuCapComponent() {
                                                 filterOption={(input, option) =>
                                                     (option?.children ?? "").toLowerCase().includes(input.toLowerCase())
                                                 }>
-                                            {danhSachVaiTro.map((vaiTro) => (
-                                                <Select.Option key={vaiTro.maVaiTro} value={vaiTro.maVaiTro}>
-                                                    {vaiTro.tenVaiTro}
-                                                </Select.Option>
-                                            ))}
-                                        </Select>
+                                                {danhSachVaiTro.map((vaiTro) => (
+                                                    <Select.Option key={vaiTro.maVaiTro} value={vaiTro.maVaiTro}>
+                                                        {vaiTro.tenVaiTro}
+                                                    </Select.Option>
+                                                ))}
+                                            </Select>
                                     </Form.Item>
                                 </Col>
                             </Row>

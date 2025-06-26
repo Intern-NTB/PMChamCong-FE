@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { getAllLichSuPhuCapServices, createLichSuPhuCapServices } from "../../services/lichsuphucapServices";
+import { getAllLichSuPhuCapServices, createLichSuPhuCapServices, deleteLichSuPhuCapServices } from "../../services/lichsuphucapServices";
 
 export const useLichSuPhuCap = () => {
     const [loadingLichSuPhuCap, setLoadingLichSuPhuCap] = useState(false);
     const [danhSachLichSuPhuCap, setDanhSachLichSuPhuCap] = useState([]);
     const [isCreatedLichSuPhuCap, setIsCreatedLichSuPhuCap] = useState(false);
+    const [isDeletedLichSuPhuCap, setIsDeletedLichSuPhuCap] = useState(false);
 
     const getAllLichSuPhuCap = async () => {
         setLoadingLichSuPhuCap(true);
@@ -18,13 +19,25 @@ export const useLichSuPhuCap = () => {
         }
     }
 
-    const createLichSuPhuCap = async (duLieuLichSuPhuCap) => {
+    const createLichSuPhuCap = async (maNhanVien, maPhuCap) => {
         setLoadingLichSuPhuCap(true);
         try {
-            await createLichSuPhuCapServices(duLieuLichSuPhuCap);
+            await createLichSuPhuCapServices(maNhanVien, maPhuCap);
             setIsCreatedLichSuPhuCap(true);
         } catch {
             setIsCreatedLichSuPhuCap(false);
+        } finally {
+            setLoadingLichSuPhuCap(false);
+        }
+    }
+
+    const deleteLichSuPhuCap = async (maNhanVien, maPhuCap) => {
+        setLoadingLichSuPhuCap(true);
+        try {
+            await deleteLichSuPhuCapServices(maNhanVien, maPhuCap);
+            setIsDeletedLichSuPhuCap(true);
+        } catch {
+            setIsDeletedLichSuPhuCap(false);
         } finally {
             setLoadingLichSuPhuCap(false);
         }
@@ -38,7 +51,9 @@ export const useLichSuPhuCap = () => {
         danhSachLichSuPhuCap,
         loadingLichSuPhuCap,
         isCreatedLichSuPhuCap,
+        isDeletedLichSuPhuCap,
         getAllLichSuPhuCap,
-        createLichSuPhuCap
+        createLichSuPhuCap,
+        deleteLichSuPhuCap
     }
 }
