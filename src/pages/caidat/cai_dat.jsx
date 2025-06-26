@@ -22,6 +22,7 @@ export default function CaiDat() {
         { key: 'phong-ban', label: 'Phòng ban' },
         { key: 'ca-lam', label: 'Ca làm' },
         { key: 'doi-tuong-uu-tien', label: 'Đối tượng ưu tiên' },
+        { key: 'phu-cap', label: 'Phụ Cấp' },
         { key: 'vai-tro', label: 'Vai trò' },
         { key: 'nghi-le', label: 'Nghỉ lễ' },
         { key: 'thuong', label: 'Thưởng' },
