@@ -12,13 +12,15 @@ import {
     Statistic,
     Tabs,
     Space,
+    Tag,
     Popconfirm,
     message,
     Row,
     Divider,
     Col,
     Typography,
-    ConfigProvider
+    ConfigProvider,
+    List
 } from "antd";
 
 import {
@@ -53,6 +55,8 @@ export default function PhuCapComponent() {
 
     const [editingId, setEditingId] = useState(null);
     const [isModalVisible, setIsModalVisible] = useState(false);
+    const [modalVisible, setModalVisible] = useState(false);
+    const [selectedRecord, setSelectedRecord] = useState(null);
     const [isHistoryModalVisible, setIsHistoryModalVisible] = useState(false);
     const [modalType, setModalType] = useState("");
     const [form] = Form.useForm();
@@ -112,11 +116,36 @@ export default function PhuCapComponent() {
                 tenPhuCapTheovaiTro: vaiTroFind?.tenPhuCap,
                 maNhanVien: dslspc.maNhanVien,
                 hoTen: nhanVienFind?.hoTen,
-                soTienPhuCap: `${phuCapFind.soTienPhuCap.toLocaleString()} VNĐ`,
+                soTienPhuCap: `${phuCapFind?.soTienPhuCap?.toLocaleString()} VNĐ`,
                 tenVaiTro: vaiTroFind?.tenVaiTro
             }
         })
     }, [danhSachLichSuPhuCap, danhSachNhanVien, danhSachLoaiPhuCap]);
+
+    const dataSourceGopLichSu = useMemo(() => {
+        const grouped = {};
+
+        dataSourceLichSuPhuCap.forEach((item) => {
+            const key = `${item.maNhanVien}-${item.hoTen}`;
+
+            if (!grouped[key]) {
+                grouped[key] = {
+                    ...item,
+                    tenPhuCap: [item.tenPhuCap],
+                    tongTienPhuCap: Number(item.soTienPhuCap.replace(/\D/g, "")), // bỏ "VNĐ", dấu phẩy
+                };
+            } else {
+                grouped[key].tenPhuCap.push(item.tenPhuCap);
+                grouped[key].tongTienPhuCap += Number(item.soTienPhuCap.replace(/\D/g, ""));
+            }
+        });
+
+        return Object.values(grouped).map((item) => ({
+            ...item,
+            tenPhuCap: item.tenPhuCap.join(", "),
+            soTienPhuCap: item.tongTienPhuCap.toLocaleString() + " VNĐ",
+        }));
+    }, [dataSourceLichSuPhuCap]);
 
     useEffect(() => {
         getAllLoaiPhuCap();
@@ -134,8 +163,18 @@ export default function PhuCapComponent() {
     const [selectedLichSuKeys, setSelectedLichSuKeys] = useState([]);
     const [selectedLoaiPhuCapKeys, setSelectedLoaiPhuCapKeys] = useState([]);
 
+    // Hàm xử lý lọc các phụ cấp đã chọn trong lịch sử
+    const danhSachPhuCapDaChon = danhSachLichSuPhuCap
+        .filter(item => item.maNhanVien === selectedMaNhanVien)
+        .map(item => item.maPhuCap);
+
+    const danhSachPhuCapChuaChon = danhSachPhuCapTheoVaiTro.filter(
+        (phucap) => !danhSachPhuCapDaChon.includes(phucap.maPhuCap)
+    );
+
     const getFilteredLichSuPhuCap = () => {
-        let filteredData = dataSourceLichSuPhuCap;
+        let filteredData = [...dataSourceLichSuPhuCap];
+
         // Lọc theo từ khóa tìm kiếm
         if (searchTextLichSu) {
             const searchLower = searchTextLichSu.toLowerCase();
@@ -143,15 +182,37 @@ export default function PhuCapComponent() {
                 return (
                     item.tenPhuCap?.toLowerCase().includes(searchLower) ||
                     item.hoTen?.toLowerCase().includes(searchLower) ||
-                    getLoaiPhuCapName(item.maLoaiTienThuong)
-                        ?.toLowerCase()
-                        .includes(searchLower) ||
+                    getLoaiPhuCapName(item.maLoaiTienThuong)?.toLowerCase().includes(searchLower) ||
                     item.lyDo?.toLowerCase().includes(searchLower)
                 );
             });
         }
-        return filteredData;
+
+        // Gộp dữ liệu theo maNhanVien + hoTen
+        const grouped = {};
+
+        filteredData.forEach((item) => {
+            const key = `${item.maNhanVien}-${item.hoTen}`;
+
+            if (!grouped[key]) {
+                grouped[key] = {
+                    ...item,
+                    tenPhuCap: [item.tenPhuCap],
+                    tongTienPhuCap: Number(item.soTienPhuCap.replace(/\D/g, "")),
+                };
+            } else {
+                grouped[key].tenPhuCap.push(item.tenPhuCap);
+                grouped[key].tongTienPhuCap += Number(item.soTienPhuCap.replace(/\D/g, ""));
+            }
+        });
+
+        return Object.values(grouped).map((item) => ({
+            ...item,
+            tenPhuCap: item.tenPhuCap.join(", "),
+            soTienPhuCap: item.tongTienPhuCap.toLocaleString() + " VNĐ",
+        }));
     };
+
     const getFilteredLoaiPhuCap = () => {
         if (!searchTextLoaiPhuCap) return dataSourceLoaiPhuCap;
         return dataSourceLoaiPhuCap.filter(
@@ -255,6 +316,7 @@ export default function PhuCapComponent() {
         setIsModalVisible(false);
         setEditingId(null);
         form.resetFields();
+        setSelectedMaNhanVien(null);
     };
 
     // Hàm xử lý CRUD cho Lịch sử phụ cấp
@@ -264,6 +326,7 @@ export default function PhuCapComponent() {
         setIsModalVisible(true);
         form.resetFields();
     };
+
     const handleDelleteLichSu = async (maNhanVien, maPhuCap) => {
         try {
             await deleteLichSuPhuCap(maNhanVien, maPhuCap);
@@ -273,6 +336,27 @@ export default function PhuCapComponent() {
             apiNotification.error({ message: "Xóa thất bại!" });
         };
     }
+
+    const handleDeletePhuCap = async (phuCapName) => {
+        const maNhanVien = selectedRecord?.maNhanVien;
+
+        // Bạn cần tìm ra maPhuCap ứng với tên phụ cấp (nếu có danh sách mapping)
+        const phuCapObj = danhSachLoaiPhuCap.find(
+            (pc) => pc.tenPhuCap === phuCapName
+        );
+
+        if (!phuCapObj) {
+            apiNotification.error({ message: "Không tìm thấy mã phụ cấp!" });
+            return;
+        }
+
+        const maPhuCap = phuCapObj.maPhuCap;
+
+        await handleDelleteLichSu(maNhanVien, maPhuCap);
+
+        // Sau khi xóa thành công → load lại lịch sử & ẩn modal (nếu cần)
+        setModalVisible(false); // hoặc load lại selectedRecord nếu muốn giữ
+    };
 
     //xóa nhiều dòng
     const handleDeleteMultipleLichSu = () => {apiNotification.error({message: 'Có lỗi xảy ra', description: 'Chưa hổ trợ được tính năng này'})};
@@ -323,6 +407,12 @@ export default function PhuCapComponent() {
       console.log("Select:", record, selected, selectedRows);
     },
   };
+
+  //Xử lý modal chi tiết phụ cấp cho nhân viên
+    const showModalPhuCap = (record) => {
+        setSelectedRecord(record);
+        setModalVisible(true);
+    };
 
     const columns = [
         {
@@ -396,7 +486,7 @@ export default function PhuCapComponent() {
         {
             title: "Tên nhân viên",
             dataIndex: "hoTen",
-            key: "hoTen ",
+            key: "hoTen",
             sorter: (a, b) =>
             a.hoTen.toLowerCase().localeCompare(b.hoTen.toLowerCase()),
         },
@@ -409,6 +499,29 @@ export default function PhuCapComponent() {
             title: "Phụ cấp",
             dataIndex: "tenPhuCap",
             key: "tenPhuCap",
+            render: (text, record) => {
+                if (!text) return null;
+                const tags = text.split(',').map(tag => tag.trim());
+                return (
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        flexWrap: 'wrap',
+                        gap: '8px'
+                    }}
+                    onClick={() => showModalPhuCap(record)}
+                    >
+                        {tags.map((tag, index) => (
+                            <Tag
+                                color="#B8860B"
+                                key={index}
+                            >
+                                {tag}
+                            </Tag>
+                        ))}
+                    </div>
+                );
+            }
         },
         {
             title: "Tiền phụ cấp",
@@ -579,7 +692,7 @@ export default function PhuCapComponent() {
                         <Table
                             columns={lichSuColumns}
                             dataSource={getFilteredLichSuPhuCap()}
-                            rowKey="maNhanVien"
+                            rowKey={(record) => `${record.maNhanVien}-${record.hoTen}`}
                             rowSelection={lichSuRowSelection}
                             pagination={{
                                 pageSize: 10,
@@ -732,7 +845,7 @@ export default function PhuCapComponent() {
                             <Row gutter={16}>
                                 <Col xs={24} sm={24}>
                                     <Form.Item
-                                        label="Tên Phụ Cấp"
+                                        label="Phụ cấp"
                                         name="maPhuCap"
                                         rules={[
                                             {
@@ -743,10 +856,10 @@ export default function PhuCapComponent() {
                                     >
                                         <Select
                                             disabled={!selectedMaNhanVien}
-                                            placeholder="Chọn phụ cấp"
+                                            placeholder={selectedMaNhanVien ? "Chọn phụ cấp" : "Vui lòng chọn nhân viên"}
                                             showSearch
                                         >
-                                            {danhSachPhuCapTheoVaiTro.map((phucap) => (
+                                            {danhSachPhuCapChuaChon.map((phucap) => (
                                                 <Select.Option key={phucap.maPhuCap} value={phucap.maPhuCap}>
                                                     {phucap.tenPhuCap}
                                                 </Select.Option>
@@ -872,6 +985,37 @@ export default function PhuCapComponent() {
                 </Form>
 
             </Modal>
+
+            <Modal
+                centered
+                title={`Chi tiết phụ cấp của nhân viên: ${selectedRecord?.hoTen}`}
+                open={modalVisible}
+                onCancel={() => setModalVisible(false)}
+                footer={null}
+            >
+                <List
+                    dataSource={selectedRecord?.tenPhuCap?.split(',').map(tag => tag.trim()) || []}
+                    renderItem={(item) => (
+                        <List.Item
+                            actions={[
+                                <Popconfirm
+                                    title={`Xóa phụ cấp "${item}"?`}
+                                    onConfirm={() => handleDeletePhuCap(item)}
+                                    okText="Xóa"
+                                    cancelText="Hủy"
+                                >
+                                    <Button type="primary" danger>
+                                        Xóa
+                                    </Button>
+                                </Popconfirm>
+                            ]}
+                        >
+                            {item} - {selectedRecord.soTienPhuCap?.toLocaleString()}
+                        </List.Item>
+                    )}
+                />
+            </Modal>
+
         </div>
     )
 }
