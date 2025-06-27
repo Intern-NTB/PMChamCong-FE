@@ -783,7 +783,7 @@ export default function PhuCapComponent() {
                             columns={columns}
                             dataSource={getFilteredLoaiPhuCap()}
                             loading={loadingLoaiPhuCap}
-                            rowKey="maLoaiPhuCap"
+                            rowKey="maPhuCap"
                             rowSelection={loaiPhuCapRowSelection}
                             pagination={{
                                 pageSize: 10,
