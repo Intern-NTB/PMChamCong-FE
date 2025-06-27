@@ -49,7 +49,7 @@ import { ReloadContext } from "../../context/reloadContext";
 export default function PhuCapComponent() {
 
     const { danhSachLoaiPhuCap, loadingLoaiPhuCap, getAllLoaiPhuCap, createLoaiPhuCap, updateLoaiPhuCap, deleteLoaiPhuCap } = useLoaiPhuCap();
-    const { danhSachLichSuPhuCap, getAllLichSuPhuCap, createLichSuPhuCap, deleteLichSuPhuCap } = useLichSuPhuCap();
+    const { danhSachLichSuPhuCap, getAllLichSuPhuCap, createLichSuPhuCap, deleteLichSuPhuCap, deleteRowLichSuPhuCap } = useLichSuPhuCap();
     const { danhSachVaiTro } = useVaiTro();
     const { danhSachNhanVien } = useNhanVien();
 
@@ -99,7 +99,7 @@ export default function PhuCapComponent() {
                 maVaiTro: dslpc.maVaiTro,
                 tenVaiTro: vaiTroFind?.tenVaiTro,
                 tenPhuCap: dslpc.tenPhuCap,
-                soTienPhuCap: `${dslpc.soTienPhuCap.toLocaleString()} VNĐ`
+                soTienPhuCap: dslpc.soTienPhuCap
             };
         });
     }, [danhSachLoaiPhuCap, danhSachVaiTro]);
@@ -337,26 +337,27 @@ export default function PhuCapComponent() {
         };
     }
 
-    const handleDeletePhuCap = async (phuCapName) => {
-        const maNhanVien = selectedRecord?.maNhanVien;
-
-        // Bạn cần tìm ra maPhuCap ứng với tên phụ cấp (nếu có danh sách mapping)
-        const phuCapObj = danhSachLoaiPhuCap.find(
-            (pc) => pc.tenPhuCap === phuCapName
-        );
-
-        if (!phuCapObj) {
-            apiNotification.error({ message: "Không tìm thấy mã phụ cấp!" });
-            return;
-        }
-
-        const maPhuCap = phuCapObj.maPhuCap;
-
-        await handleDelleteLichSu(maNhanVien, maPhuCap);
-
-        // Sau khi xóa thành công → load lại lịch sử & ẩn modal (nếu cần)
-        setModalVisible(false); // hoặc load lại selectedRecord nếu muốn giữ
+    const handleDeletePhuCap = async (maNhanVien, maPhuCap) => {
+        try {
+            await deleteLichSuPhuCap(maNhanVien, maPhuCap);
+            getAllLichSuPhuCap();
+            apiNotification.success({ message: "Xóa thành công!" });
+        } catch (error) {
+            apiNotification.error({ message: "Xóa thất bại!" });
+        };
+        setModalVisible(false);
     };
+
+    //Xử lý xóa dòng
+    const handleDeleteRowLichSu = async (maNhanVien) => {
+        try {
+            await deleteRowLichSuPhuCap(maNhanVien);
+            getAllLichSuPhuCap();
+            apiNotification.success({ message: "Xóa thành công!" });
+        } catch (error) {
+            apiNotification.error({ message: "Xóa thất bại!" });
+        };
+    }
 
     //xóa nhiều dòng
     const handleDeleteMultipleLichSu = () => {apiNotification.error({message: 'Có lỗi xảy ra', description: 'Chưa hổ trợ được tính năng này'})};
@@ -445,7 +446,7 @@ export default function PhuCapComponent() {
             dataIndex: "soTienPhuCap",
             key: "soTienPhuCap",
             width: 150,
-            render: (text) => <Text strong>{text}</Text>,
+            render: (value) => `${Number(value).toLocaleString()} VNĐ`
         },
         {
             title: "Thao Tác",
@@ -536,9 +537,8 @@ export default function PhuCapComponent() {
                     <Popconfirm
                         title="Bạn có chắc chắn muốn xóa?"
                         onConfirm={() =>
-                            handleDelleteLichSu(
+                            handleDeleteRowLichSu(
                                 record.maNhanVien,
-                                record.maPhuCap
                             )
                         }
                         okText="Có"
@@ -855,6 +855,7 @@ export default function PhuCapComponent() {
                                         ]}
                                     >
                                         <Select
+                                            //mode="multiple"
                                             disabled={!selectedMaNhanVien}
                                             placeholder={selectedMaNhanVien ? "Chọn phụ cấp" : "Vui lòng chọn nhân viên"}
                                             showSearch
@@ -881,7 +882,7 @@ export default function PhuCapComponent() {
                                             background: "linear-gradient(45deg, #667eea, #764ba2)",
                                         }}
                                     >
-                                        {editingId ? "Cập Nhật" : "Thêm Mới"}
+                                        Thêm Mới
                                     </Button>
                                 </Space>
                             </Form.Item>
@@ -1003,7 +1004,7 @@ export default function PhuCapComponent() {
                             actions={[
                                 <Popconfirm
                                     title={`Xóa phụ cấp "${item}"?`}
-                                    onConfirm={() => handleDeletePhuCap(item)}
+                                    onConfirm={() => handleDeletePhuCap(selectedRecord?.maNhanVien, selectedRecord?.maPhuCap)}
                                     okText="Xóa"
                                     cancelText="Hủy"
                                 >

@@ -32,3 +32,14 @@ export const deleteLichSuPhuCapServices = async (maNhanVien, maPhuCap) => {
         throw error;
     }
 };
+
+//Xóa tất cả ứng với 1 nhân viên
+export const deleteRowLichSuPhuCapServices = async (maNhanVien) => {
+    try{
+        const res = await axiosInstance.delete(`themphucap/all/${maNhanVien}`);
+        return res.data;
+    } catch (error) {
+        console.log("AXIOS có lỗi xảy ra khi xóa hàng này");
+        throw error;
+    }
+}

@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { getAllLichSuPhuCapServices, createLichSuPhuCapServices, deleteLichSuPhuCapServices } from "../../services/lichsuphucapServices";
+import { getAllLichSuPhuCapServices, createLichSuPhuCapServices, deleteLichSuPhuCapServices, deleteRowLichSuPhuCapServices } from "../../services/lichsuphucapServices";
 
 export const useLichSuPhuCap = () => {
     const [loadingLichSuPhuCap, setLoadingLichSuPhuCap] = useState(false);
     const [danhSachLichSuPhuCap, setDanhSachLichSuPhuCap] = useState([]);
     const [isCreatedLichSuPhuCap, setIsCreatedLichSuPhuCap] = useState(false);
     const [isDeletedLichSuPhuCap, setIsDeletedLichSuPhuCap] = useState(false);
+    const [isDeletedRowLichSuPhuCap, setIsDeletedRowLichSuPhuCap] = useState(false);
 
     const getAllLichSuPhuCap = async () => {
         setLoadingLichSuPhuCap(true);
@@ -43,6 +44,18 @@ export const useLichSuPhuCap = () => {
         }
     }
 
+    const deleteRowLichSuPhuCap = async (maNhanVien) => {
+        setLoadingLichSuPhuCap(true);
+        try{
+            await deleteRowLichSuPhuCapServices(maNhanVien);
+            setIsDeletedRowLichSuPhuCap(true);
+        } catch {
+            setIsDeletedRowLichSuPhuCap(false);
+        } finally {
+            setLoadingLichSuPhuCap(false);
+        }
+    }
+
     useEffect(() => {
         getAllLichSuPhuCap();
     }, []);
@@ -52,8 +65,10 @@ export const useLichSuPhuCap = () => {
         loadingLichSuPhuCap,
         isCreatedLichSuPhuCap,
         isDeletedLichSuPhuCap,
+        isDeletedRowLichSuPhuCap,
         getAllLichSuPhuCap,
         createLichSuPhuCap,
-        deleteLichSuPhuCap
+        deleteLichSuPhuCap,
+        deleteRowLichSuPhuCap
     }
 }
