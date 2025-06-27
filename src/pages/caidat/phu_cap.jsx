@@ -995,7 +995,10 @@ export default function PhuCapComponent() {
             >
                 <List
                     dataSource={selectedRecord?.tenPhuCap?.split(',').map(tag => tag.trim()) || []}
-                    renderItem={(item) => (
+                    renderItem={(item) =>{ 
+                        const matchedPhuCap = dataSourceLoaiPhuCap.find((pc) => pc.tenPhuCap === item);
+                        const soTien = matchedPhuCap?.soTienPhuCap || "Không rõ";
+                        return (
                         <List.Item
                             actions={[
                                 <Popconfirm
@@ -1010,9 +1013,10 @@ export default function PhuCapComponent() {
                                 </Popconfirm>
                             ]}
                         >
-                            {item} - {selectedRecord.soTienPhuCap?.toLocaleString()}
+                            {item} - {soTien?.toLocaleString()}
                         </List.Item>
                     )}
+                }
                 />
             </Modal>
 
