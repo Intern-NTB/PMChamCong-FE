@@ -21,7 +21,8 @@ import {
   Row,
   Col,
   Typography,
-  ConfigProvider
+  ConfigProvider,
+  Tooltip,
 } from "antd";
 
 import "dayjs/locale/vi";
@@ -36,6 +37,8 @@ import {
   TrophyOutlined,
   HistoryOutlined,
   SearchOutlined,
+  InfoCircleOutlined,
+  QuestionCircleOutlined
 } from "@ant-design/icons";
 
 // ==== HOOKS TUỲ CHỈNH ====
@@ -78,6 +81,8 @@ export default function ThuongComponent() {
   // state
   const apiNotification = useAppNotification();
   const { setReload } = useContext(ReloadContext);
+  const [donVi, setDonVi] = useState("VND");
+  const [loaiThuongChuaApDung, setLoaiThuongChuaApDung] = useState([]);
 
   const [dateRange, setDateRange] = useState([
     dayjs().startOf("day"),
@@ -123,6 +128,8 @@ export default function ThuongComponent() {
     setReload(() => getAllLoaiTienThuong);
   }, []);
 
+
+
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isHistoryModalVisible, setIsHistoryModalVisible] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
@@ -137,6 +144,14 @@ export default function ThuongComponent() {
   const [selectedLichSuKeys, setSelectedLichSuKeys] = useState([]);
   const [selectedLoaiThuongKeys, setSelectedLoaiThuongKeys] = useState([]);
 
+  useEffect(() => {
+    if (editingItem?.maNhanVien) {
+      handleNhanVienChange(editingItem.maNhanVien);
+      form.setFieldsValue(editingItem);
+      setDonVi(editingItem.donVi || "VND"); // nếu bạn có lưu đơn vị
+    }
+  }, [editingItem]);
+
   // Tính toán thống kê
   const tongSoNhanVienDuocThuong = new Set(
     danhSachLichSuThuong.map((item) => item.maNhanVien)
@@ -146,6 +161,8 @@ export default function ThuongComponent() {
     0
   );
   const tongSoLanThuong = danhSachLichSuThuong.length;
+
+  //Hàm check các loại thưởng chưa áp dụng
 
   // Hàm lọc dữ liệu cho tìm kiếm, lọc theo thời gian
   const getFilteredLichSu = () => {
@@ -227,7 +244,7 @@ export default function ThuongComponent() {
   };
 
   // Hàm xử lý xóa nhiều dòng
-  const handleDeleteMultipleLichSu = () => {};
+  const handleDeleteMultipleLichSu = () => { };
 
   const handleDeleteMultipleLoaiThuong = () => {
     Modal.confirm({
@@ -263,6 +280,7 @@ export default function ThuongComponent() {
     setEditingItem(record);
     setModalType("lichsu");
     setIsModalVisible(true);
+    setDonVi(record.donVi);
     form.setFieldsValue({
       ...record,
       ngayThuong: dayjs(record.ngayThuong),
@@ -290,14 +308,32 @@ export default function ThuongComponent() {
     setEditingItem(record);
     setModalType("loaithuong");
     setIsModalVisible(true);
+    setDonVi(record.donVi);
     form.setFieldsValue(record);
   };
 
   const handleDeleteLoaiThuong = (maLoaiTienThuong) => {
-    dataSourceDanhSachLichSuThuong.filter(
-      (item) => item.maLoaiTienThuong !== maLoaiTienThuong
+    const isBeingUsed = dataSourceDanhSachLichSuThuong.some(
+      (item) => item.maLoaiTienThuong === maLoaiTienThuong
     );
-    apiNotification.success("Xóa thành công!");
+
+    if (isBeingUsed) {
+      apiNotification.error({
+        message: "Không thể xóa!",
+        description: "Loại tiền thưởng này đang được sử dụng.",
+      });
+      return;
+    }
+
+    // Nếu không bị dùng, cho phép xóa
+    deleteLoaiTienThuong(maLoaiTienThuong)
+      .then(() => {
+        getAllLoaiTienThuong(); // cập nhật lại danh sách
+        apiNotification.success({ message: "Xóa thành công!" });
+      })
+      .catch(() => {
+        apiNotification.error({ message: "Xóa thất bại!" });
+      });
   };
 
   const handleSubmit = async () => {
@@ -308,10 +344,11 @@ export default function ThuongComponent() {
         const formattedValues = {
           ...values,
           ngayThuong: values.ngayThuong.format("YYYY-MM-DD"),
+          soTienThuongKhac: values.soTienThuongKhac ?? 0
         };
 
         if (editingItem) {
-          await updateLichSuThuong(values);
+          await updateLichSuThuong(formattedValues);
           apiNotification.success({ message: "Cập nhật lịch sử thưởng thành công!" });
         } else {
           await createLichSuThuong(formattedValues);
@@ -376,6 +413,41 @@ export default function ThuongComponent() {
     return loaiThuong ? loaiThuong.tenLoaiTienThuong : "Không xác định";
   };
 
+  const handleDonViChange = (value) => {
+    setDonVi(value);
+    form.setFieldValue("soTienThuong", null);
+  };
+
+  const handleLoaiThuongChange = (maLoaiTienThuong) => {
+    const loai = danhSachLoaiTienThuong.find(
+      (item) => item.maLoaiTienThuong === maLoaiTienThuong
+    );
+
+    if (loai) {
+      setDonVi(loai.donVi);
+    }
+
+    form.setFieldValue("maLoaiTienThuong", maLoaiTienThuong);
+  };
+
+  const handleNhanVienChange = (maNhanVienChon) => {
+    form.setFieldValue("maNhanVien", maNhanVienChon);
+    const loaiLoc = danhSachLoaiTienThuong.filter((loai) => {
+      const daApDung = dataSourceDanhSachLichSuThuong.some(
+        (lichSu) =>
+          lichSu.maNhanVien === maNhanVienChon &&
+          lichSu.maLoaiTienThuong === loai.maLoaiTienThuong
+      );
+
+      if (editingItem?.maLoaiTienThuong === loai.maLoaiTienThuong) return true;
+
+      return !daApDung;
+    });
+
+    setLoaiThuongChuaApDung(loaiLoc);
+    form.setFieldValue("maLoaiTienThuong", null);
+  };
+
   // Columns cho bảng Lịch sử thưởng
   const lichSuColumns = [
     {
@@ -394,21 +466,26 @@ export default function ThuongComponent() {
       key: "tenLoaiTienThuong",
     },
     {
-      title: "Số tiền thưởng",
-      dataIndex: "soTienThuong",
-      key: "soTienThuong",
-      render: (amount) => new Intl.NumberFormat("vi-VN").format(amount),
+      title: "Mức thưởng cơ bản",
+      key: "mucThuongCoBan",
+      render: (_, record) => {
+        const { soTienThuong, donVi } = record;
+        if (donVi === "%") {
+          return `${soTienThuong}%`;
+        }
+        return `${new Intl.NumberFormat("vi-VN").format(soTienThuong)} ${donVi}`;
+      },
     },
     {
-      title: "Số tiền thưởng khác",
-      dataIndex: "soTienThuongKhac",
-      key: "soTienThuongKhac",
-      render: (amount) => new Intl.NumberFormat("vi-VN").format(amount),
-    },
-    {
-      title: "Đơn vị",
-      dataIndex: "donVi",
-      key: "donVi",
+      title: "Mức thưởng tùy chọn",
+      key: "mucThuongTuyChon",
+      render: (_, record) => {
+        const { soTienThuongKhac, donVi } = record;
+        if (donVi === "%") {
+          return `${soTienThuongKhac}%`;
+        }
+        return `${new Intl.NumberFormat("vi-VN").format(soTienThuongKhac)} ${donVi}`;
+      },
     },
     {
       title: "Số tiền quy đổi",
@@ -470,15 +547,19 @@ export default function ThuongComponent() {
       key: "tenLoaiTienThuong",
     },
     {
-      title: "Số tiền",
-      dataIndex: "soTienThuong",
-      key: "soTienThuong",
-      render: (amount) => new Intl.NumberFormat("vi-VN").format(amount),
-    },
-    {
-      title: "Đơn vị",
-      dataIndex: "donVi",
-      key: "donVi",
+      title: "Mức thưởng",
+      key: "giaTriThuong",
+      render: (_, record) => {
+        const { soTienThuong, donVi } = record;
+
+        //đơn vị phần trăm
+        if (donVi === "%") {
+          return `${soTienThuong} %`;
+        }
+
+        //VND (đơn vị khác)
+        return `${new Intl.NumberFormat("vi-VN").format(soTienThuong)} ${donVi}`;
+      },
     },
     {
       title: "Thao tác",
@@ -677,7 +758,7 @@ export default function ThuongComponent() {
               <Table
                 columns={lichSuColumns}
                 dataSource={getFilteredLichSu()}
-                rowKey="id"
+                rowKey="maNhanVien"
                 rowSelection={lichSuRowSelection}
                 pagination={{
                   pageSize: 10,
@@ -801,30 +882,6 @@ export default function ThuongComponent() {
           >
             {modalType === "lichsu" ? (
               <>
-                <Form.Item
-                  name="maLoaiTienThuong"
-                  label="Loại thưởng"
-                  rules={[
-                    { required: true, message: "Vui lòng chọn loại thưởng!" },
-                  ]}
-                >
-                  <Select placeholder="Chọn loại thưởng"
-                    showSearch
-                    optionFilterProp="children"
-                    filterOption={(input, option) =>
-                      (option?.children ?? "").toLowerCase().includes(input.toLowerCase())
-                    }>
-                    {danhSachLoaiTienThuong.map((item) => (
-                      <Select.Option
-                        key={item.maLoaiTienThuong}
-                        value={item.maLoaiTienThuong}
-                      >
-                        {item.tenLoaiTienThuong}
-                      </Select.Option>
-                    ))}
-                  </Select>
-                </Form.Item>
-
                 <Row gutter={16}>
                   <Col span={12}>
                     <Form.Item
@@ -837,7 +894,9 @@ export default function ThuongComponent() {
                       <Select
                         placeholder="Chọn nhân viên"
                         showSearch
+                        disabled={editingItem != null || form.getFieldValue("maNhanVien") == null}
                         optionFilterProp="label"
+                        onChange={handleNhanVienChange}
                         filterOption={(input, option) =>
                           (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
                         }
@@ -850,12 +909,51 @@ export default function ThuongComponent() {
                   </Col>
                 </Row>
 
+                <Form.Item
+                  name="maLoaiTienThuong"
+                  label="Loại thưởng"
+                  rules={[
+                    { required: true, message: "Vui lòng chọn loại thưởng!" },
+                  ]}
+                >
+                  <Select placeholder="Chọn loại thưởng"
+                    showSearch
+                    disabled={editingItem != null || form.getFieldValue("maNhanVien") == null}
+                    optionFilterProp="children"
+                    filterOption={(input, option) =>
+                      (option?.children ?? "").toLowerCase().includes(input.toLowerCase())
+                    }
+                    onChange={handleLoaiThuongChange}
+                  >
+                    {loaiThuongChuaApDung.map((item) => (
+                      <Select.Option
+                        key={item.maLoaiTienThuong}
+                        value={item.maLoaiTienThuong}
+                      >
+                        {item.tenLoaiTienThuong} - {item.donVi === "%"
+                          ? `${item.soTienThuong} %`
+                          : `${new Intl.NumberFormat("vi-VN").format(item.soTienThuong)} ${item.donVi}`
+                        }
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+
                 <Row gutter={16}>
                   <Col span={12}>
-                    <Form.Item name="soTienThuongKhac" label="Số tiền thưởng">
+                    <Form.Item name="soTienThuongKhac" label={
+                      <span>
+                        {donVi === "%" ? "Phần trăm thưởng mong muốn" : "Số tiền thưởng mong muốn"}{" "}
+                        <Tooltip title="Mức thưởng khác, thấp hoặc cao hơn so với loại thưởng gốc (Tùy chọn)">
+                          <QuestionCircleOutlined style={{ color: "#1890ff", marginLeft: 4 }} />
+                        </Tooltip>
+                      </span>
+                    }>
                       <InputNumber
                         style={{ width: "100%" }}
-                        placeholder="Nhập số tiền thưởng"
+                        placeholder={
+                          donVi === "%" ? "Nhập phần trăm thưởng" : "Nhập số tiền thưởng"
+                        }
                         formatter={(value) =>
                           `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                         }
@@ -902,6 +1000,21 @@ export default function ThuongComponent() {
                       required: true,
                       message: "Vui lòng nhập tên loại thưởng!",
                     },
+                    {
+                      validator: (_, value) => {
+                        if (!value) return Promise.resolve();
+
+                        const trimmer = value.trim().toLowerCase();
+                        const existed = danhSachLoaiTienThuong.some((item) =>
+                          item.tenLoaiTienThuong.trim().toLowerCase() === trimmer &&
+                          (!editingItem || editingItem.tenLoaiTienThuong.trim().toLowerCase() !== trimmer)
+                        );
+
+                        return existed
+                          ? Promise.reject("Tên loại thưởng đã tồn tại!")
+                          : Promise.resolve();
+                      },
+                    },
                   ]}
                 >
                   <Input placeholder="Nhập tên loại thưởng" />
@@ -909,18 +1022,26 @@ export default function ThuongComponent() {
 
                 <Form.Item
                   name="soTienThuong"
-                  label="Số tiền"
+                  label={donVi === "%" ? "Phần trăm thưởng (%)" : "Số tiền thưởng (VND)"}
                   rules={[
-                    { required: true, message: "Vui lòng nhập số tiền!" },
+                    {
+                      required: true, message: donVi === "%"
+                        ? "Vui lòng nhập phần trăm thưởng!"
+                        : "Vui lòng nhập số tiền thưởng!",
+                    },
                   ]}
                 >
                   <InputNumber
                     style={{ width: "100%" }}
-                    placeholder="Nhập số tiền"
+                    placeholder={
+                      donVi === "%" ? "Nhập phần trăm thưởng" : "Nhập số tiền thưởng"
+                    }
                     formatter={(value) =>
                       `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                     }
                     parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
+                    min={0}
+                    max={donVi === "%" ? 100 : undefined}
                   />
                 </Form.Item>
 
@@ -932,9 +1053,10 @@ export default function ThuongComponent() {
                   <Select
                     placeholder="Chọn đơn vị"
                     options={[
-                      { value: "%", label: "%" },
                       { value: "VND", label: "VND" },
+                      { value: "%", label: "%" },
                     ]}
+                    onChange={handleDonViChange}
                   />
                 </Form.Item>
               </>
