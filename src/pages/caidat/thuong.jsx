@@ -894,7 +894,7 @@ export default function ThuongComponent() {
                       <Select
                         placeholder="Chọn nhân viên"
                         showSearch
-                        disabled={editingItem != null || form.getFieldValue("maNhanVien") == null}
+                        disabled={editingItem != null}
                         optionFilterProp="label"
                         onChange={handleNhanVienChange}
                         filterOption={(input, option) =>

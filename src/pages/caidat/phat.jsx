@@ -881,7 +881,7 @@ export default function TruComponent() {
                       <Select
                         placeholder="Chọn nhân viên"
                         showSearch
-                        disabled={editingItem != null || form.getFieldValue("maNhanVien") == null}
+                        disabled={editingItem != null}
                         onChange={handleNhanVienChangePhat}
                         optionFilterProp="label"
                         filterOption={(input, option) =>
