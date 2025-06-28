@@ -225,47 +225,73 @@ export const generateDetailedSalaryPDF = (employeeData, monthYear = "") => {
     ["5", "Tháng", employeeData.thang || "-"],
     ["6", "Lương cơ bản", formatCurrency(baseSalary)],
     ["7", "Số ngày công làm việc", employeeData.soNgayCong || 0],
-    ["8", "Công chuẩn của tháng", employeeData.congChuanCuaThang || 0],
-    ["9", "Số ngày nghỉ", employeeData.soNgayNghi + employeeData.soNgayLe || 0],
-    ["10", "Số ngày nghỉ lễ", employeeData.soNgayLe || 0],
-    ["11", "Số ngày nghỉ có phép", employeeData.soNgayNghiCoPhep || 0],
-    ["12", "Số giờ tăng ca", employeeData.soGioTangCa || 0],
-    ["13", "Hệ số tăng ca", employeeData.heSoTangCa || 0],
-    ["14", "Lương giờ", formatCurrency(employeeData.luongGio)],
     [
-      "15",
+      "8",
+      "Số ngày công chưa làm việc ",
+      employeeData.soNgayNghiTruLuong  || 0,
+    ],
+    ["9", "Công chuẩn của tháng", employeeData.congChuanCuaThang || 0],
+    [
+      "10",
+      "Tổng số ngày nghỉ",
+      employeeData.soNgayLe + employeeData.soNgayNghi || 0,
+    ],
+    ["11", "Số ngày nghỉ lễ", employeeData.soNgayLe || 0],
+    ["12", "Số ngày nghỉ có phép", employeeData.soNgayNghiCoPhep || 0],
+    [
+      "13",
+      "Số ngày nghỉ không phép nhưng tính lương ",
+      employeeData.soNgayNghiCoLuong - employeeData.soNgayNghiCoPhep || 0,
+    ],
+    [
+      "14",
+      "Số ngày nghỉ trừ lương",
+      employeeData.soNgayNghi - employeeData.soNgayNghiCoLuong || 0,
+    ],
+    ["15", "Số giờ tăng ca", employeeData.soGioTangCa || 0],
+    ["16", "Hệ số tăng ca", employeeData.heSoTangCa || 0],
+    ["17", "Lương giờ", formatCurrency(employeeData.luongGio)],
+    [
+      "18",
       "Tổng tiền tăng ca",
       formatCurrency(employeeData.tongTienTangCa || 0),
     ],
-    ["16", "Lương theo ngày", formatCurrency(employeeData.luongTheoNgay || 0)],
-    ["17", "Lương ngày nghi", formatCurrency(employeeData.luongNgayNghi || 0)],
+    ["19", "Lương theo ngày", formatCurrency(employeeData.luongTheoNgay || 0)],
     [
-      "18",
+      "20",
+      "Lương ngày công chưa làm",
+      formatCurrency(employeeData.tongSoTienNgayNghiTruLuong || 0),
+    ],
+    ["21", "Lương ngày nghi", formatCurrency(employeeData.luongNgayNghi || 0)],
+    [
+      "22",
       "Tổng tiền phụ cấp",
       formatCurrency(employeeData.tongTienPhuCap || 0),
     ],
     [
-      "19",
+      "23",
       "Tổng lương",
-      formatCurrency(
-        (employeeData.tongTienPhuCap || 0) +
-          (employeeData.luongTheoNgay || 0) +
-          (employeeData.luongNgayNghi || 0) +
-          (employeeData.tongTienTangCa || 0)
-      ),
+      [
+        formatCurrency(
+          (employeeData.tongTienPhuCap || 0) +
+            (employeeData.luongTheoNgay || 0) +
+            (employeeData.luongNgayNghi || 0) +
+            (employeeData.tongTienTangCa || 0)
+        ),
+      ],
     ],
   ];
 
   // Tạo các dòng chi tiết thưởng (truyền thêm baseSalary)
   const bonusRows = createBonusRows(
     employeeData.danhSachLichSuThuong,
-    20,
+    24,
     baseSalary
   );
 
   // Tạo dòng tổng thưởng
   const totalBonusRow = [
-    String(21),
+    String(25),
     "Tổng Tiền Thưởng",
     formatCurrency(employeeData.tienThuong || 0),
   ];
@@ -273,20 +299,20 @@ export const generateDetailedSalaryPDF = (employeeData, monthYear = "") => {
   // Tạo các dòng chi tiết phạt (truyền thêm baseSalary)
   const penaltyRows = createPenaltyRows(
     employeeData.danhSachLichSuTru,
-    22,
+    26,
     baseSalary
   );
 
   // Tạo dòng tổng phạt
   const totalPenaltyRow = [
-    String(23),
+    String(27),
     "Tổng Tiền Phạt",
     formatCurrency(employeeData.tienTru || 0),
   ];
 
   // Tạo dòng lương thực lãnh
   const finalSalaryRow = [
-    String(24),
+    String(28),
     "Lương thực lãnh",
     formatCurrency(employeeData.tongLuong || 0),
   ];
@@ -468,43 +494,61 @@ export const generateSinglePDFMultiplePages = (
       ["5", "Tháng", employeeData.thang || "-"],
       ["6", "Lương cơ bản", formatCurrency(baseSalary)],
       ["7", "Số ngày công làm việc", employeeData.soNgayCong || 0],
-      ["8", "Công chuẩn của tháng", employeeData.congChuanCuaThang || 0],
       [
-        "9",
-        "Số ngày nghỉ",
-        employeeData.soNgayNghi + employeeData.soNgayLe || 0,
+        "8",
+        "Số ngày công chưa làm việc ",
+        employeeData.soNgayNghiTruLuong || 0,
       ],
-      ["10", "Số ngày nghỉ lễ", employeeData.soNgayLe || 0],
-      ["11", "Số ngày nghỉ có phép", employeeData.soNgayNghiCoPhep || 0],
-      ["12", "Số giờ tăng ca", employeeData.soGioTangCa || 0],
-      ["13", "Hệ số tăng ca", employeeData.heSoTangCa || 0],
-      ["14", "Lương giờ", formatCurrency(employeeData.luongGio)],
+      ["9", "Công chuẩn của tháng", employeeData.congChuanCuaThang || 0],
       [
-        "15",
+        "10",
+        "Tổng số ngày nghỉ",
+        employeeData.soNgayLe + employeeData.soNgayNghi || 0,
+      ],
+      ["11", "Số ngày nghỉ lễ", employeeData.soNgayLe || 0],
+      ["12", "Số ngày nghỉ có phép", employeeData.soNgayNghiCoPhep || 0],
+      [
+        "13",
+        "Số ngày nghỉ không phép nhưng tính lương ",
+        employeeData.soNgayNghiCoLuong - employeeData.soNgayNghiCoPhep || 0,
+      ],
+      [
+        "14",
+        "Số ngày nghỉ trừ lương",
+        employeeData.soNgayNghi - employeeData.soNgayNghiCoLuong || 0,
+      ],
+      ["15", "Số giờ tăng ca", employeeData.soGioTangCa || 0],
+      ["16", "Hệ số tăng ca", employeeData.heSoTangCa || 0],
+      ["17", "Lương giờ", formatCurrency(employeeData.luongGio)],
+      [
+        "18",
         "Tổng tiền tăng ca",
         formatCurrency(employeeData.tongTienTangCa || 0),
       ],
       [
-        "16",
+        "19",
         "Lương theo ngày",
         formatCurrency(employeeData.luongTheoNgay || 0),
       ],
       [
-        "17",
+        "20",
+        "Lương ngày công chưa làm",
+        formatCurrency(employeeData.tongSoTienNgayNghiTruLuong || 0),
+      ],
+      [
+        "21",
         "Lương ngày nghi",
         formatCurrency(employeeData.luongNgayNghi || 0),
       ],
       [
-        "18",
+        "22",
         "Tổng tiền phụ cấp",
         formatCurrency(employeeData.tongTienPhuCap || 0),
       ],
       [
-        "19",
+        "23",
         "Tổng lương",
         [
-          "19",
-          "Tổng lương",
           formatCurrency(
             (employeeData.tongTienPhuCap || 0) +
               (employeeData.luongTheoNgay || 0) +
@@ -518,13 +562,13 @@ export const generateSinglePDFMultiplePages = (
     // Tạo các dòng chi tiết thưởng (truyền thêm baseSalary)
     const bonusRows = createBonusRows(
       employeeData.danhSachLichSuThuong,
-      20,
+      24,
       baseSalary
     );
 
     // Tạo dòng tổng thưởng
     const totalBonusRow = [
-      String(21),
+      String(25),
       "Tổng Tiền Thưởng",
       formatCurrency(employeeData.tienThuong || 0),
     ];
@@ -532,20 +576,20 @@ export const generateSinglePDFMultiplePages = (
     // Tạo các dòng chi tiết phạt (truyền thêm baseSalary)
     const penaltyRows = createPenaltyRows(
       employeeData.danhSachLichSuTru,
-      22,
+      26,
       baseSalary
     );
 
     // Tạo dòng tổng phạt
     const totalPenaltyRow = [
-      String(23),
+      String(27),
       "Tổng Tiền Phạt",
       formatCurrency(employeeData.tienTru || 0),
     ];
 
     // Tạo dòng lương thực lãnh
     const finalSalaryRow = [
-      String(24),
+      String(28),
       "Lương thực lãnh",
       formatCurrency(employeeData.tongLuong || 0),
     ];
