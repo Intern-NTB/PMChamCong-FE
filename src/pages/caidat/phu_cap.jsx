@@ -249,15 +249,16 @@ export default function PhuCapComponent() {
                 const values = await form.validateFields();
 
                 if (modalType === "lichsu") {
-                    try {
-                        const values = await form.validateFields();
-                        const { maNhanVien, maPhuCap } = values;
+                    const { maNhanVien, maPhuCap } = values;
 
-                        if (modalType === "lichsu") {
-                            await createLichSuPhuCap(maNhanVien, maPhuCap);
-                            getAllLichSuPhuCap();
-                            apiNotification.success({ message: "Thêm thành công!" });
+                    try {
+                        const listPhuCap = Array.isArray(maPhuCap) ? maPhuCap : [maPhuCap];
+                        // Thêm từng phụ cấp một cho nhân viên
+                        for (const phuCapId of listPhuCap) {
+                            await createLichSuPhuCap(maNhanVien, phuCapId);                                               
                         }
+                        getAllLichSuPhuCap();
+                        apiNotification.success({ message: "Thêm thành công!" });
                     } catch (err) {
                         console.error("Lỗi khi submit form:", err);
                         apiNotification.error({ message: "Thêm không thành công!" });
@@ -903,7 +904,7 @@ export default function PhuCapComponent() {
                                         ]}
                                     >
                                         <Select
-                                            //mode="multiple"
+                                            mode="multiple"
                                             disabled={!selectedMaNhanVien}
                                             placeholder={selectedMaNhanVien ? "Chọn phụ cấp" : "Vui lòng chọn nhân viên"}
                                             showSearch
