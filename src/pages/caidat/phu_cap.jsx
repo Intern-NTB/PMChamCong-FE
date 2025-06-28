@@ -59,6 +59,9 @@ export default function PhuCapComponent() {
     const [selectedRecord, setSelectedRecord] = useState(null);
     const [isHistoryModalVisible, setIsHistoryModalVisible] = useState(false);
     const [modalType, setModalType] = useState("");
+    const [selectedVaiTro, setSelectedVaiTro] = useState(null);
+    const [filteredLoaiPhuCapList, setFilteredLoaiPhuCapList] = useState([]);
+    const [dataLoaiPhuCap, setDataLoaiPhuCap] = useState([]);
     const [form] = Form.useForm();
 
     //State chọn nhân viên để lấy vai trò rồi suy ra Phụ cấp
@@ -117,7 +120,8 @@ export default function PhuCapComponent() {
                 maNhanVien: dslspc.maNhanVien,
                 hoTen: nhanVienFind?.hoTen,
                 soTienPhuCap: `${phuCapFind?.soTienPhuCap?.toLocaleString()} VNĐ`,
-                tenVaiTro: vaiTroFind?.tenVaiTro
+                tenVaiTro: vaiTroFind?.tenVaiTro,
+                maVaiTro: vaiTroFind?.maVaiTro
             }
         })
     }, [danhSachLichSuPhuCap, danhSachNhanVien, danhSachLoaiPhuCap]);
@@ -182,10 +186,13 @@ export default function PhuCapComponent() {
                 return (
                     item.tenPhuCap?.toLowerCase().includes(searchLower) ||
                     item.hoTen?.toLowerCase().includes(searchLower) ||
-                    getLoaiPhuCapName(item.maLoaiTienThuong)?.toLowerCase().includes(searchLower) ||
-                    item.lyDo?.toLowerCase().includes(searchLower)
+                    getLoaiPhuCapName(item.maLoaiTienThuong)?.toLowerCase().includes(searchLower)
                 );
             });
+        }    
+
+        if (selectedVaiTro) {
+            filteredData = filteredData.filter(item => item.maVaiTro === selectedVaiTro);
         }
 
         // Gộp dữ liệu theo maNhanVien + hoTen
@@ -214,14 +221,19 @@ export default function PhuCapComponent() {
     };
 
     const getFilteredLoaiPhuCap = () => {
-        if (!searchTextLoaiPhuCap) return dataSourceLoaiPhuCap;
-        return dataSourceLoaiPhuCap.filter(
-            (item) =>
+        return dataSourceLoaiPhuCap.filter((item) => {
+            const matchSearch =
+                !searchTextLoaiPhuCap ||
                 item.tenPhuCap
                     .toLowerCase()
                     .includes(searchTextLoaiPhuCap.toLowerCase()) ||
-                item.maPhuCap.toString().includes(searchTextLoaiPhuCap)
-        );
+                item.maPhuCap.toString().includes(searchTextLoaiPhuCap);
+
+            const matchVaiTro =
+                !selectedVaiTro || item.maVaiTro === selectedVaiTro;
+
+            return matchSearch && matchVaiTro;
+        });
     };
 
     const getLoaiPhuCapName = (maPhuCap) => {
@@ -283,7 +295,7 @@ export default function PhuCapComponent() {
                 getAllLoaiPhuCap();
             } catch (error) {
                 console.log("Validation failed:", error);
-            }    
+            }
         },
         [apiNotification, createLoaiPhuCap, getAllLoaiPhuCap, getAllLichSuPhuCap, editingId]
     );
@@ -296,7 +308,8 @@ export default function PhuCapComponent() {
     };
 
     const handleEdit = (record) => {
-        setEditingId(record);
+        console.log("record để set form:", record);
+        setEditingId(record.maPhuCap);
         setModalType("loaiphucap");
         setIsModalVisible(true);
         form.setFieldsValue(record);
@@ -360,7 +373,7 @@ export default function PhuCapComponent() {
     }
 
     //xóa nhiều dòng
-    const handleDeleteMultipleLichSu = () => {apiNotification.error({message: 'Có lỗi xảy ra', description: 'Chưa hổ trợ được tính năng này'})};
+    const handleDeleteMultipleLichSu = () => { apiNotification.error({ message: 'Có lỗi xảy ra', description: 'Chưa hổ trợ được tính năng này' }) };
     const handleDeleteMultipleLoaiPhuCap = () => {
         Modal.confirm({
             title: `Bạn có chắc chắn muốn xóa ${selectedLoaiPhuCapKeys.length} loại phụ cấp đã chọn?`,
@@ -395,23 +408,29 @@ export default function PhuCapComponent() {
             console.log("Select:", record, selected, selectedRows);
         },
     };
-    
-    const loaiPhuCapRowSelection = {
-    selectedRowKeys: selectedLoaiPhuCapKeys,
-    onChange: (selectedRowKeys) => {
-      setSelectedLoaiPhuCapKeys(selectedRowKeys);
-    },
-    onSelectAll: (selected, selectedRows, changeRows) => {
-      console.log("Select all:", selected, selectedRows, changeRows);
-    },
-    onSelect: (record, selected, selectedRows) => {
-      console.log("Select:", record, selected, selectedRows);
-    },
-  };
 
-  //Xử lý modal chi tiết phụ cấp cho nhân viên
+    const loaiPhuCapRowSelection = {
+        selectedRowKeys: selectedLoaiPhuCapKeys,
+        onChange: (selectedRowKeys) => {
+            setSelectedLoaiPhuCapKeys(selectedRowKeys);
+        },
+        onSelectAll: (selected, selectedRows, changeRows) => {
+            console.log("Select all:", selected, selectedRows, changeRows);
+        },
+        onSelect: (record, selected, selectedRows) => {
+            console.log("Select:", record, selected, selectedRows);
+        },
+    };
+
+    //Xử lý modal chi tiết phụ cấp cho nhân viên
     const showModalPhuCap = (record) => {
-        setSelectedRecord(record);
+        const lichSuPhuCapNhanVien = dataSourceLichSuPhuCap.filter(
+            (item) => item.maNhanVien === record.maNhanVien
+        );
+        setSelectedRecord({
+            ...record,
+            lichSuPhuCap: lichSuPhuCapNhanVien
+        });
         setModalVisible(true);
     };
 
@@ -430,7 +449,7 @@ export default function PhuCapComponent() {
             width: 150,
             render: (text) => <Text strong>{text}</Text>,
             sorter: (a, b) =>
-            a.tenVaiTro.toLowerCase().localeCompare(b.tenVaiTro.toLowerCase()),
+                a.tenVaiTro.toLowerCase().localeCompare(b.tenVaiTro.toLowerCase()),
         },
         {
             title: "Tên Phụ Cấp",
@@ -439,7 +458,7 @@ export default function PhuCapComponent() {
             width: 150,
             render: (text) => <Text strong>{text}</Text>,
             sorter: (a, b) =>
-            a.tenPhuCap.toLowerCase().localeCompare(b.tenPhuCap.toLowerCase()),
+                a.tenPhuCap.toLowerCase().localeCompare(b.tenPhuCap.toLowerCase()),
         },
         {
             title: "Tiền phụ cấp",
@@ -489,7 +508,7 @@ export default function PhuCapComponent() {
             dataIndex: "hoTen",
             key: "hoTen",
             sorter: (a, b) =>
-            a.hoTen.toLowerCase().localeCompare(b.hoTen.toLowerCase()),
+                a.hoTen.toLowerCase().localeCompare(b.hoTen.toLowerCase()),
         },
         {
             title: "Vai trò",
@@ -501,7 +520,10 @@ export default function PhuCapComponent() {
             dataIndex: "tenPhuCap",
             key: "tenPhuCap",
             render: (text, record) => {
-                if (!text) return null;
+                if (!text) return (
+                <Tag color="red" onClick={() => showModalPhuCap(record)}>
+                    Phụ cấp đã bị xóa
+                </Tag>);
                 const tags = text.split(',').map(tag => tag.trim());
                 return (
                     <div style={{
@@ -510,7 +532,7 @@ export default function PhuCapComponent() {
                         flexWrap: 'wrap',
                         gap: '8px'
                     }}
-                    onClick={() => showModalPhuCap(record)}
+                        onClick={() => showModalPhuCap(record)}
                     >
                         {tags.map((tag, index) => (
                             <Tag
@@ -642,6 +664,19 @@ export default function PhuCapComponent() {
                                         >
                                             Thêm phụ cấp cho nhân viên
                                         </Button>
+                                        <Select
+                                            allowClear
+                                            placeholder="Lọc theo vai trò"
+                                            value={selectedVaiTro}
+                                            onChange={(value) => setSelectedVaiTro(value)}
+                                            style={{ minWidth: 200, maxWidth: '100%', width: '100%' }}
+                                        >
+                                            {danhSachVaiTro.map((vaiTro) => (
+                                                <Select.Option key={vaiTro.maVaiTro} value={vaiTro.maVaiTro}>
+                                                    {vaiTro.tenVaiTro}
+                                                </Select.Option>
+                                            ))}
+                                        </Select>
                                         {selectedLichSuKeys.length > 0 && (
                                             <Button
                                                 type="primary"
@@ -726,6 +761,19 @@ export default function PhuCapComponent() {
                                         >
                                             Thêm loại phụ cấp
                                         </Button>
+                                        <Select
+                                            allowClear
+                                            placeholder="Lọc theo vai trò"
+                                            value={selectedVaiTro}
+                                            onChange={(value) => setSelectedVaiTro(value)}
+                                            style={{ minWidth: 200, maxWidth: '100%', width: '100%' }}
+                                        >
+                                            {danhSachVaiTro.map((vaiTro) => (
+                                                <Select.Option key={vaiTro.maVaiTro} value={vaiTro.maVaiTro}>
+                                                    {vaiTro.tenVaiTro}
+                                                </Select.Option>
+                                            ))}
+                                        </Select>
                                         {selectedLoaiPhuCapKeys.length > 0 && (
                                             <Button
                                                 type="primary"
@@ -831,10 +879,10 @@ export default function PhuCapComponent() {
                                             showSearch
                                             placeholder="Họ tên nhân viên" filterOption={(input, option) =>
                                                 (option?.children ?? "").toLowerCase().includes(input.toLowerCase())
-                                        }>                                        
+                                            }>
                                             {danhSachNhanVien.map((nhanvien) => (
                                                 <Select.Option key={nhanvien.maNhanVien} value={nhanvien.maNhanVien}>
-                                                    {nhanvien.hoTen}
+                                                    {nhanvien.hoTen} - {nhanvien.tenVaiTro}
                                                 </Select.Option>
                                             ))}
                                         </Select>
@@ -892,26 +940,6 @@ export default function PhuCapComponent() {
                             <Row gutter={16}>
                                 <Col xs={24} sm={24}>
                                     <Form.Item
-                                        label="Tên Phụ Cấp"
-                                        name="tenPhuCap"
-                                        rules={[
-                                            {
-                                                required: true,
-                                                message: "Vui lòng nhập tên phụ cấp!",
-                                            },
-                                        ]}
-                                    >
-                                        <Input
-                                            disabled={false}
-                                            placeholder="Tên phụ cấp"
-                                        />
-                                    </Form.Item>
-                                </Col>
-                            </Row>
-
-                            <Row gutter={16}>
-                                <Col xs={24} sm={24}>
-                                    <Form.Item
                                         label="Vai Trò"
                                         name="maVaiTro"
                                         rules={[
@@ -921,19 +949,64 @@ export default function PhuCapComponent() {
                                             },
                                         ]}
                                     >
-                                            <Select
-                                                disabled={false}
-                                                placeholder="Chọn vai trò"
-                                                showSearch
-                                                filterOption={(input, option) =>
-                                                    (option?.children ?? "").toLowerCase().includes(input.toLowerCase())
-                                                }>
-                                                {danhSachVaiTro.map((vaiTro) => (
-                                                    <Select.Option key={vaiTro.maVaiTro} value={vaiTro.maVaiTro}>
-                                                        {vaiTro.tenVaiTro}
-                                                    </Select.Option>
-                                                ))}
-                                            </Select>
+                                        <Select
+                                            disabled={false}
+                                            placeholder="Chọn vai trò"
+                                            showSearch
+                                            onChange={() => {
+                                                form.setFieldsValue({
+                                                    tenPhuCap: undefined,
+                                                    soTienPhuCap: undefined,
+                                                });
+                                            }}
+                                            filterOption={(input, option) =>
+                                                (option?.children ?? "").toLowerCase().includes(input.toLowerCase())
+                                            }>
+                                            {danhSachVaiTro.map((vaiTro) => (
+                                                <Select.Option key={vaiTro.maVaiTro} value={vaiTro.maVaiTro}>
+                                                    {vaiTro.tenVaiTro}
+                                                </Select.Option>
+                                            ))}
+                                        </Select>
+                                    </Form.Item>
+                                </Col>
+                            </Row>
+
+                            <Row gutter={16}>
+                                <Col xs={24} sm={24}>
+                                    <Form.Item
+                                        label="Tên Phụ Cấp"
+                                        name="tenPhuCap"
+                                        rules={[
+                                            {
+                                                required: true,
+                                                message: "Vui lòng nhập tên phụ cấp!",
+                                            },
+                                            ({ getFieldValue }) => ({
+                                                validator(_, value) {
+                                                    if (!value) return Promise.resolve();
+
+                                                    const valueNormalized = value.trim().toLowerCase();
+                                                    const selectedVaiTro = getFieldValue("maVaiTro");
+
+                                                    const isDuplicate = danhSachLoaiPhuCap.some((item) => {
+                                                        const sameRole = item.maVaiTro === selectedVaiTro;
+                                                        const sameName = item.tenPhuCap.trim().toLowerCase() === valueNormalized;
+                                                        const isDifferentRecord = editingId ? item.maPhuCap !== editingId : true;
+
+                                                        return sameRole && sameName && isDifferentRecord;
+                                                    });
+
+                                                    if (isDuplicate) {
+                                                        return Promise.reject(new Error("Tên phụ cấp đã tồn tại cho vai trò này!"));
+                                                    }
+
+                                                    return Promise.resolve();
+                                                },
+                                            }),
+                                        ]}
+                                    >
+                                        <Input placeholder="Tên phụ cấp" />
                                     </Form.Item>
                                 </Col>
                             </Row>
@@ -995,29 +1068,39 @@ export default function PhuCapComponent() {
                 footer={null}
             >
                 <List
-                    dataSource={selectedRecord?.tenPhuCap?.split(',').map(tag => tag.trim()) || []}
-                    renderItem={(item) =>{ 
-                        const matchedPhuCap = dataSourceLoaiPhuCap.find((pc) => pc.tenPhuCap === item);
-                        const soTien = matchedPhuCap?.soTienPhuCap || "Không rõ";
+                    dataSource={selectedRecord?.lichSuPhuCap || []}
+                    renderItem={(item) => {
+                        //const matchedPhuCap = dataSourceLoaiPhuCap.find((pc) => pc.tenPhuCap === item);
+                        //const soTien = matchedPhuCap?.soTienPhuCap || "Không rõ";
+                        const tenPhuCapTonTai = item.tenPhuCap?.trim();
+                        const tenPhuCapHienThi = item.tenPhuCap?.trim()
+                            ? item.tenPhuCap
+                            : "Phụ cấp đã bị xóa hoặc không có phụ cấp nào cho vai trò này nữa";
                         return (
-                        <List.Item
-                            actions={[
-                                <Popconfirm
-                                    title={`Xóa phụ cấp "${item}"?`}
-                                    onConfirm={() => handleDeletePhuCap(selectedRecord?.maNhanVien, selectedRecord?.maPhuCap)}
-                                    okText="Xóa"
-                                    cancelText="Hủy"
-                                >
-                                    <Button type="primary" danger>
-                                        Xóa
-                                    </Button>
-                                </Popconfirm>
-                            ]}
-                        >
-                            {item} - {soTien?.toLocaleString()}
-                        </List.Item>
-                    )}
-                }
+                            <List.Item
+                                actions={[
+                                    <Popconfirm
+                                        title={`Xóa phụ cấp "${item.tenPhuCap}"?`}
+                                        onConfirm={() => handleDeletePhuCap(item.maNhanVien, item.maPhuCap)}
+                                        okText="Xóa"
+                                        cancelText="Hủy"
+                                    >
+                                        <Button type="primary" danger>
+                                            Xóa
+                                        </Button>
+                                    </Popconfirm>
+                                ]}
+                            >
+                                <span>
+                                    <strong>{tenPhuCapHienThi}</strong>
+                                    {tenPhuCapTonTai && item.soTienPhuCap != null && (
+                                        <> - {item.soTienPhuCap.toLocaleString()}</>
+                                    )}
+                                </span>
+                            </List.Item>
+                        )
+                    }
+                    }
                 />
             </Modal>
 
