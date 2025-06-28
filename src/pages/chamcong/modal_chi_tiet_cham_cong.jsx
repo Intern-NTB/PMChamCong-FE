@@ -226,29 +226,32 @@ export default function ModalChiTietChamCong({
     let totalHolidayDays = 0;
 
     // Calculate total work days and hours, excluding leave days, for the selected employee
-    const {
-      totalWorkDays,
-      totalActualWorkHours,
-    } = processedCalendarData.reduce(
-      (acc, day) => {
-        // Only process days in the selected month for the selected employee
-        const isSameMonth = day.date.month() === selectedMonth.month();
-        const isSelectedEmployee =
-          selectedNhanVien?.maNhanVien === day.chamCong?.maNhanVien;
+    const { totalWorkDays, totalActualWorkHours } =
+      processedCalendarData.reduce(
+        (acc, day) => {
+          // Only process days in the selected month for the selected employee
+          const isSameMonth = day.date.month() === selectedMonth.month();
+          const isSelectedEmployee =
+            selectedNhanVien?.maNhanVien === day.chamCong?.maNhanVien;
 
-        if (isSameMonth && !day.isLeave && day.chamCong && isSelectedEmployee) {
-          acc.totalWorkDays += 1;
-          acc.totalActualWorkHours += day.chamCong.soGioThucTe || 0;
-          acc.danhSachChamCongChiTietFilter.push(day.chamCong);
+          if (
+            isSameMonth &&
+            !day.isLeave &&
+            day.chamCong &&
+            isSelectedEmployee
+          ) {
+            acc.totalWorkDays += 1;
+            acc.totalActualWorkHours += day.chamCong.soGioThucTe || 0;
+            acc.danhSachChamCongChiTietFilter.push(day.chamCong);
+          }
+          return acc;
+        },
+        {
+          totalWorkDays: 0,
+          totalActualWorkHours: 0,
+          danhSachChamCongChiTietFilter: [],
         }
-        return acc;
-      },
-      {
-        totalWorkDays: 0,
-        totalActualWorkHours: 0,
-        danhSachChamCongChiTietFilter: [],
-      }
-    );
+      );
 
     processedCalendarData.forEach((day) => {
       if (day.isOvertimeDay) {
@@ -262,7 +265,7 @@ export default function ModalChiTietChamCong({
       }
     });
 
-    const formattedTotalHours = `${totalActualWorkHours}h`;
+    const formattedTotalHours = `${Math.round(totalActualWorkHours)} h`;
 
     const ngayPhepDaSuDung = dataSourceNgayPhep?.ngayPhepDaSuDung || 0;
     const ngayPhepConLai = dataSourceNgayPhep?.ngayPhepConLai || 0;
@@ -279,7 +282,14 @@ export default function ModalChiTietChamCong({
       leaveRemaining: ngayPhepConLai,
       leaveAccumulated: ngayPhepTichLuy,
     };
-  }, [processedCalendarData, dataSourceNgayPhep?.ngayPhepDaSuDung, dataSourceNgayPhep?.ngayPhepConLai, dataSourceNgayPhep?.ngayPhepTichLuy, selectedMonth, selectedNhanVien?.maNhanVien]);
+  }, [
+    processedCalendarData,
+    dataSourceNgayPhep?.ngayPhepDaSuDung,
+    dataSourceNgayPhep?.ngayPhepConLai,
+    dataSourceNgayPhep?.ngayPhepTichLuy,
+    selectedMonth,
+    selectedNhanVien?.maNhanVien,
+  ]);
 
   useEffect(() => {
     if (selectedNhanVien) {
