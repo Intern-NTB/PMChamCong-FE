@@ -38,6 +38,8 @@ import { useTangCa } from "../../component/hooks/useTangCa";
 import { useNhanVien } from "../../component/hooks/useNhanVien";
 import { useCaLam } from "../../component/hooks/useCaLam";
 import { useCaLamTrongTuan } from "../../component/hooks/useCaLamTrongTuan";
+import { useLichSuUuTien } from "../../component/hooks/useLichSuUuTien";
+import { useDoiTuongUuTien } from "../../component/hooks/useDoiTuongUuTien"
 // ===== Context =====
 import { ReloadContext } from "../../context/reloadContext";
 
@@ -64,6 +66,9 @@ export default function GiaLapChamCong() {
   const { danhSachPhongBan } = usePhongBan();
   const { danhSachCaLam } = useCaLam();
   const { danhSachCaLamTrongTuan } = useCaLamTrongTuan();
+  const { danhSachLichSuUuTien } = useLichSuUuTien();
+  const { danhSachDoiTuongUuTien } = useDoiTuongUuTien();
+  
   const { setReload } = useContext(ReloadContext);
   const {
     danhSachTangCa,
@@ -204,6 +209,13 @@ export default function GiaLapChamCong() {
     return phut === "00" ? `${gio}h` : `${gio}h${phut}`;
   };
 
+  const formatGioUuTien = (gioStr) => {
+    if (!gioStr) return "";
+
+    const [gio, phut, giay] = gioStr.split(":");
+    return phut === "00" ? `${gio}h` : `${gio}h${phut}`;
+  };
+
   //Hàm xử lý lấy giờ bắt đầu/kết thúc hằng ngày của nhân viên ứng với ca làm việc mỗi ngày.
   const getCaLamViecTrongTuan = (maNhanVien, ngayChamCong) => {
     const nhanVien = danhSachNhanVien.find(nv => nv.maNhanVien === maNhanVien);
@@ -231,6 +243,25 @@ export default function GiaLapChamCong() {
       </div>
     );
   };
+
+  //Hàm xử lý lấy thời gian của ưu tiên.
+  const getUuTien = (maNhanVien) => {
+    const nhanVien = danhSachNhanVien.find(nv => nv.maNhanVien === maNhanVien);
+    if(!nhanVien) return null;
+
+    const lichSuUuTien = danhSachLichSuUuTien.find(lsut => lsut.maNhanVien === nhanVien.maNhanVien);
+    if(!lichSuUuTien) return null;
+
+    const uuTien = danhSachDoiTuongUuTien.find(ut => ut.maUuTien === lichSuUuTien.maUuTien);
+    if(!uuTien) return null;
+
+    return (
+      <div>
+        {uuTien.tenUuTien} <br />
+        ({formatGioUuTien(uuTien.thoiGianBatDauCa)} - {formatGioUuTien(uuTien.thoiGianKetThucCa)})
+      </div>
+    );
+  }
 
   const isDataReady = [
     danhSachNhanVien,
@@ -288,6 +319,13 @@ export default function GiaLapChamCong() {
           if (!isDataReady) return "Đang tải...";
           const ca = getCaLamViecTrongTuan(record.maNhanVien, record.ngayChamCong);
           return ca || "Không có";
+        }
+      },
+      {
+        title: "Ưu tiên",
+        render(_, record){
+          const uutien = getUuTien(record.maNhanVien);
+          return uutien || "-";
         }
       },
       {
@@ -350,7 +388,7 @@ export default function GiaLapChamCong() {
         onFilter: (value, record) => record.trangThai === value,
       },
     ],
-    [formatTime, isMobile, danhSachPhongBan, danhSachNhanVien, danhSachCaLamTrongTuan, danhSachCaLam]
+    [formatTime, isMobile, danhSachPhongBan, danhSachNhanVien, danhSachCaLamTrongTuan, danhSachCaLam, danhSachLichSuUuTien, danhSachDoiTuongUuTien]
   );
 
   const mobileColumns = useMemo(
