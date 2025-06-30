@@ -21,7 +21,9 @@ import {
   Row,
   Col,
   Typography,
-  ConfigProvider
+  ConfigProvider,
+  Tooltip,
+  notification
 } from "antd";
 
 import "dayjs/locale/vi";
@@ -35,6 +37,7 @@ import {
   DollarOutlined,
   HistoryOutlined,
   SearchOutlined,
+  QuestionCircleOutlined
 } from "@ant-design/icons";
 
 // ==== HOOKS TUỲ CHỈNH ====
@@ -78,6 +81,8 @@ export default function TruComponent() {
   // state
   const api = useAppNotification();
   const { setReload } = useContext(ReloadContext);
+  const [donViTru, setDonViTru] = useState("VND");
+  const [loaiPhatChuaApDung, setLoaiPhatChuaApDung] = useState([]);
 
   const [dateRange, setDateRange] = useState([
     dayjs().startOf("day"),
@@ -135,6 +140,14 @@ export default function TruComponent() {
   // State cho select nhiều dòng
   const [selectedLichSuKeys, setSelectedLichSuKeys] = useState([]);
   const [selectedLoaiTruKeys, setSelectedLoaiTruKeys] = useState([]);
+
+  useEffect(() => {
+    if (editingItem?.maNhanVien) {
+      handleNhanVienChangePhat(editingItem.maNhanVien);
+      form.setFieldsValue(editingItem);
+      setDonViTru(editingItem.donVi || "VND");
+    }
+  }, [editingItem]);
 
   // Tính toán thống kê
   const tongSoNhanVienBiTru = new Set(
@@ -243,7 +256,7 @@ export default function TruComponent() {
   };
 
   // Hàm xử lý xóa nhiều dòng
-  const handleDeleteMultipleLichSu = () => {};
+  const handleDeleteMultipleLichSu = () => { };
 
   const handleDeleteMultipleLoaiTru = () => {
     Modal.confirm({
@@ -306,14 +319,32 @@ export default function TruComponent() {
     setEditingItem(record);
     setModalType("loaiphat");
     setIsModalVisible(true);
+    setDonViTru(record.donVi);
     form.setFieldsValue(record);
   };
 
   const handleDeleteLoaiTru = (maLoaiTienTru) => {
-    dataSourceDanhSachLichSuTru.filter(
-      (item) => item.maLoaiTienTru !== maLoaiTienTru
+    const isBeingUsed = dataSourceDanhSachLichSuTru.some(
+      (item) => item.maLoaiTienTru === maLoaiTienTru
     );
-    message.success("Xóa thành công!");
+
+    if (isBeingUsed) {
+      api.error({
+        message: "Không thể xóa!",
+        description: "Loại tiền trừ này đang được áp dụng.",
+      });
+      return;
+    }
+
+    // Nếu không bị dùng thì tiếp tục xóa
+    deleteLoaiTienTru(maLoaiTienTru)
+      .then(() => {
+        getAllLoaiTienTru();
+        api.success({ message: "Xóa thành công!" });
+      })
+      .catch(() => {
+        api.error({ message: "Xóa thất bại!" });
+      });
   };
 
   const handleSubmit = async () => {
@@ -387,6 +418,27 @@ export default function TruComponent() {
     return loaiTru ? loaiTru.tenLoaiTru : "Không xác định";
   };
 
+  //Xử lý lọc theo mã nhân viên các loại phạt đã áp dụng trước đó
+  const handleNhanVienChangePhat = (maNhanVienChon) => {
+    form.setFieldValue("maNhanVien", maNhanVienChon);
+
+    const loc = danhSachLoaiTienTru.filter((loai) => {
+      const daApDung = dataSourceDanhSachLichSuTru.some(
+        (lichSu) =>
+          lichSu.maNhanVien === maNhanVienChon &&
+          lichSu.maLoaiTienTru === loai.maLoaiTienTru
+      );
+
+      // Nếu đang sửa thì giữ loại đang được sửa
+      if (editingItem?.maLoaiTienTru === loai.maLoaiTienTru) return true;
+
+      return !daApDung;
+    });
+
+    setLoaiPhatChuaApDung(loc);
+    form.setFieldValue("maLoaiTienTru", null); // reset nếu đã chọn trước đó
+  };
+
   // Columns cho bảng Lịch sử phạt
   const lichSuColumns = [
     {
@@ -412,22 +464,26 @@ export default function TruComponent() {
       onFilter: (value, record) => record.tenLoaiTienTru === value,
     },
     {
-      title: "Số tiền phạt",
-      dataIndex: "soTienTru",
-      key: "soTienTru",
-      render: (amount) => new Intl.NumberFormat("vi-VN").format(amount),
-    },
-    {
-      title: "Số tiền phạt khác",
-      dataIndex: "soTienTruKhac",
-      key: "soTienTruKhac",
-      render: (amount) => new Intl.NumberFormat("vi-VN").format(amount),
-    },
+      title: "Số tiền phạt cơ bản",
+      key: "soTienTruFull",
+      render: (_, record) => {
+        const { soTienTru, donVi } = record;
 
+        return donVi === "%"
+          ? `${soTienTru} %`
+          : `${new Intl.NumberFormat("vi-VN").format(soTienTru)} ${donVi}`;
+      },
+    },
     {
-      title: "Đơn vị",
-      dataIndex: "donVi",
-      key: "donVi",
+      title: "Số tiền phạt mong muốn",
+      key: "soTienTruKhacFull",
+      render: (_, record) => {
+        const { soTienTruKhac, donVi } = record;
+
+        return donVi === "%"
+          ? `${soTienTruKhac ?? 0} %`
+          : `${new Intl.NumberFormat("vi-VN").format(soTienTruKhac ?? 0)} ${donVi}`;
+      },
     },
     {
       title: "Ngày phạt",
@@ -487,15 +543,17 @@ export default function TruComponent() {
       key: "tenLoaiTienTru",
     },
     {
-      title: "Số tiền",
-      dataIndex: "soTienTru",
-      key: "soTienTru",
-      render: (amount) => new Intl.NumberFormat("vi-VN").format(amount),
-    },
-    {
-      title: "Đơn vị",
-      dataIndex: "donVi",
-      key: "donVi",
+      title: "Số tiền phạt",
+      key: "soTienTruDayDu",
+      render: (_, record) => {
+        const { soTienTru, donVi } = record;
+
+        if (donVi === "%") {
+          return `${soTienTru} %`;
+        }
+
+        return `${new Intl.NumberFormat("vi-VN").format(soTienTru)} ${donVi}`;
+      },
     },
     {
       title: "Thao tác",
@@ -700,7 +758,7 @@ export default function TruComponent() {
               <Table
                 columns={lichSuColumns}
                 dataSource={getFilteredLichSu()}
-                rowKey="id"
+                rowKey="maNhanVien"
                 rowSelection={lichSuRowSelection}
                 pagination={{
                   pageSize: 10,
@@ -808,30 +866,6 @@ export default function TruComponent() {
           >
             {modalType === "lichsu" ? (
               <>
-                <Form.Item
-                  name="maLoaiTienTru"
-                  label="Loại phạt"
-                  rules={[
-                    { required: true, message: "Vui lòng chọn loại phạt!" },
-                  ]}
-                >
-                  <Select placeholder="Chọn loại phạt"
-                    showSearch
-                    optionFilterProp="children"
-                    filterOption={(input, option) =>
-                      (option?.children ?? "").toLowerCase().includes(input.toLowerCase())
-                    }>
-                    {danhSachLoaiTienTru.map((item) => (
-                      <Select.Option
-                        key={item.maLoaiTienTru}
-                        value={item.maLoaiTienTru}
-                      >
-                        {item.tenLoaiTienTru}
-                      </Select.Option>
-                    ))}
-                  </Select>
-                </Form.Item>
-
                 <Row gutter={16}>
                   <Col span={12}>
                     <Form.Item
@@ -847,6 +881,8 @@ export default function TruComponent() {
                       <Select
                         placeholder="Chọn nhân viên"
                         showSearch
+                        disabled={editingItem != null}
+                        onChange={handleNhanVienChangePhat}
                         optionFilterProp="label"
                         filterOption={(input, option) =>
                           (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
@@ -860,9 +896,45 @@ export default function TruComponent() {
                   </Col>
                 </Row>
 
+                <Form.Item
+                  name="maLoaiTienTru"
+                  label="Loại phạt"
+                  rules={[
+                    { required: true, message: "Vui lòng chọn loại phạt!" },
+                  ]}
+                >
+                  <Select placeholder="Chọn loại phạt"
+                    showSearch
+                    disabled={editingItem != null || form.getFieldValue("maNhanVien") == null}
+                    optionFilterProp="children"
+                    filterOption={(input, option) =>
+                      (option?.children ?? "").toLowerCase().includes(input.toLowerCase())
+                    }>
+                    {loaiPhatChuaApDung.map((item) => (
+                      <Select.Option
+                        key={item.maLoaiTienTru}
+                        value={item.maLoaiTienTru}
+                      >
+                        {item.tenLoaiTienTru} - {" "}
+                        {item.donVi === "%"
+                          ? `${item.soTienTru} %`
+                          : `${new Intl.NumberFormat("vi-VN").format(item.soTienTru)} ${item.donVi}`}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+
                 <Row gutter={16}>
                   <Col span={12}>
-                    <Form.Item name="soTienTruKhac" label="Số tiền phạt">
+                    <Form.Item name="soTienTruKhac"
+                      label={
+                        <span>
+                          {donViTru === "%" ? "Phần trăm trừ mong muốn" : "Số tiền trừ mong muốn"} {" "}
+                          <Tooltip title="Khoản trừ cụ thể hoặc theo phần trăm so với mức trừ cơ bản (tùy chọn)">
+                            <QuestionCircleOutlined style={{ color: "#1890ff", marginLeft: 4 }} />
+                          </Tooltip>
+                        </span>
+                      }>
                       <InputNumber
                         style={{ width: "100%" }}
                         placeholder="Nhập số tiền phạt"
@@ -906,26 +978,24 @@ export default function TruComponent() {
                   label="Tên loại phạt"
                   rules={[
                     { required: true, message: "Vui lòng nhập tên loại phạt!" },
+                    {
+                      validator: (_, value) => {
+                        if (!value) return Promise.resolve();
+
+                        const tenDaTonTai = danhSachLoaiTienTru.some(
+                          (item) =>
+                            item.tenLoaiTienTru.trim().toLowerCase() === value.trim().toLowerCase() &&
+                            item.maLoaiTienTru !== editingItem?.maLoaiTienTru // bỏ qua nếu đang sửa chính nó
+                        );
+
+                        return tenDaTonTai
+                          ? Promise.reject("Tên loại phạt đã tồn tại!")
+                          : Promise.resolve();
+                      },
+                    },
                   ]}
                 >
                   <Input placeholder="Nhập tên loại phạt" />
-                </Form.Item>
-
-                <Form.Item
-                  name="soTienTru"
-                  label="Số tiền"
-                  rules={[
-                    { required: true, message: "Vui lòng nhập số tiền!" },
-                  ]}
-                >
-                  <InputNumber
-                    style={{ width: "100%" }}
-                    placeholder="Nhập số tiền"
-                    formatter={(value) =>
-                      `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                    }
-                    parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
-                  />
                 </Form.Item>
 
                 <Form.Item
@@ -934,11 +1004,34 @@ export default function TruComponent() {
                   rules={[{ required: true, message: "Vui lòng chọn đơn vị!" }]}
                 >
                   <Select
-                    placeholder=""
+                    placeholder="Chọn đơn vị"
+                    onChange={(value) => { setDonViTru(value); form.setFieldValue("soTienTru", null); }}
                     options={[
                       { value: "%", label: "%" },
                       { value: "VND", label: "VND" },
                     ]}
+                  />
+                </Form.Item>
+
+                <Form.Item
+                  name="soTienTru"
+                  label={donViTru === "%" ? "Phần trăm trừ (%)" : "Số tiền trừ (VND)"}
+                  rules={[
+                    { required: true, message: "Vui lòng nhập số tiền!" },
+                  ]}
+                >
+                  <InputNumber
+                    key={donViTru}
+                    style={{ width: "100%" }}
+                    placeholder={
+                      donViTru === "%" ? "Nhập phần trăm trừ" : "Nhập số tiền trừ"
+                    }
+                    formatter={(value) =>
+                      `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                    }
+                    parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
+                    min={0}
+                    max={donViTru === "%" ? 100 : undefined}
                   />
                 </Form.Item>
               </>
