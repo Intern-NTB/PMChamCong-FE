@@ -19,11 +19,8 @@ import {
 import {
   SearchOutlined,
   PlusOutlined,
-  EditOutlined,
-  EyeOutlined,
   CalendarOutlined,
   FileExcelOutlined,
-  FilePdfOutlined,
   DownOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
@@ -39,10 +36,11 @@ import { useLichSuTru } from "../../component/hooks/useLichSuTienTru";
 import { useLoaiTienThuong } from "../../component/hooks/useLoaiTienThuong";
 import { useLoaiTienTru } from "../../component/hooks/useLoaiTienTru";
 import { useChamCong } from "../../component/hooks/useChamCong";
-import LuongDetailModal from "./LuongDetailModal";
-import LuongEditModal from "./LuongEditModal";
 import ModalChiTietChamCong from "../chamcong/modal_chi_tiet_cham_cong";
-import { exportToExcel } from "./exportToExcel_version2";
+import {
+  exportToExcel,
+  exportIndividualToExcel,
+} from "./exportToExcel_version2";
 import {
   generateMultipleDetailedPDFs,
   generateSinglePDFMultiplePages,
@@ -61,11 +59,6 @@ export default function Luong() {
   const [isModalChamCongChiTietVisible, setIsModalChamCongChiTietVisible] =
     useState(false);
   const [selectedNhanVien, setSelectedNhanVien] = useState(null);
-
-  // const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
-  // const [detailRecord, setDetailRecord] = useState(null);
-  // const [isEditModalVisible, setIsEditModalVisible] = useState(false);
-  // const [editRecord, setEditRecord] = useState(null);
 
   const [selectedRows, setSelectedRows] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
@@ -170,6 +163,44 @@ export default function Luong() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Menu cho Excel
+  const menuExcel = (
+    <Menu>
+      <Menu.Item key="1">
+        <Button
+          type="text"
+          onClick={() => {
+            if (selectedRows.length !== 0) {
+              exportToExcelIndividuaHandler();
+            } else {
+              apiNotification.warning({
+                message: "Vui lòng chọn ít nhất 1 nhân viên !",
+              });
+            }
+          }}
+        >
+          Xuất lương cho nhân viên
+        </Button>
+      </Menu.Item>
+      <Menu.Item key="2">
+        <Button
+          type="text"
+          onClick={() => {
+            if (selectedRows.length !== 0) {
+              exportToExcelHandler();
+            } else {
+              apiNotification.warning({
+                message: "Vui lòng chọn ít nhất 1 nhân viên !",
+              });
+            }
+          }}
+        >
+          Xuất báo cáo
+        </Button>
+      </Menu.Item>
+    </Menu>
+  );
+
   // Menu cho PDF
   const menuPdf = (
     <Menu>
@@ -178,7 +209,6 @@ export default function Luong() {
           type="text"
           onClick={() => {
             if (selectedRows.length !== 0) {
-              apiNotification.success({ message: "Xuất PDF Thành công" });
               generateMultipagePDFHandler();
             } else {
               apiNotification.warning({
@@ -195,7 +225,6 @@ export default function Luong() {
           type="text"
           onClick={() => {
             if (selectedRows.length !== 0) {
-              apiNotification.success({ message: "Xuất PDF Thành công" });
               generateSummaryPDFHandler();
             } else {
               apiNotification.warning({
@@ -405,6 +434,13 @@ export default function Luong() {
     );
   };
 
+  const exportToExcelIndividuaHandler = () => {
+    const selectedData = filteredData.filter((record) =>
+      selectedRows.includes(record.maNhanVien)
+    );
+    exportIndividualToExcel(selectedData, selectedMonthYear.format("MM/YYYY"));
+  };
+
   const generateSummaryPDFHandler = async () => {
     const selectedData = filteredData.filter((record) =>
       selectedRows.includes(record.maNhanVien)
@@ -584,14 +620,11 @@ export default function Luong() {
       />
 
       <Space style={{ marginTop: 16 }}>
-        <Button
-          onClick={exportToExcelHandler}
-          style={{ marginRight: 10 }}
-          icon={<FileExcelOutlined />}
-          disabled={selectedRows.length === 0}
-        >
-          Xuất Excel ({selectedRows.length})
-        </Button>
+        <Dropdown overlay={menuExcel}>
+          <Button>
+            Xuất Excel <DownOutlined />
+          </Button>
+        </Dropdown>
         <Dropdown overlay={menuPdf}>
           <Button>
             Xuất PDF <DownOutlined />
@@ -693,19 +726,6 @@ export default function Luong() {
         selectedNhanVien={selectedNhanVien}
         danhSachChamCongChiTiet={danhSachChamCongChiTiet}
       />
-
-      {/* <LuongDetailModal
-        visible={isDetailModalVisible}
-        onCancel={() => setIsDetailModalVisible(false)}
-        record={detailRecord}
-        selectedMonthYear={selectedMonthYear}
-      />
-      <LuongEditModal
-        visible={isEditModalVisible}
-        onCancel={() => setIsEditModalVisible(false)}
-        initialValues={editRecord}
-        onSave={null}
-      /> */}
     </div>
   );
 }
