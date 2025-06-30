@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import {
   Modal,
   Form,
@@ -18,7 +19,7 @@ import { useVaiTro } from "../../component/hooks/useVaiTro";
 import { useDoiTuongUuTien } from "../../component/hooks/useDoiTuongUuTien";
 import { useNhanVien } from "../../component/hooks/useNhanVien";
 import dayjs from "dayjs";
-import customParseFormat from 'dayjs/plugin/customParseFormat';
+import customParseFormat from "dayjs/plugin/customParseFormat";
 import { toLocalISOString } from "../../component/utils/format_date_iso";
 
 dayjs.extend(customParseFormat);
@@ -73,7 +74,11 @@ const Popup = ({
       return parsed;
     }
 
-    console.warn("parseDate: Could not parse date string:", dateString, "using any known format.");
+    console.warn(
+      "parseDate: Could not parse date string:",
+      dateString,
+      "using any known format."
+    );
     return undefined;
   }, []);
 
@@ -93,14 +98,14 @@ const Popup = ({
           ngayVaoLam: parsedNgayVaoLam,
           maPhongBan: initialValues.maPhongBan,
           maVaiTro: initialValues.maVaiTro,
-          maUuTien: initialValues.maUuTien > 0 ? initialValues.maUuTien : undefined,
+          maUuTien:
+            initialValues.maUuTien > 0 ? initialValues.maUuTien : undefined,
         };
         form.setFieldsValue(fieldsToSet);
 
         if (initialValues.maPhongBan) {
           getAllVaiTro(initialValues.maPhongBan);
         }
-
       } else {
         setSoDienThoaiWarning(null);
         setHasPriority(false);
@@ -117,7 +122,16 @@ const Popup = ({
       setSoDienThoaiWarning(null);
       setHasPriority(false);
     }
-  }, [visible, initialValues, isEditMode, maPhongBan, maVaiTro, getAllVaiTro, parseDate, form]);
+  }, [
+    visible,
+    initialValues,
+    isEditMode,
+    maPhongBan,
+    maVaiTro,
+    getAllVaiTro,
+    parseDate,
+    form,
+  ]);
 
   // useEffect này không cần thiết để "watch" soDienThoai nữa vì chúng ta sẽ dùng Form.Item shouldUpdate
   // để kiểm tra trùng lặp ngay tại input.
@@ -126,52 +140,62 @@ const Popup = ({
   useEffect(() => {
     if (visible && form) {
       // Chạy kiểm tra trùng lặp ban đầu khi popup mở
-      const initialSoDienThoai = form.getFieldValue('soDienThoai');
+      const initialSoDienThoai = form.getFieldValue("soDienThoai");
       checkDuplicatePhone(initialSoDienThoai);
     }
   }, [visible, form, danhSachNhanVien, initialValues?.maNhanVien]); // Thêm form vào dependency array
 
-  const checkDuplicatePhone = useCallback((value) => {
-    if (!value) {
-      setSoDienThoaiWarning(null);
-      return;
-    }
+  const checkDuplicatePhone = useCallback(
+    (value) => {
+      if (!value) {
+        setSoDienThoaiWarning(null);
+        return;
+      }
 
-    const isDuplicate = danhSachNhanVien.some(nv =>
-      nv.maNhanVien !== initialValues?.maNhanVien &&
-      nv.soDienThoai === value
-    );
+      const isDuplicate = danhSachNhanVien.some(
+        (nv) =>
+          nv.maNhanVien !== initialValues?.maNhanVien &&
+          nv.soDienThoai === value
+      );
 
-    if (isDuplicate) {
-      setSoDienThoaiWarning("Số điện thoại này đã tồn tại trong hệ thống.");
-    } else {
-      setSoDienThoaiWarning(null);
-    }
-  }, [danhSachNhanVien, initialValues?.maNhanVien]);
+      if (isDuplicate) {
+        setSoDienThoaiWarning("Số điện thoại này đã tồn tại trong hệ thống.");
+      } else {
+        setSoDienThoaiWarning(null);
+      }
+    },
+    [danhSachNhanVien, initialValues?.maNhanVien]
+  );
 
+  const handleDateChange = useCallback(
+    (date) => {
+      form.setFieldValue("ngaySinh", date);
+    },
+    [form]
+  );
 
-  const handleDateChange = useCallback((date) => {
-    form.setFieldValue("ngaySinh", date);
-  }, [form]);
+  const validateCmnd = useCallback(
+    async (_, value) => {
+      if (!value) {
+        return Promise.resolve();
+      }
+      if (!/^\d{12}$/.test(value)) {
+        return Promise.reject("Căn cước công dân phải gồm 12 chữ số.");
+      }
 
-  const validateCmnd = useCallback(async (_, value) => {
-    if (!value) {
+      const isDuplicate = danhSachNhanVien.some(
+        (nv) => nv.maNhanVien !== initialValues?.maNhanVien && nv.cmnd === value
+      );
+
+      if (isDuplicate) {
+        return Promise.reject(
+          "CCCD này đã tồn tại trong hệ thống. Vui lòng nhập CCCD khác."
+        );
+      }
       return Promise.resolve();
-    }
-    if (!/^\d{12}$/.test(value)) {
-      return Promise.reject("Căn cước công dân phải gồm 12 chữ số.");
-    }
-
-    const isDuplicate = danhSachNhanVien.some(nv =>
-      nv.maNhanVien !== initialValues?.maNhanVien &&
-      (nv.cmnd === value)
-    );
-
-    if (isDuplicate) {
-      return Promise.reject("CCCD này đã tồn tại trong hệ thống. Vui lòng nhập CCCD khác.");
-    }
-    return Promise.resolve();
-  }, [danhSachNhanVien, initialValues?.maNhanVien]);
+    },
+    [danhSachNhanVien, initialValues?.maNhanVien]
+  );
 
   const validateSoDienThoaiFormat = useCallback(async (_, value) => {
     if (!value) {
@@ -187,18 +211,26 @@ const Popup = ({
     form
       .validateFields()
       .then((values) => {
-        if (values.ngaySinh && dayjs.isDayjs(values.ngaySinh) && values.ngaySinh.isValid()) {
+        if (
+          values.ngaySinh &&
+          dayjs.isDayjs(values.ngaySinh) &&
+          values.ngaySinh.isValid()
+        ) {
           values.ngaySinh = values.ngaySinh.format("YYYY-MM-DD");
         } else {
           values.ngaySinh = null;
         }
 
         if (!isEditMode) {
-          values.ngayVaoLam = toLocalISOString().split('T')[0];
-        } else if (values.ngayVaoLam && dayjs.isDayjs(values.ngayVaoLam) && values.ngayVaoLam.isValid()) {
-            values.ngayVaoLam = values.ngayVaoLam.format("YYYY-MM-DD");
+          values.ngayVaoLam = toLocalISOString().split("T")[0];
+        } else if (
+          values.ngayVaoLam &&
+          dayjs.isDayjs(values.ngayVaoLam) &&
+          values.ngayVaoLam.isValid()
+        ) {
+          values.ngayVaoLam = values.ngayVaoLam.format("YYYY-MM-DD");
         } else {
-            values.ngayVaoLam = null;
+          values.ngayVaoLam = null;
         }
 
         values.diaChi = values.diaChi || null;
@@ -206,38 +238,55 @@ const Popup = ({
         values.hoTen = values.hoTen || null;
         values.cmnd = values.cmnd || null;
 
-        values.maPhongBan = values.maPhongBan ? Number(values.maPhongBan) : null;
+        values.maPhongBan = values.maPhongBan
+          ? Number(values.maPhongBan)
+          : null;
         values.maVaiTro = values.maVaiTro ? Number(values.maVaiTro) : null;
-        values.luongCoBan = values.luongCoBan ? Number(values.luongCoBan) : null;
-        values.heSoTangCa = values.heSoTangCa ? Number(values.heSoTangCa) : null;
+        values.luongCoBan = values.luongCoBan
+          ? Number(values.luongCoBan)
+          : null;
+        values.heSoTangCa = values.heSoTangCa
+          ? Number(values.heSoTangCa)
+          : null;
 
-        values.maUuTien = hasPriority && values.maUuTien ? Number(values.maUuTien) : null;
+        values.maUuTien =
+          hasPriority && values.maUuTien ? Number(values.maUuTien) : null;
 
         onOk(values);
       })
       .catch((info) => {
         console.warn("Validation failed:", info);
-        message.error("Vui lòng kiểm tra lại thông tin nhập liệu và các trường bị lỗi.");
+        message.error(
+          "Vui lòng kiểm tra lại thông tin nhập liệu và các trường bị lỗi."
+        );
       });
   }, [form, onOk, isEditMode, hasPriority]);
 
-  const handleChangePhongBan = useCallback((value) => {
-    form.setFieldValue("maPhongBan", value);
-    getAllVaiTro(value);
-    form.setFieldValue("maVaiTro", undefined);
-  }, [form, getAllVaiTro]);
+  const handleChangePhongBan = useCallback(
+    (value) => {
+      form.setFieldValue("maPhongBan", value);
+      getAllVaiTro(value);
+      form.setFieldValue("maVaiTro", undefined);
+    },
+    [form, getAllVaiTro]
+  );
 
-  const handlePriorityToggle = useCallback((checked) => {
-    setHasPriority(checked);
-    if (!checked) {
-      form.setFieldsValue({ maUuTien: undefined });
-    }
-  }, [form]);
+  const handlePriorityToggle = useCallback(
+    (checked) => {
+      setHasPriority(checked);
+      if (!checked) {
+        form.setFieldsValue({ maUuTien: undefined });
+      }
+    },
+    [form]
+  );
 
-  const dataSourceVaiTro = Array.isArray(danhSachVaiTro) ? danhSachVaiTro.map((vt) => ({
-    value: vt.maVaiTro,
-    label: vt.tenVaiTro,
-  })) : [];
+  const dataSourceVaiTro = Array.isArray(danhSachVaiTro)
+    ? danhSachVaiTro.map((vt) => ({
+        value: vt.maVaiTro,
+        label: vt.tenVaiTro,
+      }))
+    : [];
 
   return (
     <Modal
@@ -265,7 +314,11 @@ const Popup = ({
       <Form form={form} layout="vertical" name="employeeForm">
         <Row gutter={16}>
           <Col span={12}>
-            <Form.Item name="hoTen" label="Họ Tên" rules={[{ required: true, message: "Vui lòng nhập Họ Tên!" }]}>
+            <Form.Item
+              name="hoTen"
+              label="Họ Tên"
+              rules={[{ required: true, message: "Vui lòng nhập Họ Tên!" }]}
+            >
               <Input placeholder="Nhập họ tên" />
             </Form.Item>
           </Col>
@@ -286,12 +339,18 @@ const Popup = ({
               name="luongCoBan"
               label="Lương Cơ bản"
               rules={[
-                { required: true, message: "Vui lòng nhập lương cơ bản cho nhân viên" },
                 {
-                  type: 'number',
+                  required: true,
+                  message: "Vui lòng nhập lương cơ bản cho nhân viên",
+                },
+                {
+                  type: "number",
                   min: 0,
-                  message: 'Vui lòng nhập số hợp lệ và không âm!',
-                  transform: (value) => (value === '' || value === undefined || value === null) ? null : Number(value),
+                  message: "Vui lòng nhập số hợp lệ và không âm!",
+                  transform: (value) =>
+                    value === "" || value === undefined || value === null
+                      ? null
+                      : Number(value),
                 },
               ]}
             >
@@ -311,14 +370,20 @@ const Popup = ({
               label="Hệ số tăng ca"
               rules={[
                 {
-                  type: 'number',
+                  type: "number",
                   min: 0,
-                  message: 'Vui lòng nhập số hợp lệ và không âm!',
-                  transform: (value) => (value === '' || value === undefined || value === null) ? null : Number(value),
+                  message: "Vui lòng nhập số hợp lệ và không âm!",
+                  transform: (value) =>
+                    value === "" || value === undefined || value === null
+                      ? null
+                      : Number(value),
                 },
               ]}
             >
-              <InputNumber style={{ width: "100%" }} placeholder="Nhập hệ số tăng ca" />
+              <InputNumber
+                style={{ width: "100%" }}
+                placeholder="Nhập hệ số tăng ca"
+              />
             </Form.Item>
           </Col>
           <Col span={12}>
@@ -353,7 +418,7 @@ const Popup = ({
                 placeholder="Chọn vai trò"
                 loading={loadingVaiTro}
                 options={dataSourceVaiTro}
-                disabled={!form.getFieldValue('maPhongBan')}
+                disabled={!form.getFieldValue("maPhongBan")}
               />
             </Form.Item>
           </Col>
@@ -377,14 +442,17 @@ const Popup = ({
                 allowClear
                 disabled={!hasPriority}
               >
-                {Array.isArray(danhSachDoiTuongUuTien) && danhSachDoiTuongUuTien.length > 0 ? (
+                {Array.isArray(danhSachDoiTuongUuTien) &&
+                danhSachDoiTuongUuTien.length > 0 ? (
                   danhSachDoiTuongUuTien.map((dtut) => (
                     <Option key={dtut.maUuTien} value={dtut.maUuTien}>
                       {dtut.tenUuTien}
                     </Option>
                   ))
                 ) : (
-                  <Option value={null} disabled>Không có dữ liệu ưu tiên</Option>
+                  <Option value={null} disabled>
+                    Không có dữ liệu ưu tiên
+                  </Option>
                 )}
               </Select>
             </Form.Item>
@@ -396,7 +464,7 @@ const Popup = ({
               label="Căn cước công dân"
               rules={[
                 { validator: validateCmnd },
-                { required: true, message: "Vui lòng nhập CCCD!" }
+                { required: true, message: "Vui lòng nhập CCCD!" },
               ]}
             >
               <Input placeholder="Nhập số cmnd" maxLength={12} />
@@ -409,43 +477,55 @@ const Popup = ({
               label="Số điện thoại"
               rules={[
                 { validator: validateSoDienThoaiFormat },
-                { required: true, message: "Vui lòng nhập số điện thoại!" }
+                { required: true, message: "Vui lòng nhập số điện thoại!" },
               ]}
-  
             >
-              <Input
-                placeholder="Nhập số điện thoại"
-                maxLength={10}
-              />
+              <Input placeholder="Nhập số điện thoại" maxLength={10} />
             </Form.Item>
             {/* Thêm một Form.Item độc lập chỉ để hiển thị cảnh báo trùng lặp SDT */}
-            <Form.Item shouldUpdate={(prevValues, currentValues) => prevValues.soDienThoai !== currentValues.soDienThoai}>
+            <Form.Item
+              shouldUpdate={(prevValues, currentValues) =>
+                prevValues.soDienThoai !== currentValues.soDienThoai
+              }
+            >
               {({ getFieldValue }) => {
-                const sdt = getFieldValue('soDienThoai');
-            
-                const isDuplicate = danhSachNhanVien.some(nv =>
+                const sdt = getFieldValue("soDienThoai");
+
+                const isDuplicate = danhSachNhanVien.some(
+                  (nv) =>
                     nv.maNhanVien !== initialValues?.maNhanVien &&
-                    nv.soDienThoai === sdt && sdt // Kiểm tra cả khi sdt tồn tại
+                    nv.soDienThoai === sdt &&
+                    sdt // Kiểm tra cả khi sdt tồn tại
                 );
 
                 if (isDuplicate) {
-                  return <div style={{ color: 'orange', marginTop: '-15px', marginBottom: '15px' }}>Số điện thoại này đã tồn tại trong hệ thống.</div>;
+                  return (
+                    <div
+                      style={{
+                        color: "orange",
+                        marginTop: "-15px",
+                        marginBottom: "15px",
+                      }}
+                    >
+                      Số điện thoại này đã tồn tại trong hệ thống.
+                    </div>
+                  );
                 }
                 return null;
               }}
             </Form.Item>
           </Col>
-           {isEditMode && initialValues?.ngayVaoLam && (
+          {isEditMode && initialValues?.ngayVaoLam && (
             <Col span={12}>
-                <Form.Item name="ngayVaoLam" label="Ngày Vào Làm">
-                    <DatePicker
-                        style={{ width: "100%" }}
-                        format="DD/MM/YYYY"
-                        disabled
-                    />
-                </Form.Item>
+              <Form.Item name="ngayVaoLam" label="Ngày Vào Làm">
+                <DatePicker
+                  style={{ width: "100%" }}
+                  format="DD/MM/YYYY"
+                  disabled
+                />
+              </Form.Item>
             </Col>
-           )}
+          )}
         </Row>
       </Form>
     </Modal>

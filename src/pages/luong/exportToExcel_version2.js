@@ -39,6 +39,157 @@ const removeVietnameseTones = (str) => {
     .join("");
 };
 
+const formatCurrency = (value) => {
+  if (value == null || value === 0) return "0";
+  return Math.round(value).toLocaleString("vi-VN") + " đ";
+};
+
+// Hàm tính toán số tiền dựa trên đơn vị
+const calculateAmount = (value, unit, baseSalary) => {
+  if (!value || value === 0) return 0;
+
+  if (unit === "%") {
+    // Nếu đơn vị là %, tính phần trăm của lương cơ bản
+    return (baseSalary * value) / 100;
+  } else {
+    // Nếu không phải %, trả về giá trị gốc (số tiền cố định)
+    return value;
+  }
+};
+// Hàm tạo text chi tiết thưởng
+const createBonusDetailText = (bonusData, baseSalary = 0) => {
+  if (!bonusData) {
+    return "Không có thưởng";
+  }
+
+  const details = [];
+
+  if (Array.isArray(bonusData)) {
+    bonusData.forEach((bonus) => {
+      let bonusAmount = 0;
+
+      if (bonus.soTienThuongKhac && bonus.soTienThuongKhac > 0) {
+        bonusAmount = calculateAmount(
+          bonus.soTienThuongKhac,
+          bonus.donViThuongKhac || bonus.donVi,
+          baseSalary
+        );
+      } else if (bonus.soTienThuong) {
+        bonusAmount = calculateAmount(
+          bonus.soTienThuong,
+          bonus.donViThuong || bonus.donVi,
+          baseSalary
+        );
+      }
+
+      const bonusText = `${bonus.tenLoaiTienThuong || "Thưởng khác"}${
+        bonus.lyDo ? ` (${bonus.lyDo})` : ""
+      }${
+        bonus.donVi === "%"
+          ? ` - ${bonus.soTienThuong || bonus.soTienThuongKhac}%`
+          : ""
+      }: ${formatCurrency(bonusAmount)}`;
+
+      details.push(bonusText);
+    });
+  } else {
+    let bonusAmount = 0;
+
+    if (bonusData.soTienThuongKhac && bonusData.soTienThuongKhac > 0) {
+      bonusAmount = calculateAmount(
+        bonusData.soTienThuongKhac,
+        bonusData.donViThuongKhac || bonusData.donVi,
+        baseSalary
+      );
+    } else if (bonusData.soTienThuong) {
+      bonusAmount = calculateAmount(
+        bonusData.soTienThuong,
+        bonusData.donViThuong || bonusData.donVi,
+        baseSalary
+      );
+    }
+
+    const bonusText = `${bonusData.tenLoaiTienThuong || "Thưởng khác"}${
+      bonusData.lyDo ? ` (${bonusData.lyDo})` : ""
+    }${
+      bonusData.donVi === "%"
+        ? ` - ${bonusData.soTienThuong || bonusData.soTienThuongKhac}%`
+        : ""
+    }: ${formatCurrency(bonusAmount)}`;
+
+    details.push(bonusText);
+  }
+
+  return details.join("\n");
+};
+
+// Hàm tạo text chi tiết phạt
+const createPenaltyDetailText = (penaltyData, baseSalary = 0) => {
+  if (!penaltyData) {
+    return "Không có phạt";
+  }
+
+  const details = [];
+
+  if (Array.isArray(penaltyData)) {
+    penaltyData.forEach((penalty) => {
+      let penaltyAmount = 0;
+
+      if (penalty.soTienTruKhac && penalty.soTienTruKhac > 0) {
+        penaltyAmount = calculateAmount(
+          penalty.soTienTruKhac,
+          penalty.donViTruKhac || penalty.donVi,
+          baseSalary
+        );
+      } else if (penalty.soTienTru) {
+        penaltyAmount = calculateAmount(
+          penalty.soTienTru,
+          penalty.donViTru || penalty.donVi,
+          baseSalary
+        );
+      }
+
+      const penaltyText = `${penalty.tenLoaiTienTru || "Phạt khác"}${
+        penalty.liDo ? ` (${penalty.liDo})` : ""
+      }${
+        penalty.donVi === "%"
+          ? ` - ${penalty.soTienTru || penalty.soTienTruKhac}%`
+          : ""
+      }: ${formatCurrency(penaltyAmount)}`;
+
+      details.push(penaltyText);
+    });
+  } else {
+    let penaltyAmount = 0;
+
+    if (penaltyData.soTienTruKhac && penaltyData.soTienTruKhac > 0) {
+      penaltyAmount = calculateAmount(
+        penaltyData.soTienTruKhac,
+        penaltyData.donViTruKhac || penaltyData.donVi,
+        baseSalary
+      );
+    } else if (penaltyData.soTienTru) {
+      penaltyAmount = calculateAmount(
+        penaltyData.soTienTru,
+        penaltyData.donViTru || penaltyData.donVi,
+        baseSalary
+      );
+    }
+
+    const penaltyText = `${penaltyData.tenLoaiTienTru || "Phạt khác"}${
+      penaltyData.liDo ? ` (${penaltyData.liDo})` : ""
+    }${
+      penaltyData.donVi === "%"
+        ? ` - ${penaltyData.soTienTru || penaltyData.soTienTruKhac}%`
+        : ""
+    }: ${formatCurrency(penaltyAmount)}`;
+
+    details.push(penaltyText);
+  }
+
+  return details.join("\n");
+};
+
 export const exportToExcel = async (
   data,
   monthYear = "",
@@ -94,58 +245,56 @@ export const exportToExcel = async (
           width: 16,
           header: "(6)\nSố Ngày Nghỉ Không Phép Nhưng Tính Lương",
         },
-        {
-          key: "soNgayNghiTruLuong",
-          width: 16,
-          header: "(7)\nSố Ngày Nghỉ Trừ Lương",
-        },
-        { key: "soGioTangCa", width: 12, header: "(8)\nSố Giờ Tăng Ca" },
-        { key: "heSoTangCa", width: 12, header: "(9)\nHệ Số Tăng Ca" },
-        { key: "tongTienPhuCap", width: 15, header: "(10)\nTổng Tiền Phụ Cấp" },
-        { key: "tienThuong", width: 15, header: "(11)\nTiền Thưởng" },
-        { key: "tienTru", width: 15, header: "(12)\nTiền Trừ" },
+        { key: "soGioTangCa", width: 12, header: "(7)\nSố Giờ Tăng Ca" },
+        { key: "heSoTangCa", width: 12, header: "(8)\nHệ Số Tăng Ca" },
+        { key: "tongTienPhuCap", width: 15, header: "(9)\nTổng Tiền Phụ Cấp" },
 
-        // === CÁC CÔNG THỨC TÍNH (theo thứ tự logic) ===
-        { key: "luongGio", width: 12, header: "(13)\nLương Giờ\n(1)/(3)/8" },
+        // === CHI TIẾT THƯỞNG VÀ PHẠT ===
+        {
+          key: "danhSachLichSuThuong",
+          width: 50,
+          header: "(10)\nChi Tiết Thưởng",
+        },
+        { key: "tienThuong", width: 15, header: "(11)\nTổng Tiền Thưởng" },
+        { key: "danhSachLichSuTru", width: 50, header: "(12)\nChi Tiết Phạt" },
+        { key: "tienTru", width: 15, header: "(13)\nTổng Tiền Phạt" },
+
+        // === CÁC CÔNG THỨC TÍNH (cập nhật số thứ tự) ===
+        { key: "luongGio", width: 12, header: "(14)\nLương Giờ\n(1)/(3)/8" },
         {
           key: "soNgayNghi",
           width: 12,
-          header: "(14)\nSố Ngày Nghỉ\n(4)+(5)+(6)+(7)",
-        },
-        {
-          key: "soNgayCongChuaLam",
-          width: 12,
-          header: "(15)\nSố Ngày Công Chưa Làm\n(3)-(2)-\n(4)-(5)-(6)",
+          header: "(15)\nSố Ngày Nghỉ Tính Lương\n(4)+(5)+(6)",
         },
         {
           key: "tongTienTangCa",
           width: 15,
-          header: "(16)\nTổng Tiền Tăng Ca\n(8)*(13)+((8)*(9)*(13))",
+          header: "(16)\nTổng Tiền Tăng Ca\n(7)*(14)+((7)*(8)*(14))",
         },
         {
           key: "luongNgayNghi",
           width: 15,
-          header: "(17)\nLương Ngày Nghỉ\n(13)*8*((4)+(5)+(6))",
+          header: "(17)\nLương Ngày Nghỉ\n(14)*8*((4)+(5)+(6))",
         },
         {
           key: "luongNgayCongChuaLam",
           width: 15,
-          header: "(18)\nLương Ngày Công Chưa Làm\n(13)*8*(15)",
+          header: "(18)\nLương Ngày Công Chưa Làm\n(14)*8*((3)-(2)-(15))",
         },
         {
           key: "luongTheoNgay",
           width: 15,
-          header: "(19)\nLương Theo Ngày\n(1)-(18)-(17)",
+          header: "(19)\nLương Theo Ngày\n(1)-(17)-(18)",
         },
         {
           key: "tongLuongCoBan",
           width: 15,
-          header: "(20)\nTổng Lương Cơ Bản\n(16)+(19)+(17)+(10)",
+          header: "(20)\nTổng Lương Cơ Bản\n(16)+(19)+(17)+(9)",
         },
         {
           key: "tongLuong",
           width: 15,
-          header: "(21)\nTổng Lương\n(20)+(11)-(12)",
+          header: "(21)\nTổng Lương\n(20)+(11)-(13)",
         },
       ];
 
@@ -234,13 +383,14 @@ export const exportToExcel = async (
           soNgayCong: item.soNgayCong || 0,
           soNgayCongChuaLam: item.soNgayNghiTruLuong || 0,
           congChuanCuaThang: item.congChuanCuaThang || 0,
-          soNgayNghi: item.soNgayNghi + item.soNgayLe || 0,
+          soNgayNghi:
+            item.soNgayNghi +
+              item.soNgayLe -
+              ((item.soNgayNghi || 0) - (item.soNgayNghiCoLuong || 0)) || 0,
           soNgayLe: item.soNgayLe || 0,
           soNgayNghiCoPhep: item.soNgayNghiCoPhep || 0,
           soNgayNghiKhongPhepNhungTinhLuong:
             (item.soNgayNghiCoLuong || 0) - (item.soNgayNghiCoPhep || 0),
-          soNgayNghiTruLuong:
-            (item.soNgayNghi || 0) - (item.soNgayNghiCoLuong || 0),
           soGioTangCa: item.soGioTangCa || 0,
           heSoTangCa: item.heSoTangCa || 0,
           luongGio: item.luongGio || 0,
@@ -249,21 +399,33 @@ export const exportToExcel = async (
           luongNgayCongChuaLam: item.tongSoTienNgayNghiTruLuong || 0,
           luongNgayNghi: item.luongNgayNghi || 0,
           tongTienPhuCap: item.tongTienPhuCap || 0,
+
+          // Thêm chi tiết thưởng và phạt
+          danhSachLichSuThuong: createBonusDetailText(
+            item.danhSachLichSuThuong,
+            item.luongCoBan
+          ),
+          tienThuong: item.tienThuong || 0,
+          danhSachLichSuTru: createPenaltyDetailText(
+            item.danhSachLichSuTru,
+            item.luongCoBan
+          ),
+          tienTru: item.tienTru || 0,
+
           tongLuongCoBan:
             (item.tongTienPhuCap || 0) +
             (item.luongTheoNgay || 0) +
             (item.luongNgayNghi || 0) +
             (item.tongTienTangCa || 0),
-          tienThuong: item.tienThuong || 0,
-          tienTru: item.tienTru || 0,
           tongLuong: item.tongLuong || 0,
         });
 
-        row.height = 25;
+        row.height = 40; // Tăng chiều cao để hiển thị chi tiết
 
         row.eachCell({ includeEmpty: false }, (cell, colNumber) => {
           const columnKey = summaryColumnDefinitions[colNumber - 1]?.key;
 
+          // Căn giữa tất cả các cell
           cell.alignment = {
             vertical: "middle",
             horizontal: "center",
@@ -277,10 +439,7 @@ export const exportToExcel = async (
             right: { style: "thin", color: { argb: "FF000000" } },
           };
 
-          if (["maNhanVien", "hoTen", "tenPhongBan"].includes(columnKey)) {
-            cell.alignment = { vertical: "middle", horizontal: "left" };
-          }
-
+          // Format số cho các cột tiền (vẫn căn giữa)
           if (
             [
               "luongCoBan",
@@ -297,9 +456,10 @@ export const exportToExcel = async (
             ].includes(columnKey)
           ) {
             cell.numFmt = "#,##0";
-            cell.alignment = { vertical: "middle", horizontal: "right" };
+            // Không cần thay đổi alignment, vẫn giữ căn giữa
           }
 
+          // Màu nền xen kẽ
           if (index % 2 === 0) {
             cell.fill = {
               type: "pattern",
@@ -308,6 +468,7 @@ export const exportToExcel = async (
             };
           }
 
+          // Highlight tổng lương
           if (columnKey === "tongLuong") {
             cell.fill = {
               type: "pattern",
@@ -321,16 +482,19 @@ export const exportToExcel = async (
             };
           }
 
+          // Highlight chi tiết thưởng và phạt
           if (
-            columnKey === "soNgayNghiTruLuong" &&
-            (item.soNgayNghi || 0) - (item.soNgayNghiCoLuong || 0) > 0
+            ["danhSachLichSuThuong", "danhSachLichSuTru"].includes(columnKey)
           ) {
             cell.fill = {
               type: "pattern",
               pattern: "solid",
-              fgColor: { argb: "FFFFE6E6" },
+              fgColor: { argb: "FFFEF7E6" },
             };
-            cell.font = { ...DEFAULT_FONT, color: { argb: "FFD32F2F" } };
+            cell.font = {
+              ...DEFAULT_FONT,
+              size: 10, // Font nhỏ hơn cho chi tiết
+            };
           }
         });
       });
@@ -343,13 +507,21 @@ export const exportToExcel = async (
         thang: "",
         luongCoBan: data.reduce((sum, item) => sum + (item.luongCoBan || 0), 0),
         soNgayCong: data.reduce((sum, item) => sum + (item.soNgayCong || 0), 0),
+        danhSachLichSuThuong: "---", // Không tính tổng chi tiết
+        tienThuong: data.reduce((sum, item) => sum + (item.tienThuong || 0), 0),
+        danhSachLichSuTru: "---", // Không tính tổng chi tiết
+        tienTru: data.reduce((sum, item) => sum + (item.tienTru || 0), 0),
         soNgayCongChuaLam: data.reduce(
           (sum, item) => sum + (item.soNgayNghiTruLuong || 0),
           0
         ),
         congChuanCuaThang: "",
         soNgayNghi: data.reduce(
-          (sum, item) => sum + ((item.soNgayNghi || 0) + (item.soNgayLe || 0)),
+          (sum, item) =>
+            sum +
+            ((item.soNgayNghi || 0) +
+              (item.soNgayLe || 0) -
+              ((item.soNgayNghi || 0) - (item.soNgayNghiCoLuong || 0))),
           0
         ),
         soNgayLe: data.reduce((sum, item) => sum + (item.soNgayLe || 0), 0),
@@ -403,8 +575,7 @@ export const exportToExcel = async (
               (item.tongTienTangCa || 0)),
           0
         ),
-        tienThuong: data.reduce((sum, item) => sum + (item.tienThuong || 0), 0),
-        tienTru: data.reduce((sum, item) => sum + (item.tienTru || 0), 0),
+
         tongLuong: data.reduce((sum, item) => sum + (item.tongLuong || 0), 0),
       });
 

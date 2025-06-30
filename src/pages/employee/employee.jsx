@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import {
   Table,
   Button,
@@ -13,7 +14,7 @@ import {
   Badge,
   Menu,
   AutoComplete,
-  Form, 
+  Form,
 } from "antd";
 import { useEffect, useState, useContext, useMemo } from "react";
 import {
@@ -51,16 +52,15 @@ export default function NhanVien() {
     deleteNhanVien,
     updateNhanVien,
   } = useNhanVien();
-  const { setReload } = useContext(ReloadContext);
 
   // State
-  const [isModalVisible, setIsModalVisible] = useState(false); 
+  const [isModalVisible, setIsModalVisible] = useState(false);
   const [isModalChamCongChiTietVisible, setIsModalChamCongChiTietVisible] =
-    useState(false); 
+    useState(false);
   const [selectedNhanVien, setSelectedNhanVien] = useState(null);
   const [isModalCreateNhanVienVisible, setIsModalCreateNhanVienVisible] =
-    useState(false); 
-  const [currentRecord, setCurrentRecord] = useState(null); 
+    useState(false);
+  const [currentRecord, setCurrentRecord] = useState(null);
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [pageSize, setPageSize] = useState(10);
   const [isMobile, setIsMobile] = useState(false);
@@ -82,16 +82,55 @@ export default function NhanVien() {
   const [tableScrollY, setTableScrollY] = useState(0);
 
   const formFields = [
-    { name: "hoTen", label: "Họ Tên", type: "text", rules: [{ required: true, message: "Vui lòng nhập họ tên!" }] },
-    { name: "cmnd", label: "Số CCCD", type: "text", rules: [{ required: true, message: "Vui lòng nhập CCCD!" }] },
-    { name: "ngaySinh", label: "Ngày Sinh", type: "date", rules: [{ required: true, message: "Vui lòng chọn ngày sinh!" }] },
+    {
+      name: "hoTen",
+      label: "Họ Tên",
+      type: "text",
+      rules: [{ required: true, message: "Vui lòng nhập họ tên!" }],
+    },
+    {
+      name: "cmnd",
+      label: "Số CCCD",
+      type: "text",
+      rules: [{ required: true, message: "Vui lòng nhập CCCD!" }],
+    },
+    {
+      name: "ngaySinh",
+      label: "Ngày Sinh",
+      type: "date",
+      rules: [{ required: true, message: "Vui lòng chọn ngày sinh!" }],
+    },
     { name: "diaChi", label: "Địa Chỉ", type: "textarea" },
-    { name: "soDienThoai", label: "Số Điện Thoại", type: "text", rules: [{ required: true, message: "Vui lòng nhập số điện thoại!" }] },
-    { name: "trangThai", label: "Trạng Thái", type: "select", options: ["Đang làm", "Nghỉ việc", "Mới đăng ký"] },
-    { name: "ngayVaoLam", label: "Ngày Vào Làm", type: "date", rules: [{ required: true, message: "Vui lòng chọn ngày vào làm!" }] },
-    { name: "luongCoBan", label: "Lương Cơ Bản", type: "number", rules: [{ required: true, message: "Vui lòng nhập lương cơ bản!" }] },
-    { name: "heSoTangCa", label: "Hệ Số Tăng Ca", type: "number", rules: [{ required: true, message: "Vui lòng nhập hệ số tăng ca!" }] },
- 
+    {
+      name: "soDienThoai",
+      label: "Số Điện Thoại",
+      type: "text",
+      rules: [{ required: true, message: "Vui lòng nhập số điện thoại!" }],
+    },
+    {
+      name: "trangThai",
+      label: "Trạng Thái",
+      type: "select",
+      options: ["Đang làm", "Nghỉ việc", "Mới đăng ký"],
+    },
+    {
+      name: "ngayVaoLam",
+      label: "Ngày Vào Làm",
+      type: "date",
+      rules: [{ required: true, message: "Vui lòng chọn ngày vào làm!" }],
+    },
+    {
+      name: "luongCoBan",
+      label: "Lương Cơ Bản",
+      type: "number",
+      rules: [{ required: true, message: "Vui lòng nhập lương cơ bản!" }],
+    },
+    {
+      name: "heSoTangCa",
+      label: "Hệ Số Tăng Ca",
+      type: "number",
+      rules: [{ required: true, message: "Vui lòng nhập hệ số tăng ca!" }],
+    },
   ];
 
   // Effects
@@ -133,7 +172,7 @@ export default function NhanVien() {
     if (!Array.isArray(danhSachNhanVien)) return [];
 
     let filtered = danhSachNhanVien.map((nhanVien) => ({
-      ...nhanVien, 
+      ...nhanVien,
       maNhanVien: nhanVien.maNhanVien,
       hoTen: nhanVien.hoTen || "N/A",
       cmnd: nhanVien.cmnd || "",
@@ -150,7 +189,7 @@ export default function NhanVien() {
       tenPhongBan: nhanVien.tenPhongBan || "N/A",
       tenVaiTro: nhanVien.tenVaiTro || "N/A",
       tenUuTien: nhanVien.tenUuTien || "N/A",
-      originalData: nhanVien, 
+      originalData: nhanVien,
     }));
 
     if (currentFilter.phongBan) {
@@ -263,9 +302,11 @@ export default function NhanVien() {
       key: "ngaySinh",
       width: 150,
       render: (text) =>
-        dayjs(text).isValid()
-          ? dayjs(text).format("DD/MM/YYYY")
-          : highlightText(text),
+        text
+          ? dayjs(text).isValid()
+            ? dayjs(text).format("DD/MM/YYYY")
+            : ""
+          : "",
     },
     {
       title: "CCCD",
@@ -367,18 +408,14 @@ export default function NhanVien() {
           <div style={{ fontWeight: "bold", marginBottom: "4px" }}>
             {highlightText(record.hoTen)}
           </div>
-          <div
-            style={{ fontSize: "12px", color: "#666", marginBottom: "4px" }}
-          >
+          <div style={{ fontSize: "12px", color: "#666", marginBottom: "4px" }}>
             CCCD: {highlightText(record.cmnd)}
           </div>
           <div style={{ fontSize: "12px", marginBottom: "4px" }}>
             {highlightText(record.tenVaiTro)} -{" "}
             {highlightText(record.tenPhongBan)}
           </div>
-          <div
-            style={{ fontSize: "12px", color: "#666", marginBottom: "8px" }}
-          >
+          <div style={{ fontSize: "12px", color: "#666", marginBottom: "8px" }}>
             SĐT: {highlightText(record.soDienThoai)}
           </div>
           <div
@@ -485,7 +522,7 @@ export default function NhanVien() {
       await addNhanVien(values);
       showAlert("success", "Thành công", "Thêm nhân viên thành công!");
       setIsModalCreateNhanVienVisible(false);
-      await fetchNhanVien(); 
+      await fetchNhanVien();
     } catch (error) {
       console.error("Lỗi khi thêm nhân viên:", error);
       showAlert("error", "Lỗi", "Thêm nhân viên thất bại. Vui lòng thử lại.");
@@ -493,16 +530,16 @@ export default function NhanVien() {
   };
 
   const handleEdit = (record) => {
-    console.log("Chỉnh sửa nhân viên:", record); 
+    console.log("Chỉnh sửa nhân viên:", record);
     setCurrentRecord(record);
-    setIsModalVisible(true); 
+    setIsModalVisible(true);
   };
 
   const handleDelete = async (maNhanVien) => {
     try {
       await deleteNhanVien(maNhanVien);
       showAlert("success", "Thành công", "Xoá nhân viên thành công!");
-      await fetchNhanVien(); 
+      await fetchNhanVien();
     } catch (error) {
       console.error("Lỗi khi xóa nhân viên:", error);
       showAlert("error", "Lỗi", "Xoá nhân viên thất bại. Vui lòng thử lại.");
@@ -514,7 +551,7 @@ export default function NhanVien() {
       await updateNhanVien(currentRecord.maNhanVien, values);
       showAlert("success", "Thành công", "Cập nhật nhân viên thành công!");
       setIsModalVisible(false);
-      await fetchNhanVien(); 
+      await fetchNhanVien();
     } catch (error) {
       console.error("Lỗi khi cập nhật:", error);
       showAlert(
@@ -735,7 +772,7 @@ export default function NhanVien() {
                     if (event.target.closest("button, .ant-dropdown-trigger")) {
                       return;
                     }
-                    handleEdit(record); 
+                    handleEdit(record);
                   },
                 };
               }}
@@ -927,7 +964,7 @@ export default function NhanVien() {
                       ) {
                         return;
                       }
-                      handleEdit(record); 
+                      handleEdit(record);
                     },
                   };
                 }}
@@ -968,13 +1005,13 @@ export default function NhanVien() {
         visible={isModalVisible}
         onCancel={() => {
           setIsModalVisible(false);
-          setCurrentRecord(null); 
+          setCurrentRecord(null);
         }}
         onOk={handleSave}
-        initialValues={currentRecord ? currentRecord.originalData : null} 
+        initialValues={currentRecord ? currentRecord.originalData : null}
         title="Chỉnh sửa nhân viên"
-        formFields={formFields} 
-        isEditMode={true} 
+        formFields={formFields}
+        isEditMode={true}
         maPhongBan={currentRecord?.maPhongBan}
         maVaiTro={currentRecord?.maVaiTro}
       />
@@ -987,9 +1024,9 @@ export default function NhanVien() {
         }}
         onOk={handleSaveCreateNhanVien}
         title="Thêm nhân viên mới"
-        initialValues={{}} 
-        formFields={formFields} 
-        isEditMode={false} 
+        initialValues={{}}
+        formFields={formFields}
+        isEditMode={false}
       />
     </div>
   );

@@ -38,6 +38,7 @@ import {
   CheckCircleOutlined,
   ExclamationCircleOutlined, // Import for Modal.confirm
   WarningOutlined,
+  ReloadOutlined,
 } from "@ant-design/icons";
 
 // ===== STYLES ======
@@ -93,7 +94,8 @@ export default function NghiPhep() {
     createNghiPhep,
   } = useNghiPhep();
   const { danhSachNhanVien } = useNhanVien();
-  const { danhSachNgayPhep, getAllNgayPhep } = useNgayPhep();
+  const { danhSachNgayPhep, getAllNgayPhep, tinhToanNgayPhepTatCa } =
+    useNgayPhep();
   const { danhSachHeThong } = useHeThong();
   const { danhSachPhongBan } = usePhongBan();
   const { danhSachCaLam } = useCaLam();
@@ -855,6 +857,30 @@ export default function NghiPhep() {
               onClick={showAddModal}
             >
               Tạo đơn xin nghỉ
+            </Button>
+          </Col>
+          <Col xs={24} sm={24} md={8}>
+            <Button
+              type="primary"
+              icon={<ReloadOutlined />}
+              block
+              onClick={async () => {
+                try {
+                  await tinhToanNgayPhepTatCa(
+                    dayjs(selectedMonth).year(),
+                    dayjs(selectedMonth).month() + 1
+                  );
+                  api.success({
+                    message: "Cập nhật phép thành công cho nhân viên",
+                  });
+                } catch {
+                  api.error({
+                    message: "Lỗi khi cập nhật ngày phép nhân viên",
+                  });
+                }
+              }}
+            >
+              Cập nhật ngày phép
             </Button>
           </Col>
         </Row>
