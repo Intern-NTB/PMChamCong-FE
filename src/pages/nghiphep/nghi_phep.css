@@ -7,28 +7,37 @@
 }
 
 .search-filters {
-  display: flex; 
-  gap: 10px; 
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-  align-items: center; 
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
 }
 
-.search-filters .ant-input-search {
+.search-filters .ant-input-search,
+.search-filters .ant-picker {
   flex: 1;
-  min-width: 200px; 
-  max-width: 250px; 
+  height: 40px;
+  border-radius: 8px;
+  font-size: 16px;
 }
 
-.search-filters .ant-picker-range {
-  flex: 1; 
-  min-width: 200px; 
-  max-width: 250px; 
+.search-filters .ant-input-search .ant-input {
+  height: 40px;
+  border-radius: 8px;
+  font-size: 16px;
+  padding-left: 12px;
 }
 
-.search-filters .ant-picker[picker="month"] {
-    flex: 0 0 auto; 
-    width: 120px; 
+.search-filters .ant-picker {
+  font-size: 16px;
+  border-radius: 8px;
+  width: 100%; 
+}
+
+.search-filters .ant-btn-primary {
+  height: 40px;
+  padding: 0 24px;
+  font-size: 16px;
+  border-radius: 8px;
 }
 
 .ant-table {
@@ -57,17 +66,18 @@
 }
 
 .ant-table-tbody > tr:nth-child(odd) {
-  background-color: #f8f8f8;
+  background-color: #f8f8f8; 
 }
 
 .ant-table-tbody > tr:nth-child(even) {
-  background-color: #ffffff;
+  background-color: #ffffff; 
 }
 
 .ant-table-tbody > tr:nth-child(odd):hover > td,
 .ant-table-tbody > tr:nth-child(even):hover > td {
-  background-color: #e6f7ff !important;
+  background-color: #e6f7ff !important; 
 }
+
 
 .ant-table-pagination {
   margin-top: 20px;
@@ -142,19 +152,19 @@
 .ant-typography {
   color: #333;
 }
-
 .custom-header-table .ant-table-thead > tr > th {
   font-size: 14px;
 }
 
+
 .row-canh-bao td {
-  background-color: #ffe6e6 !important; /* light pink */
+  background-color: #ffe6e6 !important; /* màu hồng nhạt */
 }
 
 .row-qua-han td {
-  background-color: rgb(254, 148, 148) !important; /* light red */
+  background-color: rgb(254, 148, 148) !important; /* màu đỏ nhạt */
 }
 
 .row-cho-duyet td {
-  background-color: #f8f0e8 !important; /* light orange */
+  background-color: #f8f0e8 !important; /* màu cam nhạt */
 }
