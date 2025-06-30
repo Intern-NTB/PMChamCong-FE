@@ -50,16 +50,16 @@ export default function VaiTroComponent() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const dataSource = Array.isArray(danhSachVaiTro)
     ? danhSachVaiTro.map((vt) => {
-        const tongNguoiDangDuocGan = Array.isArray(danhSachNhanVien)
-          ? danhSachNhanVien.filter((nv) => nv.maVaiTro === vt.maVaiTro).length
-          : 0;
+      const tongNguoiDangDuocGan = Array.isArray(danhSachNhanVien)
+        ? danhSachNhanVien.filter((nv) => nv.maVaiTro === vt.maVaiTro).length
+        : 0;
 
-        return {
-          maVaiTro: vt.maVaiTro,
-          tenVaiTro: vt.tenVaiTro || "",
-          tongNguoiDangDuocGan,
-        };
-      })
+      return {
+        maVaiTro: vt.maVaiTro,
+        tenVaiTro: vt.tenVaiTro || "",
+        tongNguoiDangDuocGan,
+      };
+    })
     : [];
 
   // Filter data
@@ -206,8 +206,8 @@ export default function VaiTroComponent() {
           }}
         >
           <Checkbox
-            checked={selectedRowKeys.includes(item.id)}
-            onChange={(e) => handleCardSelect(item.id, e.target.checked)}
+            checked={selectedRowKeys.includes(item.maVaiTro)}
+            onChange={(e) => handleCardSelect(item.maVaiTro, e.target.checked)}
           />
           <Badge
             color="#52c41a"
@@ -475,24 +475,26 @@ export default function VaiTroComponent() {
           setIsModalConfirmVisible({ visible: false, data: null })
         }
         footer={[
-          <AntButton
-            key="cancel"
-            onClick={() =>
-              setIsModalConfirmVisible({ visible: false, data: null })
-            }
-            style={{ borderRadius: 6 }}
-          >
-            Hủy bỏ
-          </AntButton>,
-          <AntButton
-            key="delete"
-            type="primary"
-            danger
-            onClick={() => handleDeleteVaiTro()}
-            style={{ borderRadius: 6 }}
-          >
-            Xóa vai trò
-          </AntButton>,
+          <Space style={{ display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+            <AntButton
+              key="cancel"
+              onClick={() =>
+                setIsModalConfirmVisible({ visible: false, data: null })
+              }
+              style={{ borderRadius: 6 }}
+            >
+              Hủy bỏ
+            </AntButton>
+            <AntButton
+              key="delete"
+              type="primary"
+              danger
+              onClick={() => handleDeleteVaiTro()}
+              style={{ borderRadius: 6 }}
+            >
+              Xóa vai trò
+            </AntButton>
+          </Space>
         ]}
         bodyStyle={{ textAlign: "center", padding: "24px" }}
       >
