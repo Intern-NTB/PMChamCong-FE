@@ -68,7 +68,7 @@ export default function GiaLapChamCong() {
   const { danhSachCaLamTrongTuan } = useCaLamTrongTuan();
   const { danhSachLichSuUuTien } = useLichSuUuTien();
   const { danhSachDoiTuongUuTien } = useDoiTuongUuTien();
-  
+
   const { setReload } = useContext(ReloadContext);
   const {
     danhSachTangCa,
@@ -205,19 +205,12 @@ export default function GiaLapChamCong() {
   const formatGio = (gioStr) => {
     if (!gioStr) return "";
 
-    const [gio, giay, phut] = gioStr.split(":");
-    return phut === "00" ? `${gio}h` : `${gio}h${phut}`;
-  };
-
-  const formatGioUuTien = (gioStr) => {
-    if (!gioStr) return "";
-
     const [gio, phut, giay] = gioStr.split(":");
     return phut === "00" ? `${gio}h` : `${gio}h${phut}`;
   };
 
-  //Hàm xử lý lấy giờ bắt đầu/kết thúc hằng ngày của nhân viên ứng với ca làm việc mỗi ngày.
-  const getCaLamViecTrongTuan = (maNhanVien, ngayChamCong) => {
+  //Hàm xử lý lấy thông tin ca làm, giờ làm việc theo ngày.
+  const getThongTinCaTrongNgay = (maNhanVien, ngayChamCong) => {
     const nhanVien = danhSachNhanVien.find(nv => nv.maNhanVien === maNhanVien);
     if (!nhanVien) return null;
 
@@ -227,14 +220,24 @@ export default function GiaLapChamCong() {
     const caLam = danhSachCaLam.find(ca => ca.maCa === phongBan.maCa);
     if (!caLam) return null;
 
-    const jsDay = dayjs(ngayChamCong).day(); // 0–6
+    const jsDay = dayjs(ngayChamCong).day(); // 0 (Chủ nhật) – 6
     const ngayChuan = jsDay === 0 ? 1 : jsDay + 1;
 
     const caTrongTuan = danhSachCaLamTrongTuan.find(
       item => item.maCa === caLam.maCa && item.ngayTrongTuan === ngayChuan
     );
 
-    if (!caTrongTuan) return "Không có ca trong ngày";
+    if (!caTrongTuan) return null;
+
+    return { nhanVien, phongBan, caLam, caTrongTuan };
+  };
+
+  //Hàm xử lý lấy giờ bắt đầu/kết thúc hằng ngày của nhân viên ứng với ca làm việc mỗi ngày.
+  const getCaLamViecTrongTuan = (maNhanVien, ngayChamCong) => {
+    const thongTin = getThongTinCaTrongNgay(maNhanVien, ngayChamCong);
+    if (!thongTin) return "Không có ca trong ngày";
+
+    const { caTrongTuan } = thongTin;
 
     return (
       <div>
@@ -245,22 +248,51 @@ export default function GiaLapChamCong() {
   };
 
   //Hàm xử lý lấy thời gian của ưu tiên.
-  const getUuTien = (maNhanVien) => {
-    const nhanVien = danhSachNhanVien.find(nv => nv.maNhanVien === maNhanVien);
-    if(!nhanVien) return null;
+  const getUuTien = (maNhanVien, ngayChamCong) => {
+    const thongTin = getThongTinCaTrongNgay(maNhanVien, ngayChamCong);
+    if (!thongTin) return "Không có ca trong ngày";
+
+    const { nhanVien, caTrongTuan } = thongTin;
 
     const lichSuUuTien = danhSachLichSuUuTien.find(lsut => lsut.maNhanVien === nhanVien.maNhanVien);
-    if(!lichSuUuTien) return null;
+    if (!lichSuUuTien) return null;
 
     const uuTien = danhSachDoiTuongUuTien.find(ut => ut.maUuTien === lichSuUuTien.maUuTien);
-    if(!uuTien) return null;
+    if (!uuTien) return null;
 
+    const gioBatDauCa = dayjs(`1970-01-01T${caTrongTuan.gioBatDau}`);
+    const gioKetThucCa = dayjs(`1970-01-01T${caTrongTuan.gioKetThuc}`);
+
+    const [h1, m1, s1] = uuTien.thoiGianBatDauCa.split(":").map(Number);
+    const [h2, m2, s2] = uuTien.thoiGianKetThucCa.split(":").map(Number);
+
+    const phutUuTienBatDau = h1 * 60 + m1 + Math.floor(s1 / 60);
+    const phutUuTienKetThuc = h2 * 60 + m2 + Math.floor(s2 / 60);
+
+    const gioUuTienBatDau = gioBatDauCa.add(phutUuTienBatDau, "minute");
+    const gioUuTienKetThuc = gioKetThucCa.subtract(phutUuTienKetThuc, "minute");
     return (
       <div>
         {uuTien.tenUuTien} <br />
-        ({formatGioUuTien(uuTien.thoiGianBatDauCa)} - {formatGioUuTien(uuTien.thoiGianKetThucCa)})
+        ({gioUuTienBatDau.format("HH:mm")} - {gioUuTienKetThuc.format("HH:mm")})
       </div>
     );
+  };
+
+  //Hàm tính giờ tăng ca (tổng giờ - giờ làm việc).
+  const tinhGioTangCa = (maNhanVien, ngayChamCong) => {
+    const thongTin = getThongTinCaTrongNgay(maNhanVien, ngayChamCong);
+    if (!thongTin) return "Không có ca trong ngày";
+
+    const {nhanVien, caTrongTuan} = thongTin;
+
+    const chamCong = danhSachChamCongChiTiet.find(item =>
+      item.maNhanVien === maNhanVien && dayjs(item.ngayChamCong).isSame(ngayChamCong, 'day')
+    );
+
+    const soGioThucTe = chamCong?.soGioThucTe || 0;
+    const soGioTanCa = soGioThucTe - caTrongTuan.soGioLamViec;
+    return `${soGioTanCa}`;    
   }
 
   const isDataReady = [
@@ -303,6 +335,7 @@ export default function GiaLapChamCong() {
       },
       {
         title: "Phòng ban",
+        width: 150,
         dataIndex: "tenPhongBan",
         key: "tenPhongBan",
         filters: danhSachPhongBan.map((pb) => ({
@@ -323,7 +356,7 @@ export default function GiaLapChamCong() {
       },
       {
         title: "Ưu tiên",
-        render(_, record){
+        render(_, record) {
           const uutien = getUuTien(record.maNhanVien);
           return uutien || "-";
         }
@@ -341,8 +374,17 @@ export default function GiaLapChamCong() {
         render: formatTime,
       },
       {
+        title: "Giờ tăng ca",
+        width: 120,
+        render: (_, record) => {
+          const tc = tinhGioTangCa(record.maNhanVien, record.ngayChamCong);
+          return tc;
+        }
+      },
+      {
         title: "Tổng giờ",
         dataIndex: "soGioThucTe",
+        width: 120,
         key: "soGioThucTe",
         responsive: ["md"],
       },
@@ -356,6 +398,7 @@ export default function GiaLapChamCong() {
       {
         title: "Trạng thái",
         dataIndex: "trangThai",
+        width: 130,
         key: "trangThai",
         render: (status) => {
           const color =
@@ -376,6 +419,7 @@ export default function GiaLapChamCong() {
             "Tăng ca": 2,
             "Hoàn tất": 3,
             "Tăng ca hoàn tất": 4,
+            "Không tăng ca": 5,
           };
           return priority[a.trangThai] - priority[b.trangThai];
         },
@@ -384,6 +428,7 @@ export default function GiaLapChamCong() {
           { text: "Tăng ca", value: "Tăng ca" },
           { text: "Hoàn tất", value: "Hoàn tất" },
           { text: "Tăng ca hoàn tất", value: "Tăng ca hoàn tất" },
+          { text: "Không tăng ca", value: "Không tăng ca" },
         ],
         onFilter: (value, record) => record.trangThai === value,
       },
@@ -957,7 +1002,7 @@ export default function GiaLapChamCong() {
                   showTotal: (total, range) =>
                     `${range[0]}-${range[1]} của ${total} bản ghi`,
                 }}
-                scroll={{ y: "calc(100vh - 300px)", sticky: true }}
+                scroll={{x: 'max-content', y: "calc(100vh - 300px)", sticky: true }}
                 onChange={(pagination, filters) => {
                   const pb = filters.tenPhongBan?.[0];
                   setSelectedPhongBan({
