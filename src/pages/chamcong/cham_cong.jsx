@@ -36,6 +36,8 @@ import { useChamCong } from "../../component/hooks/useChamCong";
 import { usePhongBan } from "../../component/hooks/usePhongBan";
 import { useTangCa } from "../../component/hooks/useTangCa";
 import { useNhanVien } from "../../component/hooks/useNhanVien";
+import { useCaLam } from "../../component/hooks/useCaLam";
+import { useCaLamTrongTuan } from "../../component/hooks/useCaLamTrongTuan";
 // ===== Context =====
 import { ReloadContext } from "../../context/reloadContext";
 
@@ -60,6 +62,8 @@ export default function GiaLapChamCong() {
   const { danhSachNhanVien } = useNhanVien();
   const { danhSachChamCongChiTiet, getAllChamCongDetail } = useChamCong();
   const { danhSachPhongBan } = usePhongBan();
+  const { danhSachCaLam } = useCaLam();
+  const { danhSachCaLamTrongTuan } = useCaLamTrongTuan();
   const { setReload } = useContext(ReloadContext);
   const {
     danhSachTangCa,
@@ -193,6 +197,48 @@ export default function GiaLapChamCong() {
     return text;
   }, []);
 
+  const formatGio = (gioStr) => {
+    if (!gioStr) return "";
+
+    const [gio, giay, phut] = gioStr.split(":");
+    return phut === "00" ? `${gio}h` : `${gio}h${phut}`;
+  };
+
+  //Hàm xử lý lấy giờ bắt đầu/kết thúc hằng ngày của nhân viên ứng với ca làm việc mỗi ngày.
+  const getCaLamViecTrongTuan = (maNhanVien, ngayChamCong) => {
+    const nhanVien = danhSachNhanVien.find(nv => nv.maNhanVien === maNhanVien);
+    if (!nhanVien) return null;
+
+    const phongBan = danhSachPhongBan.find(pb => pb.maPhongBan === nhanVien.maPhongBan);
+    if (!phongBan) return null;
+
+    const caLam = danhSachCaLam.find(ca => ca.maCa === phongBan.maCa);
+    if (!caLam) return null;
+
+    const jsDay = dayjs(ngayChamCong).day(); // 0–6
+    const ngayChuan = jsDay === 0 ? 1 : jsDay + 1;
+
+    const caTrongTuan = danhSachCaLamTrongTuan.find(
+      item => item.maCa === caLam.maCa && item.ngayTrongTuan === ngayChuan
+    );
+
+    if (!caTrongTuan) return "Không có ca trong ngày";
+
+    return (
+      <div>
+        Thứ {caTrongTuan.ngayTrongTuan} <br />
+        ({formatGio(caTrongTuan.gioBatDau)} - {formatGio(caTrongTuan.gioKetThuc)})
+      </div>
+    );
+  };
+
+  const isDataReady = [
+    danhSachNhanVien,
+    danhSachPhongBan,
+    danhSachCaLam,
+    danhSachCaLamTrongTuan
+  ].every(ds => Array.isArray(ds) && ds.length > 0);
+
   const columns = useMemo(
     () => [
       {
@@ -236,6 +282,15 @@ export default function GiaLapChamCong() {
         sorter: (a, b) => a.tenPhongBan.localeCompare(b.tenPhongBan),
       },
       {
+        title: "Ca làm việc",
+        key: "caLamViec",
+        render: (_, record) => {
+          if (!isDataReady) return "Đang tải...";
+          const ca = getCaLamViecTrongTuan(record.maNhanVien, record.ngayChamCong);
+          return ca || "Không có";
+        }
+      },
+      {
         title: "Giờ vào",
         dataIndex: "thoiGianVao",
         key: "thoiGianVao",
@@ -269,8 +324,8 @@ export default function GiaLapChamCong() {
             status === "Chưa hoàn tất" || status === "Tăng ca"
               ? "error"
               : status === "Tăng ca hoàn tất" || status === "Hoàn tất"
-              ? "success"
-              : "warning";
+                ? "success"
+                : "warning";
           return (
             <Tag color={color}>
               {isMobile ? status.slice(0, 8) + "..." : status}
@@ -295,7 +350,7 @@ export default function GiaLapChamCong() {
         onFilter: (value, record) => record.trangThai === value,
       },
     ],
-    [formatTime, isMobile, danhSachPhongBan]
+    [formatTime, isMobile, danhSachPhongBan, danhSachNhanVien, danhSachCaLamTrongTuan, danhSachCaLam]
   );
 
   const mobileColumns = useMemo(
@@ -336,12 +391,12 @@ export default function GiaLapChamCong() {
               <Tag
                 color={
                   record.trangThai === "Chưa hoàn tất" ||
-                  record.trangThai === "Tăng ca"
+                    record.trangThai === "Tăng ca"
                     ? "error"
                     : record.trangThai === "Tăng ca hoàn tất" ||
                       record.trangThai === "Hoàn tất"
-                    ? "success"
-                    : "warning"
+                      ? "success"
+                      : "warning"
                 }
               >
                 {record.trangThai}
@@ -369,15 +424,15 @@ export default function GiaLapChamCong() {
     const nhanVienTheoPhongBan =
       selectedPhongBan && selectedPhongBan.phongBanValue
         ? danhSachNhanVien.filter(
-            (nv) => nv.tenPhongBan === selectedPhongBan.phongBanValue
-          )
+          (nv) => nv.tenPhongBan === selectedPhongBan.phongBanValue
+        )
         : danhSachNhanVien;
 
     const chamCongTheoPhongBan =
       selectedPhongBan && selectedPhongBan.phongBanValue
         ? danhSachChamCongChiTiet.filter(
-            (cc) => cc.tenPhongBan === selectedPhongBan.phongBanValue
-          )
+          (cc) => cc.tenPhongBan === selectedPhongBan.phongBanValue
+        )
         : danhSachChamCongChiTiet;
 
     const totalRecords = chamCongTheoPhongBan.filter(
