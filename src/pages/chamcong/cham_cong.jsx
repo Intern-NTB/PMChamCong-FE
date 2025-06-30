@@ -271,6 +271,9 @@ export default function GiaLapChamCong() {
 
     const gioUuTienBatDau = gioBatDauCa.add(phutUuTienBatDau, "minute");
     const gioUuTienKetThuc = gioKetThucCa.subtract(phutUuTienKetThuc, "minute");
+
+    console.log(`${gioUuTienBatDau.format("HH:mm")} - ${gioUuTienKetThuc.format("HH:mm")}`);
+
     return (
       <div>
         {uuTien.tenUuTien} <br />
@@ -278,22 +281,6 @@ export default function GiaLapChamCong() {
       </div>
     );
   };
-
-  //Hàm tính giờ tăng ca (tổng giờ - giờ làm việc).
-  const tinhGioTangCa = (maNhanVien, ngayChamCong) => {
-    const thongTin = getThongTinCaTrongNgay(maNhanVien, ngayChamCong);
-    if (!thongTin) return "Không có ca trong ngày";
-
-    const {nhanVien, caTrongTuan} = thongTin;
-
-    const chamCong = danhSachChamCongChiTiet.find(item =>
-      item.maNhanVien === maNhanVien && dayjs(item.ngayChamCong).isSame(ngayChamCong, 'day')
-    );
-
-    const soGioThucTe = chamCong?.soGioThucTe || 0;
-    const soGioTanCa = soGioThucTe - caTrongTuan.soGioLamViec;
-    return `${soGioTanCa}`;    
-  }
 
   const isDataReady = [
     danhSachNhanVien,
@@ -376,10 +363,6 @@ export default function GiaLapChamCong() {
       {
         title: "Giờ tăng ca",
         width: 120,
-        render: (_, record) => {
-          const tc = tinhGioTangCa(record.maNhanVien, record.ngayChamCong);
-          return tc;
-        }
       },
       {
         title: "Tổng giờ",
