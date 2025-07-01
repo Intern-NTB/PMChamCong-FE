@@ -21,6 +21,7 @@ import {
   Form,
   Typography,
   Input,
+  notification,
 } from "antd";
 import {
   ClockCircleOutlined,
@@ -39,10 +40,10 @@ import { useNhanVien } from "../../component/hooks/useNhanVien";
 import { useCaLam } from "../../component/hooks/useCaLam";
 import { useCaLamTrongTuan } from "../../component/hooks/useCaLamTrongTuan";
 import { useLichSuUuTien } from "../../component/hooks/useLichSuUuTien";
-import { useDoiTuongUuTien } from "../../component/hooks/useDoiTuongUuTien"
+import { useDoiTuongUuTien } from "../../component/hooks/useDoiTuongUuTien";
 // ===== Context =====
 import { ReloadContext } from "../../context/reloadContext";
-
+import { useAppNotification } from "../../component/ui/notification";
 // ===== Component nội bộ =====
 import MyAlert from "../../component/ui/alert";
 import ModalTangCa from "./tangca/modal_tangcang";
@@ -68,7 +69,7 @@ export default function GiaLapChamCong() {
   const { danhSachCaLamTrongTuan } = useCaLamTrongTuan();
   const { danhSachLichSuUuTien } = useLichSuUuTien();
   const { danhSachDoiTuongUuTien } = useDoiTuongUuTien();
-  
+
   const { setReload } = useContext(ReloadContext);
   const {
     danhSachTangCa,
@@ -86,6 +87,7 @@ export default function GiaLapChamCong() {
     dayjs().endOf("day"),
   ]);
   const [selectedMonth, setSelectedMonth] = useState(null);
+  const apiNotification = useAppNotification();
 
   const [isMobile, setIsMobile] = useState(false);
   const [selectedDate, setSelectedDate] = useState({
@@ -205,19 +207,12 @@ export default function GiaLapChamCong() {
   const formatGio = (gioStr) => {
     if (!gioStr) return "";
 
-    const [gio, giay, phut] = gioStr.split(":");
-    return phut === "00" ? `${gio}h` : `${gio}h${phut}`;
-  };
-
-  const formatGioUuTien = (gioStr) => {
-    if (!gioStr) return "";
-
     const [gio, phut, giay] = gioStr.split(":");
     return phut === "00" ? `${gio}h` : `${gio}h${phut}`;
   };
 
-  //Hàm xử lý lấy giờ bắt đầu/kết thúc hằng ngày của nhân viên ứng với ca làm việc mỗi ngày.
-  const getCaLamViecTrongTuan = (maNhanVien, ngayChamCong) => {
+  //Hàm xử lý lấy thông tin ca làm, giờ làm việc theo ngày.
+  const getThongTinCaTrongNgay = (maNhanVien, ngayChamCong) => {
     const nhanVien = danhSachNhanVien.find(nv => nv.maNhanVien === maNhanVien);
     if (!nhanVien) return null;
 
@@ -227,14 +222,24 @@ export default function GiaLapChamCong() {
     const caLam = danhSachCaLam.find(ca => ca.maCa === phongBan.maCa);
     if (!caLam) return null;
 
-    const jsDay = dayjs(ngayChamCong).day(); // 0–6
+    const jsDay = dayjs(ngayChamCong).day(); // 0 (Chủ nhật) – 6
     const ngayChuan = jsDay === 0 ? 1 : jsDay + 1;
 
     const caTrongTuan = danhSachCaLamTrongTuan.find(
       item => item.maCa === caLam.maCa && item.ngayTrongTuan === ngayChuan
     );
 
-    if (!caTrongTuan) return "Không có ca trong ngày";
+    if (!caTrongTuan) return null;
+
+    return { nhanVien, phongBan, caLam, caTrongTuan };
+  };
+
+  //Hàm xử lý lấy giờ bắt đầu/kết thúc hằng ngày của nhân viên ứng với ca làm việc mỗi ngày.
+  const getCaLamViecTrongTuan = (maNhanVien, ngayChamCong) => {
+    const thongTin = getThongTinCaTrongNgay(maNhanVien, ngayChamCong);
+    if (!thongTin) return "Không có ca trong ngày";
+
+    const { caTrongTuan } = thongTin;
 
     return (
       <div>
@@ -245,22 +250,58 @@ export default function GiaLapChamCong() {
   };
 
   //Hàm xử lý lấy thời gian của ưu tiên.
-  const getUuTien = (maNhanVien) => {
-    const nhanVien = danhSachNhanVien.find(nv => nv.maNhanVien === maNhanVien);
-    if(!nhanVien) return null;
+  const getUuTien = (maNhanVien, ngayChamCong) => {
+    const thongTin = getThongTinCaTrongNgay(maNhanVien, ngayChamCong);
+    if (!thongTin) return "Không có ca trong ngày";
+
+    const { nhanVien, caTrongTuan } = thongTin;
 
     const lichSuUuTien = danhSachLichSuUuTien.find(lsut => lsut.maNhanVien === nhanVien.maNhanVien);
-    if(!lichSuUuTien) return null;
+    if (!lichSuUuTien) return null;
 
     const uuTien = danhSachDoiTuongUuTien.find(ut => ut.maUuTien === lichSuUuTien.maUuTien);
-    if(!uuTien) return null;
+    if (!uuTien) return null;
+
+    const gioBatDauCa = dayjs(`1970-01-01T${caTrongTuan.gioBatDau}`);
+    const gioKetThucCa = dayjs(`1970-01-01T${caTrongTuan.gioKetThuc}`);
+
+    const [h1, m1, s1] = uuTien.thoiGianBatDauCa.split(":").map(Number);
+    const [h2, m2, s2] = uuTien.thoiGianKetThucCa.split(":").map(Number);
+
+    const phutUuTienBatDau = h1 * 60 + m1 + Math.floor(s1 / 60);
+    const phutUuTienKetThuc = h2 * 60 + m2 + Math.floor(s2 / 60);
+
+    const gioUuTienBatDau = gioBatDauCa.add(phutUuTienBatDau, "minute");
+    const gioUuTienKetThuc = gioKetThucCa.subtract(phutUuTienKetThuc, "minute");
 
     return (
       <div>
         {uuTien.tenUuTien} <br />
-        ({formatGioUuTien(uuTien.thoiGianBatDauCa)} - {formatGioUuTien(uuTien.thoiGianKetThucCa)})
+        ({gioUuTienBatDau.format("HH:mm")} - {gioUuTienKetThuc.format("HH:mm")})
       </div>
     );
+  };
+
+  //Hàm xử lý lấy thời gian tăng ca (vào/ra)
+  const getTimeTangCa = (maNhanVien, ngayChamCong) => {
+    const thongTin = getThongTinCaTrongNgay(maNhanVien, ngayChamCong);
+    if(!thongTin) return "Không tìm thấy nhân viên";
+
+    const {phongBan} = thongTin;
+
+    const chamCong = danhSachChamCongChiTiet.find(cc =>
+      cc.maNhanVien === maNhanVien &&
+      dayjs(cc.ngayChamCong).isSame(dayjs(ngayChamCong), 'day')
+    );
+    if (!chamCong) return "Không có dữ liệu chấm công";
+
+    const tangCa = danhSachTangCa.find(tc =>
+      tc.maPhongBan === phongBan.maPhongBan &&
+      dayjs(tc.ngayChamCongTangCa).isSame(dayjs(ngayChamCong), 'day')
+    );
+    if (!tangCa) return "Không có tăng ca";
+
+    return `(${formatGio(tangCa.gioTangCaBatDau)} - ${formatGio(tangCa.gioTangCaKetThuc)})`;
   }
 
   const isDataReady = [
@@ -303,6 +344,7 @@ export default function GiaLapChamCong() {
       },
       {
         title: "Phòng ban",
+        width: 150,
         dataIndex: "tenPhongBan",
         key: "tenPhongBan",
         filters: danhSachPhongBan.map((pb) => ({
@@ -323,7 +365,7 @@ export default function GiaLapChamCong() {
       },
       {
         title: "Ưu tiên",
-        render(_, record){
+        render(_, record) {
           const uutien = getUuTien(record.maNhanVien);
           return uutien || "-";
         }
@@ -341,8 +383,17 @@ export default function GiaLapChamCong() {
         render: formatTime,
       },
       {
+        title: "Giờ tăng ca",
+        width: 120,
+        render(_, record){
+          const tc = getTimeTangCa(record.maNhanVien, record.ngayChamCong);
+          return tc || "Không tìm thấy";
+        }
+      },
+      {
         title: "Tổng giờ",
         dataIndex: "soGioThucTe",
+        width: 120,
         key: "soGioThucTe",
         responsive: ["md"],
       },
@@ -356,6 +407,7 @@ export default function GiaLapChamCong() {
       {
         title: "Trạng thái",
         dataIndex: "trangThai",
+        width: 130,
         key: "trangThai",
         render: (status) => {
           const color =
@@ -376,6 +428,7 @@ export default function GiaLapChamCong() {
             "Tăng ca": 2,
             "Hoàn tất": 3,
             "Tăng ca hoàn tất": 4,
+            "Không tăng ca": 5,
           };
           return priority[a.trangThai] - priority[b.trangThai];
         },
@@ -384,11 +437,13 @@ export default function GiaLapChamCong() {
           { text: "Tăng ca", value: "Tăng ca" },
           { text: "Hoàn tất", value: "Hoàn tất" },
           { text: "Tăng ca hoàn tất", value: "Tăng ca hoàn tất" },
+          { text: "Không tăng ca", value: "Không tăng ca" },
         ],
         onFilter: (value, record) => record.trangThai === value,
       },
     ],
-    [formatTime, isMobile, danhSachPhongBan, danhSachNhanVien, danhSachCaLamTrongTuan, danhSachCaLam, danhSachLichSuUuTien, danhSachDoiTuongUuTien]
+    [formatTime, isMobile, danhSachPhongBan, danhSachNhanVien, danhSachCaLamTrongTuan, 
+      danhSachCaLam, danhSachLichSuUuTien, danhSachDoiTuongUuTien, danhSachTangCa]
   );
 
   const mobileColumns = useMemo(
@@ -398,44 +453,72 @@ export default function GiaLapChamCong() {
         key: "info",
         render: (_, record) => (
           <div
-            style={{ padding: "8px 0" }}
+            style={{
+              padding: "12px",
+              borderBottom: "1px solid #f0f0f0",
+              cursor: "pointer",
+            }}
             onClick={() => {
               setSelectedNhanVien(record);
               setIsModalChiTietVisible(true);
             }}
           >
-            <div style={{ fontWeight: "bold", marginBottom: "4px" }}>
-              {dayjs(record.ngayChamCong).format("DD/MM/YYYY")}
+            {/* Ngày và tên */}
+            <div style={{ fontWeight: 600, fontSize: "15px", color: "#333" }}>
+              {dayjs(record.ngayChamCong).format("DD/MM/YYYY")} - {record.hoTen}
             </div>
-            <div style={{ marginBottom: "4px" }}>{record.hoTen}</div>
-            <div style={{ fontSize: "12px", color: "#666" }}>
+
+            {/* Phòng ban */}
+            <div style={{ fontSize: "13px", color: "#888", marginTop: 4 }}>
               {record.tenPhongBan}
             </div>
-            <div style={{ marginTop: "8px" }}>
-              <Space size="small">
-                <span style={{ fontSize: "12px" }}>
-                  Vào: {formatTime(record.thoiGianVao)}
+
+            {/* Giờ làm */}
+            <div style={{ marginTop: 8 }}>
+              <Space size={[12, 8]} wrap>
+                <span style={{ fontSize: "13px" }}>
+                  <strong>Vào:</strong> {formatTime(record.thoiGianVao)}
                 </span>
-                <span style={{ fontSize: "12px" }}>
-                  Ra: {formatTime(record.thoiGianRa)}
+                <span style={{ fontSize: "13px" }}>
+                  <strong>Ra:</strong> {formatTime(record.thoiGianRa)}
                 </span>
-                <span style={{ fontSize: "12px" }}>
-                  Giờ: {record.soGioThucTe}
+                <span style={{ fontSize: "13px" }}>
+                  <strong>Giờ:</strong> {record.soGioThucTe}
                 </span>
-                <span style={{ fontSize: "12px" }}>Công: {record.cong}</span>
+                <span style={{ fontSize: "13px" }}>
+                  <strong>Công:</strong> {record.cong}
+                </span>
               </Space>
             </div>
-            <div style={{ marginTop: "4px" }}>
+            {/* Giờ tăng ca */}
+            <div style={{ marginTop: 8 }}>
+              <div style={{ fontSize: "13px", fontWeight: 500, marginBottom: 4 }}>
+                Giờ tăng ca
+              </div>
+              {getTimeTangCa(record.maNhanVien, record.ngayChamCong) ? (
+                <Space size={[12, 8]} wrap>
+                  <span style={{ fontSize: "13px" }}>
+                    <strong>Khoảng thời gian:</strong> {formatTime(getTimeTangCa(record.maNhanVien, record.ngayChamCong))}
+                  </span>
+                </Space>
+              ) : (
+                <div style={{ fontSize: "13px", color: "#999" }}>Không có tăng ca</div>
+              )}
+            </div>
+
+            {/* Trạng thái */}
+            <div style={{ marginTop: 10 }}>
               <Tag
                 color={
-                  record.trangThai === "Chưa hoàn tất" ||
-                    record.trangThai === "Tăng ca"
+                  record.trangThai === "Chưa hoàn tất" || record.trangThai === "Tăng ca"
                     ? "error"
-                    : record.trangThai === "Tăng ca hoàn tất" ||
-                      record.trangThai === "Hoàn tất"
+                    : record.trangThai === "Tăng ca hoàn tất" || record.trangThai === "Hoàn tất"
                       ? "success"
-                      : "warning"
+                      : record.trangThai === "Không tăng ca"
+                        ? "cyan"
+                        : "warning"
                 }
+                style={{ fontSize: "12px" }}
               >
                 {record.trangThai}
               </Tag>
@@ -449,11 +532,13 @@ export default function GiaLapChamCong() {
           { text: "Chưa hoàn tất", value: "Chưa hoàn tất" },
           { text: "Tăng ca", value: "Tăng ca" },
           { text: "Tăng ca hoàn tất", value: "Tăng ca hoàn tất" },
+          { text: "Không tăng ca", value: "Không tăng ca" },
         ],
         onFilter: (value, record) => record.trangThai === value,
       },
     ],
-    [formatTime]
+    [formatTime, isMobile, danhSachPhongBan, danhSachNhanVien, danhSachCaLamTrongTuan, 
+      danhSachCaLam, danhSachLichSuUuTien, danhSachDoiTuongUuTien, danhSachTangCa ]
   );
 
   const statistics = useMemo(() => {
@@ -555,8 +640,30 @@ export default function GiaLapChamCong() {
 
   const handleMonthChange = useCallback((month) => {
     setSelectedMonth(month);
-    setDateRange([null, null]);
+    if (month) {
+      const startOfMonth = month.startOf("month");
+      const endOfMonth = month.endOf("month");
+      setDateRange([startOfMonth, endOfMonth]);
+    } else {
+      setDateRange([null, null]);
+    }
   }, []);
+
+  const handleTodayClick = () => {
+    const today = dayjs().startOf("day");
+
+    if (
+      dateRange &&
+      dayjs(dateRange[0]).isSame(today, "day") &&
+      dayjs(dateRange[1]).isSame(today, "day")
+    ) {
+      apiNotification.warning({message: "Bạn đang trong ngày hôm nay rồi!!"});
+      return;
+    }
+
+    setDateRange([today, today.endOf("day")]);
+    setSelectedMonth(null);
+  };
 
   const handlePageSizeChange = useCallback((current, size) => {
     setPageSize(size);
@@ -921,6 +1028,7 @@ export default function GiaLapChamCong() {
                   onChange={handleDateRangeChange}
                   format="DD/MM/YYYY"
                 />
+                <Button onClick={handleTodayClick}>Hôm nay</Button>
                 <span style={{ marginLeft: "16px" }}>Chọn tháng:</span>
                 <ConfigProvider locale={viVN}>
                   {" "}
@@ -957,7 +1065,7 @@ export default function GiaLapChamCong() {
                   showTotal: (total, range) =>
                     `${range[0]}-${range[1]} của ${total} bản ghi`,
                 }}
-                scroll={{ y: "calc(100vh - 300px)", sticky: true }}
+                scroll={{x: 'max-content', y: "calc(100vh - 300px)", sticky: true }}
                 onChange={(pagination, filters) => {
                   const pb = filters.tenPhongBan?.[0];
                   setSelectedPhongBan({
