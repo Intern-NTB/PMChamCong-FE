@@ -1,4 +1,4 @@
-// routes.js
+// src/routes/privateRoutes.jsx
 import Dashboard from '../pages/baocao/bao_cao.jsx';
 import TrangChu from '../pages/home/home.jsx';
 import MainLayout from '../component/layout/mainLayout.jsx';
@@ -19,8 +19,8 @@ import TaiKhoanComponent from '../pages/caidat/tai_khoan.jsx';
 import LichSuPhongBanComponent from '../pages/caidat/lich_su_phong_ban.jsx';
 import LichSuLuongComponent from '../pages/caidat/lich_su_luong.jsx';
 import HeThongComponent from '../pages/caidat/he_thong.jsx';
-// Thêm import cho thành phần Máy chấm công
-import MayChamCong from '../pages/maychamcong/maychamcong.jsx'; 
+import MayChamCong from '../pages/maychamcong/maychamcong.jsx';
+import PhanQuyenComponent from '../pages/caidat/phan_quyen.jsx';
 
 export const privateRoutes = [
     {
@@ -32,65 +32,29 @@ export const privateRoutes = [
             { path: 'trangchu', element: <TrangChu /> },
             { path: 'nhanvien', element: <NhanVien /> },
             { path: 'chamcong', element: <ChamCong /> },
-            // Thêm tuyến đường cho Máy chấm công tại đây
-            { path: 'maychamcong', element: <MayChamCong /> }, // Đường dẫn: /main-layout/maychamcong
+            { path: 'maychamcong', element: <MayChamCong /> },
             { path: 'nghiphep', element: <NghiPhep /> },
             { path: 'luong', element: <Luong /> },
             {
                 path: 'caidat',
                 element: <CaiDat />,
                 children: [
-                    {
-                        index: true,
-                        element: <PhongBanComponent />
-                    },
-                    {
-                        path: 'he-thong',
-                        element: <HeThongComponent />
-                    },
-                    {
-                        path: 'phong-ban',
-                        element: <PhongBanComponent />
-                    },
-                    {
-                        path: 'ca-lam',
-                        element: <CaLamComponent />
-                    },
-                    {
-                        path: 'doi-tuong-uu-tien',
-                        element: <DoiTuongUuTienComponent />
-                    },
-                    {
-                        path: 'vai-tro',
-                        element: <VaiTroComponent />
-                    },
-                    {
-                        path: 'nghi-le',
-                        element: <NgayLeComponent />
-                    },
-                    {
-                        path: 'thuong',
-                        element: <ThuongComponent />
-                    },
-                    {
-                        path: 'phat',
-                        element: <PhatComponent />
-                    },
-                    {
-                        path: 'tai-khoan',
-                        element: <TaiKhoanComponent />
-                    },
-                    {
-                        path: 'lich-su-phong-ban',
-                        element: <LichSuPhongBanComponent />
-                    },
-                    {
-                        path: 'lich-su-luong',
-                        element: <LichSuLuongComponent />
-                    }
+                    { index: true, element: <PhongBanComponent /> },
+                    { path: 'he-thong', element: <HeThongComponent /> },
+                    { path: 'phong-ban', element: <PhongBanComponent /> },
+                    { path: 'ca-lam', element: <CaLamComponent /> },
+                    { path: 'doi-tuong-uu-tien', element: <DoiTuongUuTienComponent /> },
+                    { path: 'vai-tro', element: <VaiTroComponent /> },
+                    { path: 'nghi-le', element: <NgayLeComponent /> },
+                    { path: 'thuong', element: <ThuongComponent /> },
+                    { path: 'phat', element: <PhatComponent /> },
+                    { path: 'tai-khoan', element: <TaiKhoanComponent /> },
+                    { path: 'phan-quyen', element: <PhanQuyenComponent /> },
+                    { path: 'lich-su-phong-ban', element: <LichSuPhongBanComponent /> },
+                    { path: 'lich-su-luong', element: <LichSuLuongComponent /> }
                 ]
             },
             { path: 'baocao', element: <BaoCao /> },
         ]
     },
-]
+];
