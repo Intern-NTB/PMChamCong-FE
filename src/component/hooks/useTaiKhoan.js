@@ -12,10 +12,10 @@ export const useTaiKhoan = () => {
   const [danhsachTaiKhoan, setDanhSachTaiKhoan] = useState([]);
   const [isValid, setIsValid] = useState(false);
   const [loadingDangNhap, setLoadingDangNhap] = useState(false);
+  const [loadingTaiKhoan, setLoadingTaiKhoan] = useState(false);
   const [isCreatedTaiKhoan, setIsCreatedTaiKhoan] = useState(false);
   const [isDeletedTaiKhoan, setIsDeletedTaikhoan] = useState(false);
   const [isUpdatedTaiKhoan, setIsUpdatedTaikhoan] = useState(false);
-  const [loadingTaiKhoan, setLoadingTaiKhoan] = useState(false); // Đã thêm
 
   const getAllTaiKhoan = async () => {
     setLoadingTaiKhoan(true);
@@ -65,7 +65,7 @@ export const useTaiKhoan = () => {
     }
   };
 
-  // Login - CẬP NHẬT: Đảm bảo lưu 'permissions'
+  // Login - CẬP NHẬT ĐỂ TRẢ VỀ DỮ LIỆU ĐẦY ĐỦ BAO GỒM PERMISSIONS
   const login = async (tenDangNhap, matKhau) => {
     setLoadingDangNhap(true);
     try {
@@ -74,22 +74,20 @@ export const useTaiKhoan = () => {
       // Backend của bạn cần trả về cấu trúc như:
       // {
       //   token: "...",
-      //   taiKhoan: { id: ..., tenDangNhap: ..., maVaiTro: ..., ... },
+      //   taiKhoan: { maVaiTro: ..., ... },
       //   permissions: ["permission:key:1", "permission:key:2", ...] // Mảng các string quyền
       // }
-      
+
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("taiKhoan", JSON.stringify(res.data.taiKhoan));
       
-      // Lưu userPermissions vào localStorage
+      // Nếu backend trả về permissions, hãy lưu nó vào localStorage
       if (res.data.permissions && Array.isArray(res.data.permissions)) {
         localStorage.setItem("userPermissions", JSON.stringify(res.data.permissions));
-      } else {
-        // Nếu backend không trả về permissions hoặc không phải mảng, đặt mặc định là mảng rỗng
-        localStorage.setItem("userPermissions", JSON.stringify([]));
       }
 
       setIsValid(true);
+      // Trả về toàn bộ dữ liệu từ res.data để Login.jsx có thể sử dụng (ví dụ: permissions)
       return { success: true, ...res.data }; // Trả về tất cả thuộc tính của res.data
     } catch (error) {
       setIsValid(false);
@@ -116,7 +114,7 @@ export const useTaiKhoan = () => {
   
   useEffect(() => {
     getAllTaiKhoan();
-  }, []); // Chỉ chạy 1 lần khi component mount
+  }, []); // Chú ý: useEffect này chỉ chạy 1 lần khi component mount, không có dependency
 
   return {
     isValid,
