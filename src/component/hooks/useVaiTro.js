@@ -6,6 +6,7 @@ import {
   updateVaiTroServices,
   assignPermissionToRole,
   removePermissionFromRole,
+  getAllQuyenHanServices,
 } from "../../services/vaitroServices.js";
 
 export const useVaiTro = () => {
@@ -34,9 +35,10 @@ export const useVaiTro = () => {
     setLoading(true);
 
     try {
-      await createVaiTroServices(tenVaiTro);
+      const res = await createVaiTroServices(tenVaiTro);
       setIsCreatedVaiTro(true);
       await getAllVaiTro();
+      return res; 
     } catch (error) { 
       console.error("Lỗi khi tạo vai trò:", error);
       setIsCreatedVaiTro(false);
@@ -75,6 +77,16 @@ export const useVaiTro = () => {
       setLoading(false);
     }
   }, [getAllVaiTro]); 
+
+  const getQuyenTheoVaiTro = useCallback(async (maVaiTro) => {
+    try {
+      const response = await getAllQuyenHanServices(maVaiTro);
+      return response.data;
+    } catch (error) {
+      console.error("Lỗi khi lấy quyền theo vai trò:", error);
+      return [];
+    }
+  }, [getAllVaiTro]);
 
   const ganQuyenChoVaiTro = useCallback(async (maVaiTro, danhSachMaQuyenHan) => {
     try {
@@ -129,5 +141,6 @@ export const useVaiTro = () => {
     updateVaiTro,
     ganQuyenChoVaiTro,
     goQuyenKhoiVaiTro,
+    getQuyenTheoVaiTro,
   };
 };

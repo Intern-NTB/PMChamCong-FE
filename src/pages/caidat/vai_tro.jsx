@@ -35,10 +35,11 @@ const { Search } = Input;
 const { TabPane } = Tabs;
 
 export default function VaiTroComponent() {
-  const { danhSachVaiTro, deleteVaiTro, createVaiTro, updateVaiTro, ganQuyenChoVaiTro, goQuyenKhoiVaiTro, } = useVaiTro();
+  const { danhSachVaiTro, getAllVaiTro, deleteVaiTro, createVaiTro, updateVaiTro, ganQuyenChoVaiTro, goQuyenKhoiVaiTro, getQuyenTheoVaiTro} = useVaiTro();
   const { danhSachQuyenHan } = useQuyenHan();  
   const { danhSachNhanVien } = useNhanVien();
   const [danhSachQuyenTheoVaiTro, setDanhSachQuyenTheoVaiTro] = useState({});
+  const [danhSachQuyenTheoVaiTroTruocDo, setDanhSachQuyenTheoVaiTroTruocDo] = useState([]);
   const [form] = Form.useForm();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isModalConfirmVisible, setIsModalConfirmVisible] = useState({
@@ -106,6 +107,7 @@ export default function VaiTroComponent() {
       .filter(([_, isChecked]) => isChecked)
       .map(([MaQuyenHan]) => MaQuyenHan);
     console.log("✅ Các quyền được chọn:", danhSachQuyenDuocChon);
+
     try {
       if (editingId) {
         // Cập nhật tên vai trò
@@ -131,15 +133,14 @@ export default function VaiTroComponent() {
         apiNotification.success({ message: "Cập nhật vai trò thành công!" });
       } else {
         const newVaiTro = await createVaiTro(tenVaiTro);
-        const maVaiTro = newVaiTro.MaVaiTro;
 
-        if (danhSachQuyenDuocChon.length > 0) {
-          await ganQuyenChoVaiTro(maVaiTro, danhSachQuyenDuocChon);
+        if (newVaiTro?.maVaiTro && danhSachQuyenDuocChon.length > 0) {
+          await ganQuyenChoVaiTro(newVaiTro.maVaiTro, danhSachQuyenDuocChon);
         }
-
         apiNotification.success({ message: "Thêm vai trò thành công!" });
-      }
+      }      
       handleCancel();
+      getAllVaiTro();
     } catch (error) {
       apiNotification.error({ message: "Thao tác thất bại!" });
     }
@@ -152,12 +153,12 @@ export default function VaiTroComponent() {
   };
 
   const handleEdit = useCallback(
-    (data) => {
-      const quyenOfVaiTro = danhSachQuyenTheoVaiTro[data.maVaiTro] || [];
+    async (data) => {
+      const danhSachQuyen  = await getQuyenTheoVaiTro(data.maVaiTro);
 
       const permissionChecked = {};
-      quyenOfVaiTro.forEach((id) => {
-        permissionChecked[id] = true;
+      danhSachQuyen.forEach((id) => {
+        permissionChecked[id.toString()] = true;
       });
 
       form.setFieldsValue({
@@ -165,10 +166,14 @@ export default function VaiTroComponent() {
         ...permissionChecked,
       });
 
+      setDanhSachQuyenTheoVaiTro((prev) => ({
+        ...prev,
+        [data.maVaiTro]: danhSachQuyen.map(String),
+      }));
       setEditingId(data.maVaiTro);
       setIsModalVisible(true);
     },
-    [form, danhSachQuyenTheoVaiTro]
+    [form, getQuyenTheoVaiTro]
   );
 
   const handleDelete = useCallback((data) => {
@@ -611,6 +616,7 @@ export default function VaiTroComponent() {
           <Tabs defaultActiveKey="1" centered>
             <TabPane tab="Thông tin chung" key="1">
               <Form.Item
+                key="tenVaiTro"
                 name="tenVaiTro"
                 label={<Text strong>Tên vai trò</Text>}
                 rules={[
