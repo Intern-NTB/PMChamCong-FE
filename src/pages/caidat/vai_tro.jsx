@@ -15,6 +15,8 @@ import {
   Empty,
   Pagination,
   Badge,
+  Tabs,
+  Switch 
 } from "antd";
 import {
   PlusOutlined,
@@ -25,14 +27,18 @@ import {
 } from "@ant-design/icons";
 import { useNhanVien } from "../../component/hooks/useNhanVien";
 import { useVaiTro } from "../../component/hooks/useVaiTro";
+import { useQuyenHan } from "../../component/hooks/useQuyenHan";
 import { useAppNotification } from "../../component/ui/notification";
+
 const { Text, Title } = Typography;
 const { Search } = Input;
+const { TabPane } = Tabs;
 
 export default function VaiTroComponent() {
-  const { danhSachVaiTro, deleteVaiTro, createVaiTro, updateVaiTro } =
-    useVaiTro();
+  const { danhSachVaiTro, deleteVaiTro, createVaiTro, updateVaiTro, ganQuyenChoVaiTro, goQuyenKhoiVaiTro, } = useVaiTro();
+  const { danhSachQuyenHan } = useQuyenHan();  
   const { danhSachNhanVien } = useNhanVien();
+  const [danhSachQuyenTheoVaiTro, setDanhSachQuyenTheoVaiTro] = useState({});
   const [form] = Form.useForm();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isModalConfirmVisible, setIsModalConfirmVisible] = useState({
@@ -61,6 +67,16 @@ export default function VaiTroComponent() {
       };
     })
     : [];
+  
+  //Dữ liệu quyền hạn.
+  const permissionsOptions = Array.isArray(danhSachQuyenHan)
+    ? danhSachQuyenHan.map((qh) => ({
+      key: qh.MaQuyenHan,
+      MaQuyenHan: String(qh.MaQuyenHan),
+      TenQuyenHan: qh.TenQuyenHan,
+      MoTa: qh.MoTa,
+    }))
+    : [];
 
   // Filter data
   const filteredData = useMemo(() => {
@@ -83,18 +99,50 @@ export default function VaiTroComponent() {
   const paginatedData = filteredData.slice(startIndex, endIndex);
 
   const onFinish = async (values) => {
-    if (editingId) {
-      await updateVaiTro(editingId, values);
-      apiNotification.success({ message: "Cập nhật vai trò thành công!" });
-    } else {
-      try {
-        await createVaiTro(values);
+    console.log(values);
+    const { tenVaiTro, ...quyenForm } = values;
+    
+    const danhSachQuyenDuocChon = Object.entries(quyenForm)
+      .filter(([_, isChecked]) => isChecked)
+      .map(([MaQuyenHan]) => MaQuyenHan);
+    console.log("✅ Các quyền được chọn:", danhSachQuyenDuocChon);
+    try {
+      if (editingId) {
+        // Cập nhật tên vai trò
+        await updateVaiTro(editingId, tenVaiTro);
+
+        // Lấy danh sách quyền hiện tại đã gán (nếu bạn có dữ liệu)
+        const quyenTruocDo = danhSachQuyenTheoVaiTro[editingId] || [];
+
+        const quyenCanThem = danhSachQuyenDuocChon.filter(
+          (q) => !quyenTruocDo.includes(q)
+        );
+        const quyenCanXoa = quyenTruocDo.filter(
+          (q) => !danhSachQuyenDuocChon.includes(q)
+        );
+
+        if (quyenCanThem.length > 0) {
+          await ganQuyenChoVaiTro(editingId, quyenCanThem);
+        }
+        if (quyenCanXoa.length > 0) {
+          await goQuyenKhoiVaiTro(editingId, quyenCanXoa);
+        }
+
+        apiNotification.success({ message: "Cập nhật vai trò thành công!" });
+      } else {
+        const newVaiTro = await createVaiTro(tenVaiTro);
+        const maVaiTro = newVaiTro.MaVaiTro;
+
+        if (danhSachQuyenDuocChon.length > 0) {
+          await ganQuyenChoVaiTro(maVaiTro, danhSachQuyenDuocChon);
+        }
+
         apiNotification.success({ message: "Thêm vai trò thành công!" });
-      } catch {
-        apiNotification.error({ message: "Thêm vai trò không thành công!" });
       }
+      handleCancel();
+    } catch (error) {
+      apiNotification.error({ message: "Thao tác thất bại!" });
     }
-    handleCancel();
   };
 
   const handleAdd = () => {
@@ -105,11 +153,22 @@ export default function VaiTroComponent() {
 
   const handleEdit = useCallback(
     (data) => {
+      const quyenOfVaiTro = danhSachQuyenTheoVaiTro[data.maVaiTro] || [];
+
+      const permissionChecked = {};
+      quyenOfVaiTro.forEach((id) => {
+        permissionChecked[id] = true;
+      });
+
+      form.setFieldsValue({
+        tenVaiTro: data.tenVaiTro,
+        ...permissionChecked,
+      });
+
       setEditingId(data.maVaiTro);
-      form.setFieldsValue(data);
       setIsModalVisible(true);
     },
-    [form]
+    [form, danhSachQuyenTheoVaiTro]
   );
 
   const handleDelete = useCallback((data) => {
@@ -538,7 +597,7 @@ export default function VaiTroComponent() {
         open={isModalVisible}
         onCancel={handleCancel}
         footer={null}
-        width={500}
+        width={600}
         centered
         bodyStyle={{ padding: "24px 32px" }}
       >
@@ -549,30 +608,52 @@ export default function VaiTroComponent() {
           layout="vertical"
           style={{ marginTop: 16 }}
         >
-          <Form.Item
-            name="tenVaiTro"
-            label={<Text strong>Tên vai trò</Text>}
-            rules={[
-              { required: true, message: "Vui lòng nhập tên vai trò!" },
-              { min: 2, message: "Tên vai trò phải có ít nhất 2 ký tự!" },
-            ]}
-          >
-            <Input
-              placeholder="Ví dụ: Trưởng phòng IT, Nhân viên HR..."
-              size="large"
-              style={{ borderRadius: 8 }}
-            />
-          </Form.Item>
+          <Tabs defaultActiveKey="1" centered>
+            <TabPane tab="Thông tin chung" key="1">
+              <Form.Item
+                name="tenVaiTro"
+                label={<Text strong>Tên vai trò</Text>}
+                rules={[
+                  { required: true, message: "Vui lòng nhập tên vai trò!" },
+                  { min: 2, message: "Tên vai trò phải có ít nhất 2 ký tự!" },
+                ]}
+              >
+                <Input
+                  placeholder="VD: Trưởng phòng IT"
+                  size="large"
+                  style={{ borderRadius: 8 }}
+                />
+              </Form.Item>
+            </TabPane>
+
+            <TabPane tab="Chi tiết quyền" key="2">
+              <Divider orientation="left">Quyền chung</Divider>
+              {permissionsOptions.map((item) => (
+                <Form.Item
+                  key={item.MaQuyenHan}
+                  name={item.MaQuyenHan.toString()}
+                  valuePropName="checked"
+                  initialValue={false}
+                  style={{ marginBottom: 20 }}
+                  label={
+                    <div>
+                      <strong>{item.TenQuyenHan}</strong>
+                      <div style={{ fontSize: 12, color: "#888" }}>{item.MoTa}</div>
+                    </div>
+                  }
+                >
+                    <Switch checkedChildren="Bật" unCheckedChildren="Tắt" />
+                </Form.Item>
+              ))}
+            </TabPane>
+          </Tabs>
 
           <Form.Item style={{ marginBottom: 0, marginTop: 32 }}>
             <Space style={{ width: "100%", justifyContent: "center", gap: 16 }}>
               <AntButton
                 onClick={handleCancel}
                 size="large"
-                style={{
-                  borderRadius: 8,
-                  minWidth: 100,
-                }}
+                style={{ borderRadius: 8, minWidth: 100 }}
               >
                 Hủy bỏ
               </AntButton>
@@ -583,8 +664,7 @@ export default function VaiTroComponent() {
                 style={{
                   borderRadius: 8,
                   minWidth: 100,
-                  background:
-                    "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
                   border: "none",
                 }}
               >

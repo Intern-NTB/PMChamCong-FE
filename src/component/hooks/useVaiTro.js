@@ -4,6 +4,8 @@ import {
   deleteVaiTroServices,
   createVaiTroServices,
   updateVaiTroServices,
+  assignPermissionToRole,
+  removePermissionFromRole,
 } from "../../services/vaitroServices.js";
 
 export const useVaiTro = () => {
@@ -74,6 +76,30 @@ export const useVaiTro = () => {
     }
   }, [getAllVaiTro]); 
 
+  const ganQuyenChoVaiTro = useCallback(async (maVaiTro, danhSachMaQuyenHan) => {
+    try {
+      await Promise.all(
+        danhSachMaQuyenHan.map((maQuyenHan) =>
+          assignPermissionToRole(maVaiTro, maQuyenHan)
+        )
+      );
+    } catch (error) {
+      console.error("Lỗi khi gán quyền:", error);
+    }
+  }, []);
+
+  const goQuyenKhoiVaiTro = useCallback(async (maVaiTro, danhSachMaQuyenHan) => {
+    try {
+      await Promise.all(
+        danhSachMaQuyenHan.map((maQuyenHan) =>
+          removePermissionFromRole(maVaiTro, maQuyenHan)
+        )
+      );
+    } catch (error) {
+      console.error("Lỗi khi gỡ quyền:", error);
+    }
+  }, []);
+
   useEffect(() => {
     getAllVaiTro();
   }, [getAllVaiTro]); 
@@ -101,5 +127,7 @@ export const useVaiTro = () => {
     deleteVaiTro,
     createVaiTro,
     updateVaiTro,
+    ganQuyenChoVaiTro,
+    goQuyenKhoiVaiTro,
   };
 };
