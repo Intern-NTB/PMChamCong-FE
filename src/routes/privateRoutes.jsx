@@ -22,6 +22,8 @@ import HeThongComponent from '../pages/caidat/he_thong.jsx';
 import PhuCapComponent from '../pages/caidat/phu_cap.jsx';
 // Thêm import cho thành phần Máy chấm công
 import MayChamCong from '../pages/maychamcong/maychamcong.jsx'; 
+// Import component PhanQuyenPage mới
+import PhanQuyenComponent from '../pages/caidat/phan_quyen.jsx'; // <-- THÊM DÒNG NÀY
 
 export const privateRoutes = [
     {
@@ -43,7 +45,10 @@ export const privateRoutes = [
                 children: [
                     {
                         index: true,
-                        element: <PhongBanComponent />
+                        // Bạn có thể chọn một component mặc định khi vào /caidat,
+                        // hiện tại bạn đang dùng PhongBanComponent.
+                        // Nếu muốn HeThongComponent là mặc định, bạn có thể đổi ở đây.
+                        element: <PhongBanComponent /> 
                     },
                     {
                         path: 'he-thong',
@@ -80,6 +85,10 @@ export const privateRoutes = [
                     {
                         path: 'tai-khoan',
                         element: <TaiKhoanComponent />
+                    },
+                    {
+                        path: 'phan-quyen', // <-- THÊM DÒNG NÀY VÀO ĐÂY
+                        element: <PhanQuyenComponent /> // <-- VÀ THÀNH PHẦN MỚI
                     },
                     {
                         path: 'lich-su-phong-ban',

@@ -1,3 +1,4 @@
+// src/pages/caidat/cai_dat.jsx
 import { Tabs } from 'antd'
 import { Children, useEffect, useState } from 'react'
 import { useNavigate, useLocation, Outlet } from 'react-router-dom'
@@ -28,6 +29,7 @@ export default function CaiDat() {
         { key: 'thuong', label: 'Thưởng' },
         { key: 'phat', label: 'Phạt' },
         { key: 'tai-khoan', label: 'Tài khoản' },
+        { key: 'phan-quyen', label: 'Phân quyền' }, // <-- THÊM DÒNG NÀY
         { key: 'lich-su-phong-ban', label: 'Lịch Sử Phòng Ban' },
         { key: 'lich-su-luong', label: 'Lịch Sử Lương' }
     ]
@@ -54,6 +56,5 @@ export default function CaiDat() {
             </div>
             <Outlet />
         </>
-
     )
 }

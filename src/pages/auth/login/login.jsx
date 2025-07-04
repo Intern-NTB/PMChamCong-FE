@@ -1,9 +1,11 @@
+// src/pages/auth/login/Login.jsx
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './login.css'
 import logo from '../../../assets/images/LogoIcon.png'
 import { useTaiKhoan } from '../../../component/hooks/useTaiKhoan'
 import { notification, Input } from 'antd'
+// import { setCurrentUser } from '../../../config/utils/user_permission'; // Dòng này có thể không cần thiết nếu đã xử lý trong useTaiKhoan
 
 const Login = () => {
   const navigate = useNavigate()
@@ -11,8 +13,7 @@ const Login = () => {
 
   const [tenDangNhap, setTenDangNhap] = useState('')
   const [matKhau, setPassword] = useState('')
-  const [hienMatKhau, setHienMatKhau] = useState(false)
-
+  const [hienMatKhau, setHienMatKhau] = useState(false) // Biến này chưa được sử dụng trong code hiện tại
 
   const [api, contextHolder] = notification.useNotification()
 
@@ -34,20 +35,25 @@ const Login = () => {
     }
 
     try {
+      // Hàm `login` từ useTaiKhoan hook giờ đây trả về `success`, `token`, `taiKhoan`, và `permissions`
       const result = await login(tenDangNhap, matKhau)
       console.log('Login result:', result)
 
       if (result && result.success) {
-        navigate('/main-layout')
+        // Lưu ý: token, taiKhoan và userPermissions đã được lưu trong useTaiKhoan.js.
+        // Bạn không cần phải thêm logic localStorage.setItem ở đây nữa.
+        
+        // Điều hướng đến trang chính sau khi đăng nhập thành công
+        navigate('/main-layout/trangchu');
       } else {
-        openNotification('error', 'Đăng nhập thất bại', 'Tên đăng nhập hoặc mật khẩu không đúng')
+        openNotification('error', 'Đăng nhập thất bại', result.message || 'Tên đăng nhập hoặc mật khẩu không đúng')
       }
     } catch (error) {
-      console.log('Login error:', error)
+      console.error('Login error:', error)
       openNotification(
         'error',
         'Lỗi đăng nhập',
-        'Sai tên đăng nhập hoặc mật khẩu'
+        error.message || 'Có lỗi xảy ra trong quá trình đăng nhập. Vui lòng thử lại.'
       )
     }
   }

@@ -1,3 +1,4 @@
+// src/routes/AppRoutes.jsx
 import { Routes, Route } from 'react-router-dom';
 import { privateRoutes } from './privateRoutes';
 import { publicRoutes } from './publicRoutes';
@@ -11,13 +12,12 @@ export default function AppRoutes() {
       ))}
 
       {privateRoutes.map(({ path, element, children }, idx) => (
-        <Route 
-          key={idx} 
-          path={path} 
+        <Route
+          key={idx}
+          path={path}
           element={<ProtectedRoute>{element}</ProtectedRoute>}
         >
           {children && children.map((child, cIdx) => {
-            // Handle nested routes properly
             if (child.children) {
               return (
                 <Route
@@ -36,7 +36,7 @@ export default function AppRoutes() {
                 </Route>
               );
             }
-            
+
             return (
               <Route
                 key={cIdx}
