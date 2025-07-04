@@ -23,7 +23,6 @@ import {
   Typography,
   ConfigProvider,
   Tooltip,
-  notification
 } from "antd";
 
 import "dayjs/locale/vi";

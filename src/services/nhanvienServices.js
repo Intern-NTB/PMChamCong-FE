@@ -111,3 +111,19 @@ export const uploadFingerPrintsServices = async () => {
     throw error;
   }
 };
+
+export const getNhanVienByCCCDServices = async (cccd) => {
+  try {
+    // Gửi trực tiếp object, không wrap trong {nhanVienData}
+    const data = {
+      cccd: cccd,
+    };
+    const response = await axiosInstance.post("/nhanvien/chitiet", data);
+    console.log(response);
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi lấy thông tin nhân viên chi tiết:", error);
+    console.error("Error response:", error.response?.message); // Log chi tiết lỗi từ server
+    throw error.response.data.message;
+  }
+};

@@ -6,12 +6,14 @@ import {
   deleteNhanVienServices,
   updateNhanVienService,
   reloadNhanVienServices,
+  getNhanVienByCCCDServices,
 } from "../../services/nhanvienServices";
 import { useCallback } from "react";
 
-export const useNhanVien = () => {
+export const useNhanVien = (isGetAllNhanvien = true) => {
   const [danhSachNhanVien, setDanhSachNhanVien] = useState([]);
   const [danhSachVanTayNhanVien, setDanhSachVanTayNhanVien] = useState([]);
+  const [thongTinNhanVien, setThongTinNhanVien] = useState(null);
   const [loading, setLoading] = useState(false);
   const [statusCreateNhanVien, setStatusCreateNhanVien] = useState(false);
   const [statusDeleteNhanVien, setStatusDeleteNhanVien] = useState(false);
@@ -25,6 +27,19 @@ export const useNhanVien = () => {
       setDanhSachNhanVien(Array.isArray(response.data) ? response.data : []);
     } catch {
       setDanhSachNhanVien([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const fetchNhanVienByCCCD = useCallback(async (cccd) => {
+    setLoading(true);
+    try {
+      const response = await getNhanVienByCCCDServices(cccd);
+      setThongTinNhanVien(response.data);
+    } catch (error) {
+      setThongTinNhanVien(null);
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -47,7 +62,7 @@ export const useNhanVien = () => {
     try {
       await deleteNhanVienServices(maNhanVien);
       setStatusDeleteNhanVien(true);
-    } catch  {
+    } catch {
       setStatusDeleteNhanVien(false);
     } finally {
       setLoading(false);
@@ -59,7 +74,7 @@ export const useNhanVien = () => {
     try {
       await updateNhanVienService(maNhanVien, nhanVienData);
       setStatusUpdateNhanVien(true);
-    } catch{
+    } catch {
       setStatusUpdateNhanVien(false);
     } finally {
       setLoading(false);
@@ -92,14 +107,17 @@ export const useNhanVien = () => {
   };
 
   useEffect(() => {
-    const initData = async () => {
-      await fetchNhanVien();
-      await getAllFingerprintsOfNhanVien();
-    };
-    initData();
-  }, []); 
+    if (isGetAllNhanvien) {
+      const initData = async () => {
+        await fetchNhanVien();
+        await getAllFingerprintsOfNhanVien();
+      };
+      initData();
+    }
+  }, []);
 
   return {
+    thongTinNhanVien,
     danhSachVanTayNhanVien,
     danhSachNhanVien,
     loading,
@@ -112,5 +130,6 @@ export const useNhanVien = () => {
     updateNhanVien,
     reloadData,
     getAllFingerprintsOfNhanVien,
+    fetchNhanVienByCCCD,
   };
 };

@@ -28,6 +28,7 @@ import {
   Tag,
   Alert,
 } from "antd";
+import { ModalQrCode } from "./modalQrCode";
 import {
   CloseCircleOutlined,
   PlusOutlined,
@@ -61,7 +62,7 @@ import { NghiPhepPermissions } from "../../config/utils/user_permission";
 
 const { RangePicker } = DatePicker;
 
-// Hàm helper để parse ngày từ backend - FIX
+// Hàm helper để parse ngày từ backend
 const parseDate = (dateString) => {
   if (!dateString) return null;
 
@@ -113,11 +114,12 @@ export default function NghiPhep() {
   const [leaveWarning, setLeaveWarning] = useState("");
   const [showSplitRecordModal, setShowSplitRecordModal] = useState(false);
   const [soNgayPhepConLai, setSoNgayPhepConLai] = useState(0);
+  const [isOpenModalQrCode, setIsOpenModalQrCode] = useState(false);
 
   // CONTEXT
   const { setReload } = useContext(ReloadContext);
 
-  const canEditStatus = NghiPhepPermissions.canEditStatus();
+  const canEditStatus = NghiPhepPermissions.canEdit();
   const canDelete = NghiPhepPermissions.canDelete();
 
   useEffect(() => {
@@ -834,6 +836,9 @@ export default function NghiPhep() {
               placeholder={["Từ ngày", "Đến ngày"]}
             />
           </Col>
+          <Col xs={24} sm={12} md={6}>
+            <Button onClick={() => setIsOpenModalQrCode(true)}>Tạo QrCode đến trang nghỉ phép</Button>
+          </Col>
         </Row>
         <Row gutter={16}>
           <Col xs={24} sm={24} md={4}>
@@ -1124,6 +1129,8 @@ export default function NghiPhep() {
           </Form.Item>
         </Form>
       </Modal>
+      {/** Modal Qrcode */}
+      <ModalQrCode isOpen={isOpenModalQrCode} onBack={() => setIsOpenModalQrCode(false)}/>
 
       {/* Modal xác nhận tách bản ghi */}
       <Modal

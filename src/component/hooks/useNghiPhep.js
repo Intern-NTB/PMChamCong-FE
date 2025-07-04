@@ -6,7 +6,7 @@ import {
   createNghiPhepServices,
 } from "../../services/ngaynghiServices";
 
-export const useNghiPhep = () => {
+export const useNghiPhep = (isGetAllNgaynghiPhep = true) => {
   const [danhSachNghiPhep, setDanhSachNghiPhep] = useState([]);
   const [loadingNghiPhep, setLoadingNghiPhep] = useState(false);
   const [isUpdatedNghiPhep, setIsUpdatedNghiPhep] = useState(false);
@@ -71,7 +71,9 @@ export const useNghiPhep = () => {
   }, [isUpdatedNghiPhep, isCreatedNghiPhep, isDeletedNghiPhep]);
 
   useEffect(() => {
-    getAllNghiPhep();
+    if (isGetAllNgaynghiPhep) {
+      getAllNghiPhep();
+    }
   }, []);
 
   return {

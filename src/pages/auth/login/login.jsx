@@ -5,7 +5,6 @@ import './login.css'
 import logo from '../../../assets/images/LogoIcon.png'
 import { useTaiKhoan } from '../../../component/hooks/useTaiKhoan'
 import { notification, Input } from 'antd'
-// import { setCurrentUser } from '../../../config/utils/user_permission'; // Dòng này có thể không cần thiết nếu đã xử lý trong useTaiKhoan
 
 const Login = () => {
   const navigate = useNavigate()
@@ -13,7 +12,6 @@ const Login = () => {
 
   const [tenDangNhap, setTenDangNhap] = useState('')
   const [matKhau, setPassword] = useState('')
-  const [hienMatKhau, setHienMatKhau] = useState(false) // Biến này chưa được sử dụng trong code hiện tại
 
   const [api, contextHolder] = notification.useNotification()
 
