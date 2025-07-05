@@ -3,10 +3,12 @@ import {
   getAllNgayPhepServices,
   tinhToanNgayPhepServices,
   tinhToanNgayPhepTatCaServices,
+  getTienQuyDoiNgayPhepServices,
 } from "../../services/ngayphepServices";
 
-export const useNgayPhep = () => {
+export const useNgayPhep = (isAutoGetAll = true) => {
   const [danhSachNgayPhep, setDanhSachNgayPhep] = useState([]);
+  const [thongTinTienQuyDoiPhep, setThongTinTienQuyDoiPhep] = useState(null);
   const [loadingNgayPhep, setLoadingNgayPhep] = useState(false);
   const [isUpdatedNgayPhep, setIsUpdatedNgayPhep] = useState(false);
 
@@ -48,6 +50,18 @@ export const useNgayPhep = () => {
     }
   };
 
+  const getTienQuyDoiNgayPhep = async (maNhanVien, body) => {
+    try {
+      const res = await getTienQuyDoiNgayPhepServices(maNhanVien, body);
+      console.log("res:", res);
+      setThongTinTienQuyDoiPhep(res.data[0]);
+      return res.data[0];
+    } catch (error) {
+      setThongTinTienQuyDoiPhep(null);
+      throw error;
+    }
+  };
+
   useEffect(() => {
     if (isUpdatedNgayPhep) {
       getAllNgayPhep();
@@ -56,15 +70,20 @@ export const useNgayPhep = () => {
   }, [isUpdatedNgayPhep]);
 
   useEffect(() => {
-    getAllNgayPhep();
+    if (isAutoGetAll) {
+      getAllNgayPhep();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return {
+    thongTinTienQuyDoiPhep,
     danhSachNgayPhep,
     loadingNgayPhep,
     isUpdatedNgayPhep,
     getAllNgayPhep,
     tinhToanNgayPhep,
     tinhToanNgayPhepTatCa,
+    getTienQuyDoiNgayPhep,
   };
 };

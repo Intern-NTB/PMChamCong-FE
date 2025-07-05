@@ -30,12 +30,14 @@ export const createLuongByIdServices = async (dataLuong) => {
   }
 };
 
+
+
 export const getAllLuongDieuChinhServices = async () => {
-    try{
-        const response = await axiosInstance.get(`/luong/dieuchinh`);
-        return response.data;
-    } catch (error) {
-        console.error('Lỗi khi lấy dữ liệu', error);
-        throw error;
-    }
-}
+  try {
+    const response = await axiosInstance.get(`/luong/dieuchinh`);
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi lấy dữ liệu", error);
+    throw error;
+  }
+};

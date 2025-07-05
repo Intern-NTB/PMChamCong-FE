@@ -74,6 +74,7 @@ export const useNghiPhep = (isGetAllNgaynghiPhep = true) => {
     if (isGetAllNgaynghiPhep) {
       getAllNghiPhep();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return {

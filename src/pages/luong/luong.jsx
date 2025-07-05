@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useEffect, useContext } from "react";
+/* eslint-disable react-hooks/exhaustive-deps */
+import { useState, useMemo, useEffect } from "react";
 import {
   Table,
   Input,
@@ -29,6 +30,7 @@ dayjs.locale("vi");
 import { useLuong } from "../../component/hooks/useLuong";
 import { useNhanVien } from "../../component/hooks/useNhanVien";
 import { usePhongBan } from "../../component/hooks/usePhongBan";
+import { useNgayPhep } from "../../component/hooks/useNgayPhep";
 import { ReloadContext } from "../../context/reloadContext";
 import { useAppNotification } from "../../component/ui/notification";
 import { useLichSuThuong } from "../../component/hooks/useLichSuTienThuong";
@@ -56,21 +58,22 @@ export default function Luong() {
   const [selectedPhongBan, setSelectedPhongBan] = useState(null);
 
   const { danhSachChamCongChiTiet } = useChamCong();
+  const { getTienQuyDoiNgayPhep } = useNgayPhep(false);
   const [isModalChamCongChiTietVisible, setIsModalChamCongChiTietVisible] =
     useState(false);
   const [selectedNhanVien, setSelectedNhanVien] = useState(null);
 
   const [selectedRows, setSelectedRows] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
-
-  const { setReload } = useContext(ReloadContext);
+  const [isBaoGomTienQuyDoiPhep, setIsBaoGomTienQuyDoiPhep] = useState(false);
+  const [duLieuThongTinTienQuyDoi, setDuLieuThongTinTienQuyDoi] =
+    useState(null);
 
   // Modal tính lương
   const [isTinhLuongModalVisible, setIsTinhLuongModalVisible] = useState(false);
   const [tinhLuongForm] = Form.useForm();
 
-  const { danhSachLuong, getAllLuong, createLuong, createLuongById } =
-    useLuong();
+  const { danhSachLuong, createLuong, createLuongById } = useLuong();
   const { danhSachNhanVien } = useNhanVien();
   const { danhSachPhongBan } = usePhongBan();
   const { danhSachLichSuThuong } = useLichSuThuong();
@@ -159,9 +162,31 @@ export default function Luong() {
   });
 
   useEffect(() => {
-    setReload(() => getAllLuong);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (isBaoGomTienQuyDoiPhep && selectedRows.length > 0) {
+      const fetchLeaveConversionData = async () => {
+        const conversionData = {};
+
+        for (const maNhanVien of selectedRows) {
+          try {
+            const body = {
+              nam: dayjs(selectedMonthYear).year(),
+              thang: dayjs(selectedMonthYear).month() + 1,
+            };
+            const result = await getTienQuyDoiNgayPhep(maNhanVien, body);
+            conversionData[maNhanVien] = result;
+          } catch (error) {
+            console.error(error);
+          }
+        }
+
+        setDuLieuThongTinTienQuyDoi(conversionData);
+      };
+
+      fetchLeaveConversionData();
+    } else {
+      setDuLieuThongTinTienQuyDoi({});
+    }
+  }, [isBaoGomTienQuyDoiPhep, selectedRows, selectedMonthYear]);
 
   // Menu cho Excel
   const menuExcel = (
@@ -275,7 +300,6 @@ export default function Luong() {
                 setSelectedRows(filteredData.map((item) => item.maNhanVien));
               } else {
                 setSelectedRows([]);
-                console.log("Deselected all.");
               }
             }}
           />
@@ -426,11 +450,20 @@ export default function Luong() {
     const selectedData = filteredData.filter((record) =>
       selectedRows.includes(record.maNhanVien)
     );
+
+    const duLieuTienQuyDoiTheoNhanVien = {};
+    selectedData.forEach((record) => {
+      duLieuTienQuyDoiTheoNhanVien[record.maNhanVien] =
+        duLieuThongTinTienQuyDoi[record.maNhanVien] || { soTienQuyDoi: 0 };
+    });
+
     exportToExcel(
       selectedData,
       selectedMonthYear.format("MM/YYYY"),
       selectedPhongBan,
-      false
+      false,
+      duLieuTienQuyDoiTheoNhanVien,
+      isBaoGomTienQuyDoiPhep
     );
   };
 
@@ -438,37 +471,57 @@ export default function Luong() {
     const selectedData = filteredData.filter((record) =>
       selectedRows.includes(record.maNhanVien)
     );
-    exportIndividualToExcel(selectedData, selectedMonthYear.format("MM/YYYY"));
+
+    const duLieuTienQuyDoiTheoNhanVien = {};
+    selectedData.forEach((record) => {
+      duLieuTienQuyDoiTheoNhanVien[record.maNhanVien] =
+        duLieuThongTinTienQuyDoi[record.maNhanVien] || { soTienQuyDoi: 0 };
+    });
+    exportIndividualToExcel(
+      selectedData,
+      selectedMonthYear.format("MM/YYYY"),
+      false,
+      duLieuTienQuyDoiTheoNhanVien,
+      isBaoGomTienQuyDoiPhep
+    );
   };
 
-  const generateSummaryPDFHandler = async () => {
-    const selectedData = filteredData.filter((record) =>
-      selectedRows.includes(record.maNhanVien)
-    );
-    console.log(selectedData);
-    if (selectedData.length > 0) {
-      generateSinglePDFMultiplePages(
-        selectedData,
-        selectedMonthYear.format("MM/YYYY")
-      );
-    } else {
-      alert("Vui lòng chọn ít nhất một nhân viên để in.");
-    }
-  };
+ const generateSummaryPDFHandler = async () => {
+  const selectedData = filteredData.filter((record) =>
+    selectedRows.includes(record.maNhanVien)
+  );
+  
+  if (selectedData.length === 0) {
+    alert("Vui lòng chọn ít nhất một nhân viên để in.");
+    return;
+  }
+
+  // Tạo PDF duy nhất với nhiều trang (một trang cho mỗi nhân viên)
+  generateSinglePDFMultiplePages(
+    selectedData,
+    selectedMonthYear.format("MM/YYYY"),
+    duLieuThongTinTienQuyDoi,
+    isBaoGomTienQuyDoiPhep
+  );
+};
 
   const generateMultipagePDFHandler = async () => {
     const selectedData = filteredData.filter((record) =>
       selectedRows.includes(record.maNhanVien)
     );
-    console.log(selectedData);
-    if (selectedData.length > 0) {
-      generateMultipleDetailedPDFs(
-        selectedData,
-        selectedMonthYear.format("MM/YYYY")
-      );
-    } else {
+
+    if (selectedData.length === 0) {
       alert("Vui lòng chọn ít nhất một nhân viên để in.");
+      return;
     }
+
+    // Tạo nhiều file PDF riêng biệt (mỗi nhân viên một file)
+    generateMultipleDetailedPDFs(
+      selectedData,
+      selectedMonthYear.format("MM/YYYY"),
+      duLieuThongTinTienQuyDoi,
+      isBaoGomTienQuyDoiPhep
+    );
   };
 
   const handleTinhLuong = () => {
@@ -495,7 +548,6 @@ export default function Luong() {
         nam: Number(dayjs(values.thangNam, "MM/YYYY").format("YYYY")),
         thang: Number(dayjs(values.thangNam, "MM/YYYY").format("MM")),
       };
-      console.log("Tính lương với các thông số:", valuesFormated);
       await createLuong(valuesFormated);
     }
     setIsTinhLuongModalVisible(false);
@@ -631,6 +683,19 @@ export default function Luong() {
           </Button>
         </Dropdown>
       </Space>
+      <Checkbox
+        disabled={selectedRows.length === 0 ? true : false}
+        style={{ marginLeft: 12 }}
+        onMouseDown={(e) => {
+          e.stopPropagation();
+        }}
+        onChange={(e) => {
+          e.stopPropagation();
+          setIsBaoGomTienQuyDoiPhep(true);
+        }}
+      >
+        Thêm thông tin tiền quy đổi phép
+      </Checkbox>
 
       {/* Modal Tính Lương */}
       <Modal
@@ -706,13 +771,7 @@ export default function Luong() {
               >
                 Hủy
               </Button>
-              <Button
-                type="primary"
-                htmlType="submit"
-                onClick={() => {
-                  console.log("click tính lương");
-                }}
-              >
+              <Button type="primary" htmlType="submit">
                 Tính lương
               </Button>
             </Space>
