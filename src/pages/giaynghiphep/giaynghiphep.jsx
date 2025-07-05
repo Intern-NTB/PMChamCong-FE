@@ -20,8 +20,12 @@ import { ModalEmail } from "./modalEmail";
 
 export default function GiayNghiPhep() {
   const { danhSachNghiPhep, createNghiPhep } = useNghiPhep(false);
-  const { danhSachNhanVien, thongTinNhanVien, fetchNhanVienByCCCD } =
-    useNhanVien(false);
+  const {
+    danhSachNhanVien,
+    thongTinNhanVien,
+    fetchNhanVienByCCCD,
+    updateEmailNhanVien,
+  } = useNhanVien(false);
   const { danhSachNgayPhep, getAllNgayPhep } = useNgayPhep();
 
   const api = useAppNotification();
@@ -37,7 +41,7 @@ export default function GiayNghiPhep() {
     data: null,
   });
   const [isOpenModalUpdateEmail, setIsOpenModalUpdateEmail] = useState(false);
-  const [isSavedEmail, setIsSaveEmail] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   // Thêm state để quản lý loading
   const [isLoadingNhanVien, setIsLoadingNhanVien] = useState(false);
@@ -264,9 +268,17 @@ export default function GiayNghiPhep() {
 
   const handleUpdateEmail = async (email) => {
     try {
+      console.log(
+        "thongTinNhanVien.maNhanVien,email: ",
+        thongTinNhanVien.maNhanVien,
+        email
+      );
       // Gọi API để cập nhật email
+      await updateEmailNhanVien(thongTinNhanVien.maNhanVien, email);
       setIsOpenModalUpdateEmail(false);
-      setIsSaveEmail(true);
+      // GỌi API để lấy lại thông tin nhân viên
+      await fetchNhanVienByCCCD(completedInputCCCD.data);
+      api.success({ message: "Cập nhật email thành công" });
     } catch (error) {
       api.error(error);
     }
@@ -295,11 +307,10 @@ export default function GiayNghiPhep() {
         });
         return;
       }
-
-      // if (!thongTinNhanVien.email) {
-      //   setIsOpenModalUpdateEmail(true);
-      //   return;
-      // }
+      if (!thongTinNhanVien.email) {
+        setIsOpenModalUpdateEmail(true);
+        return;
+      }
 
       if (!values.ngayBatDau || !values.ngayKetThuc) {
         api.error({
@@ -350,9 +361,9 @@ export default function GiayNghiPhep() {
       await createNghiPhep(dataToSave);
       api.success({
         message: "Thành công",
-        description: "Đã thêm thành công đơn nghỉ phép",
+        description: "Đã gửi thành công đơn nghỉ phép",
       });
-
+      setIsSubmitted(true);
       setIsModalVisible(false);
       form.resetFields();
     } catch (errorInfo) {
@@ -396,18 +407,21 @@ export default function GiayNghiPhep() {
 
   return (
     <div className="login-container">
-      <style jsx>{`
-        @media screen and (max-width: 768px) {
-          .ant-input,
-          .ant-input-number-input,
-          .ant-select-selection-search-input,
-          .ant-picker-input > input {
-            font-size: 16px !important;
-            -webkit-appearance: none;
-            appearance: none;
-          }
-        }
-      `}</style>
+      <style>
+        {`
+    @media screen and (max-width: 768px) {
+      .ant-input,
+      .ant-input-number-input,
+      .ant-select-selection-search-input,
+      .ant-picker-input > input {
+        font-size: 16px !important;
+        -webkit-appearance: none;
+        appearance: none;
+      }
+    }
+  `}
+      </style>
+
       <ModalEmail
         isOpen={isOpenModalUpdateEmail}
         updateEmailNhanVien={(email) => handleUpdateEmail(email)}
@@ -604,6 +618,21 @@ export default function GiayNghiPhep() {
             </Checkbox>
           </Form.Item>
         </Form>
+      </Modal>
+
+      {/** Modal Thông báo khi tạo đơn thành công */}
+      <Modal
+        open={isSubmitted}
+        centered={true}
+        title="Bạn đã gửi đơn nghỉ phép thành công"
+        cancelButtonProps={{ style: { display: "none" } }}
+        okButtonProps={{ style: { display: "none" } }}
+      >
+        Thông báo sẽ được gửi đến Email :{" "}
+        <span style={{ color: "blueviolet" }}>
+          {thongTinNhanVien?.email ?? "email@example.com"}
+        </span>{" "}
+        sau khi được phê duyệt
       </Modal>
 
       <Modal

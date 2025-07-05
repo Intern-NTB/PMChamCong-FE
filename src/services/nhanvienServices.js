@@ -13,7 +13,6 @@ export const getAllNhanVienChiTietServices = async () => {
     throw error;
   }
 };
-
 /**
  * Lấy nhân viên theo ID
  * @param {number} maNhanVien - Mã nhân viên
@@ -124,6 +123,17 @@ export const getNhanVienByCCCDServices = async (cccd) => {
   } catch (error) {
     console.error("Lỗi khi lấy thông tin nhân viên chi tiết:", error);
     console.error("Error response:", error.response?.message); // Log chi tiết lỗi từ server
+    throw error.response.data.message;
+  }
+};
+
+export const updateEmailNhanVienByMaNhanVienServices = async (maNhanVien, email) => {
+  try {
+    const data = {
+      email: email,
+    };
+    await axiosInstance.patch(`/nhanvien/${maNhanVien}`, data);
+  } catch (error) {
     throw error.response.data.message;
   }
 };

@@ -35,8 +35,8 @@ const MainLayout = () => {
             "/main-layout/chamcong": "Chấm Công",
             "/main-layout/maychamcong": "Máy Chấm Công",
             "/main-layout/luong": "Lương",
-            "/main-layout/caidat": "Cài Đặt",
             "/main-layout/baocao": "Báo Cáo",
+            "/main-layout/caidat": "Cài Đặt",
         }),
         []
     );
@@ -92,19 +92,20 @@ const MainLayout = () => {
 
         if (!collapsed && isInEmployeeSubmenu) {
             setOpenKeys(["sub1"]);
-        } else {
-
-            setOpenKeys([]);
+        } else if (collapsed) { 
+            setOpenKeys([]); 
         }
+  
     }, [location.pathname, collapsed]); 
+
     const handleOpenChange = useCallback((keys) => {
-        if (!collapsed) {
+      
+        if (!collapsed || isMobile) { 
             setOpenKeys(keys);
         } else {
             setOpenKeys([]); 
         }
-    }, [collapsed]);
-
+    }, [collapsed, isMobile]); 
 
     const handleLogout = useCallback(() => {
         localStorage.removeItem("token");
@@ -197,13 +198,14 @@ const MainLayout = () => {
             <div
                 style={{
                     display: "flex",
-                    justifyContent: collapsed ? "center" : "flex-start",
+                    justifyContent: collapsed && !isMobile ? "center" : "flex-start", 
                     alignItems: "center",
-                    padding: isMobile ? "20px 0" : "16px 0",
+                    padding: isMobile ? "20px" : "16px", 
                     overflow: 'hidden',
                     transition: 'width 0.2s ease',
-                    width: collapsed ? '80px' : '300px',
-                    gap: collapsed ? '0px' : '10px'
+                    width: collapsed && !isMobile ? '80px' : 'auto', 
+                    minHeight: '64px', 
+                    gap: collapsed && !isMobile ? '0px' : '10px'
                 }}
             >
             </div>
@@ -213,12 +215,11 @@ const MainLayout = () => {
                 openKeys={openKeys}
                 onOpenChange={handleOpenChange}
                 theme="dark"
-                inlineCollapsed={collapsed} 
+                inlineCollapsed={collapsed && !isMobile} 
                 onClick={({ key, keyPath }) => {
                     if (isMobile) {
-                        setDrawerVisible(false);
+                        setDrawerVisible(false); 
                     }
-                 
                 }}
                 style={{
                     background: "transparent",
@@ -250,37 +251,41 @@ const MainLayout = () => {
                         size="large"
                         style={{ fontSize: "18px" }}
                     />
+                    {/* Display the current page title in the mobile header */}
                     <h2 style={{ margin: 0, flex: 1, textAlign: "center" }}>{title}</h2>
-                    <Button
-                        icon={<LogoutOutlined />}
-                        onClick={handleLogout}
-                        type="text"
-                        size="large"
-                        style={{ marginRight: 12 }}
-                    />
                     <Button
                         icon={<ReloadOutlined />}
                         onClick={executeReload}
                         size="large"
                     />
+                    <Button 
+                        icon={<LogoutOutlined />}
+                        onClick={handleLogout}
+                        type="text"
+                        size="large"
+                        style={{ marginLeft: 12 }}
+                    />
                 </Header>
 
                 <Drawer
-                    title={null}
+                    title={null} 
                     placement="left"
                     closable={false}
                     onClose={() => setDrawerVisible(false)}
                     open={drawerVisible}
-                    width="100vw"
+                    width="80vw" 
                     styles={{
                         body: {
-                            padding: 0,
+                            padding: 0, 
                             background: "#71A5E0",
                             height: "100vh",
                         },
                         header: {
                             display: "none",
                         },
+                        wrapper: {
+                            overflowX: 'hidden'
+                        }
                     }}
                 >
                     <div

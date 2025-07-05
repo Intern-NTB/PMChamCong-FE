@@ -465,7 +465,6 @@ const Popup = ({
               label="Căn cước công dân"
               rules={[
                 { validator: validateCmnd },
-                { required: true, message: "Vui lòng nhập CCCD!" },
               ]}
             >
               <Input placeholder="Nhập số cmnd" maxLength={12} />
@@ -478,7 +477,6 @@ const Popup = ({
               label="Số điện thoại"
               rules={[
                 { validator: validateSoDienThoaiFormat },
-                { required: true, message: "Vui lòng nhập số điện thoại!" },
               ]}
             >
               <Input placeholder="Nhập số điện thoại" maxLength={10} />

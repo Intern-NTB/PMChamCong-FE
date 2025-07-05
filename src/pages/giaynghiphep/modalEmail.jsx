@@ -36,6 +36,7 @@ export const ModalEmail = ({ isOpen, updateEmailNhanVien, onBack }) => {
       }}
       onCancel={onBack}
       okText="Lưu"
+      okButtonProps={{ style: { display: isValidated ? "" : "none" } }}
       cancelText="Quay lại"
       title="Bạn chưa có Email!"
     >

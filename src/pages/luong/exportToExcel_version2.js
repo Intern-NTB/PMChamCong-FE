@@ -284,12 +284,12 @@ export const exportToExcel = async (
         {
           key: "luongTheoNgay",
           width: 15,
-          header: "(19)\nLương Theo Ngày\n(1)-(17)-(18)",
+          header: "(19)\nLương Theo Ngày\n(2)*(14)*8",
         },
         {
           key: "tongLuongCoBan",
           width: 15,
-          header: "(20)\nTổng Lương Cơ Bản\n(16)+(19)+(17)+(9)",
+          header: "(20)\nTổng Lương Cơ Bản\n(9)+(16)+(17)+(19)",
         },
         {
           key: "tongLuong",
@@ -643,7 +643,7 @@ export const exportIndividualToExcel = async (data, monthYear = "") => {
     for (const item of data) {
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet(
-        `Bảng Lương Cá Nhân - ${item.hoTen}`
+        `Bảng Lương Cá Nhân`
       );
 
       // Header công ty
