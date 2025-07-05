@@ -268,9 +268,13 @@ export default function GiayNghiPhep() {
 
   const handleUpdateEmail = async (email) => {
     try {
-      console.log("email: ", email);
+      console.log(
+        "thongTinNhanVien.maNhanVien,email: ",
+        thongTinNhanVien.maNhanVien,
+        email
+      );
       // Gọi API để cập nhật email
-      //await updateEmailNhanVien(thongTinNhanVien.maNhanVien,email)
+      await updateEmailNhanVien(thongTinNhanVien.maNhanVien, email);
       setIsOpenModalUpdateEmail(false);
       // GỌi API để lấy lại thông tin nhân viên
       await fetchNhanVienByCCCD(completedInputCCCD.data);
@@ -303,10 +307,10 @@ export default function GiayNghiPhep() {
         });
         return;
       }
-      // if (!thongTinNhanVien.email) {
-      //   setIsOpenModalUpdateEmail(true);
-      //   return;
-      // }
+      if (!thongTinNhanVien.email) {
+        setIsOpenModalUpdateEmail(true);
+        return;
+      }
 
       if (!values.ngayBatDau || !values.ngayKetThuc) {
         api.error({

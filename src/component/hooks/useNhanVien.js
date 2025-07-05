@@ -7,7 +7,7 @@ import {
   updateNhanVienService,
   reloadNhanVienServices,
   getNhanVienByCCCDServices,
-  updateEmailNhanVienServices,
+  updateEmailNhanVienByMaNhanVienServices,
 } from "../../services/nhanvienServices";
 import { useCallback } from "react";
 
@@ -51,7 +51,7 @@ export const useNhanVien = (isGetAllNhanvien = true) => {
   const updateEmailNhanVien = async (maNhanVien, email) => {
     setLoading(true);
     try {
-      await updateEmailNhanVienServices(maNhanVien, email);
+      await updateEmailNhanVienByMaNhanVienServices(maNhanVien, email);
       setStatusUpdateEmailNhanVien(true);
     } catch (error) {
       setStatusUpdateEmailNhanVien(false);
@@ -130,7 +130,7 @@ export const useNhanVien = (isGetAllNhanvien = true) => {
       };
       initData();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return {
