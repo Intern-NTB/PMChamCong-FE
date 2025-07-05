@@ -219,6 +219,22 @@ export default function TaiKhoanComponent() {
             onConfirm={() => handleDelete(record.maNhanVien)}
             okText="Có"
             cancelText="Không"
+            okButtonProps={{
+              style: {
+                minWidth: 64,
+                maxWidth: 100,
+                padding: "0 12px",
+                whiteSpace: "nowrap",
+              },
+            }}
+            cancelButtonProps={{
+              style: {
+                minWidth: 64,
+                maxWidth: 100,
+                padding: "0 12px",
+                whiteSpace: "nowrap",
+              },
+            }}
           >
             <Button
               danger

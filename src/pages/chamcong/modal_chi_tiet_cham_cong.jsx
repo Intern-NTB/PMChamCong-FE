@@ -179,6 +179,8 @@ export default function ModalChiTietChamCong({
   // Theo dõi trạng thái loading tổng quát
   const isLoading = loadingNgayLe || loadingNghiPhep;
 
+  //mobile
+  const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
     try {
       const body = {
@@ -191,6 +193,17 @@ export default function ModalChiTietChamCong({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedMonth]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 576); // hoặc 768 tùy breakpoint bạn chọn
+    };
+
+    handleResize(); // Gọi lần đầu
+    window.addEventListener("resize", handleResize); // Theo dõi resize
+
+    return () => window.removeEventListener("resize", handleResize); // Cleanup
+  }, []);
 
   const processedCalendarData = useMemo(() => {
     if (!selectedNhanVien || !danhSachChamCongChiTiet || isLoading) {
@@ -437,11 +450,15 @@ export default function ModalChiTietChamCong({
         </div>
         <div style={{ fontSize: "11px", lineHeight: "1.2" }}>
           {chamCong ? (
-            <>
-              <div>Vào: {gioVao}</div>
-              <div>Ra: {gioRa}</div>
-              <div>{cong} công</div>
-            </>
+            isMobile ? (
+              <div>Đã chấm công</div>
+            ) : (
+              <>
+                <div>Vào: {gioVao}</div>
+                <div>Ra: {gioRa}</div>
+                <div>{cong} công</div>
+              </>
+            )
           ) : (
             <>
               {!(
@@ -487,11 +504,39 @@ export default function ModalChiTietChamCong({
     ];
   }, []);
 
-  const firstDayOfMonth = selectedMonth.startOf("month").weekday();
-  const startOffset = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1;
+  console.log("weekDays", weekDays);
+
+  const firstDay = selectedMonth.startOf("month").day();
+  const dbDay = firstDay === 0 ? 1 : firstDay + 1;
+  const startOffset = dbDay === 1 ? 6 : dbDay - 2;
   const emptyCells = Array.from({ length: startOffset }, (_, i) => (
-    <Col key={`empty-${i}`} className="day-cell-empty" span={24 / 7}></Col>
+    <Col
+      key={`empty-${i}`}
+      className="day-cell-empty"
+      span={Math.floor(24 / 7)}
+    ></Col>
   ));
+
+  const calendarCells = [
+    ...emptyCells.map((cell, index) => ({
+      type: "empty",
+      key: `empty-${index}`,
+    })),
+    ...processedCalendarData.map((day, index) => ({
+      type: "day",
+      data: day,
+      key: `day-${index}`,
+    })),
+  ];
+
+  const weeks = [];
+  for (let i = 0; i < calendarCells.length; i += 7) {
+    weeks.push(calendarCells.slice(i, i + 7));
+  }
+
+  weeks.forEach((week, i) => {
+    console.log(`Week ${i} has ${week.length} days`, week);
+  });
 
   if (isLoading)
     return (
@@ -501,39 +546,39 @@ export default function ModalChiTietChamCong({
     );
 
   return (
-    <>
-      <Modal
-        title={
-          selectedNhanVien
-            ? `Lịch chấm công của ${selectedNhanVien.hoTen} (${selectedNhanVien.maNhanVien})`
-            : "Lịch chấm công chi tiết"
-        }
-        open={isVisible}
-        onCancel={onCancel}
-        footer={null}
-        width={1000}
-        style={{ top: 20 }}
-        styles={{ body: { padding: 0 } }}
-      >
-        <ConfigProvider locale={viVN}>
-          <div style={{ padding: "0 0 24px 0" }}>
-            <Space
-              style={{
-                marginBottom: 16,
-                width: "100%",
-                justifyContent: "space-between",
-                padding: "0 24px",
-              }}
-            >
+    <Modal
+      title={
+        selectedNhanVien
+          ? `Lịch chấm công của ${selectedNhanVien.hoTen} (${selectedNhanVien.maNhanVien})`
+          : "Lịch chấm công chi tiết"
+      }
+      open={isVisible}
+      onCancel={onCancel}
+      footer={null}
+      width={1000}
+      style={{ top: 20 }}
+      styles={{ body: { padding: 0 } }}
+    >
+      <ConfigProvider locale={viVN}>
+        <div style={{ padding: "0 0 24px 0" }}>
+          <Row
+            gutter={[8, 8]}
+            justify="space-between"
+            align="middle"
+            style={{ marginBottom: 16, padding: "0 24px" }}
+          >
+            <Col xs={24} sm={6}>
               <DatePicker
                 picker="month"
                 placeholder="Chọn tháng"
                 onChange={handleMonthChange}
                 value={selectedMonth}
                 format="MM/YYYY"
-                style={{ width: 150 }}
+                style={{ width: "100%" }}
                 allowClear={false}
               />
+            </Col>
+            <Col xs={24} sm={12} style={{ textAlign: "right" }}>
               <Button
                 type="primary"
                 icon={<FileExcelOutlined />}
@@ -542,263 +587,290 @@ export default function ModalChiTietChamCong({
               >
                 Xuất Excel
               </Button>
-            </Space>
+            </Col>
+          </Row>
 
-            <Row gutter={[16, 0]} style={{ padding: "0 24px" }}>
-              <Col span={16}>
-                <Card
-                  size="small"
-                  style={{
-                    marginBottom: 20,
-                    backgroundColor: "#f9fafb",
-                    border: "1px solid #e5e7eb",
-                  }}
-                >
-                  <Space wrap size={[16, 8]}>
-                    <Tag
-                      color="#dcfce7"
-                      style={{ color: "#16a34a", borderColor: "#bbf7d0" }}
-                    >
-                      Hoàn tất
-                    </Tag>
-                    <Tag
-                      color="#e0f2f1"
-                      style={{ color: "#00796b", borderColor: "#00796b" }}
-                    >
-                      Ngày tăng ca
-                    </Tag>
-                    <Tag
-                      color="#fde68a"
-                      style={{ color: "#b45309", borderColor: "#fcd34d" }}
-                    >
-                      Nghỉ lễ
-                    </Tag>
-                    <Tag
-                      color="#bfdbfe"
-                      style={{ color: "#2563eb", borderColor: "#93c5fd" }}
-                    >
-                      Xin nghỉ
-                    </Tag>
-                    <Tag
-                      color="#fef2f2"
-                      style={{ color: "#ef4444", borderColor: "#fecaca" }}
-                    >
-                      Chưa hoàn tất
-                    </Tag>
-                  </Space>
-                </Card>
-
+          <Row gutter={[16, 0]} style={{ padding: "0 24px" }} wrap>
+            <Col xs={24} md={16} style={{ marginBottom: 16 }}>
+              <Card
+                size="small"
+                style={{
+                  marginBottom: 20,
+                  backgroundColor: "#f9fafb",
+                  border: "1px solid #e5e7eb",
+                }}
+              >
                 <div
                   style={{
-                    border: "1px solid #e0e0e0",
-                    borderRadius: "4px",
-                    overflow: "hidden",
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: "8px 16px",
                   }}
                 >
-                  <Row
-                    justify="start"
-                    style={{ backgroundColor: "#f5f5f5", fontWeight: "bold" }}
-                  >
-                    {weekDays.map((day) => (
-                      <Col
-                        key={day.name}
-                        span={24 / 7}
+                  {[
+                    {
+                      text: "Hoàn tất",
+                      color: "#dcfce7",
+                      textColor: "#16a34a",
+                      borderColor: "#bbf7d0",
+                    },
+                    {
+                      text: "Ngày tăng ca",
+                      color: "#e0f2f1",
+                      textColor: "#00796b",
+                      borderColor: "#00796b",
+                    },
+                    {
+                      text: "Nghỉ lễ",
+                      color: "#fde68a",
+                      textColor: "#b45309",
+                      borderColor: "#fcd34d",
+                    },
+                    {
+                      text: "Xin nghỉ",
+                      color: "#bfdbfe",
+                      textColor: "#2563eb",
+                      borderColor: "#93c5fd",
+                    },
+                    {
+                      text: "Chưa hoàn tất",
+                      color: "#fef2f2",
+                      textColor: "#ef4444",
+                      borderColor: "#fecaca",
+                    },
+                  ].map((item, index) => (
+                    <div
+                      key={index}
+                      style={{
+                        width: "calc(50% - 8px)",
+                        minWidth: 120,
+                      }}
+                    >
+                      <Tag
+                        color={item.color}
                         style={{
+                          color: item.textColor,
+                          borderColor: item.borderColor,
+                          width: "100%",
                           textAlign: "center",
-                          padding: "8px 0",
-                          color: day.color,
                         }}
                       >
-                        {day.name}
-                      </Col>
-                    ))}
-                  </Row>
-                  <Row gutter={[0, 0]}>
-                    {emptyCells}
-                    {processedCalendarData.map(renderDayCell)}
-                  </Row>
+                        {item.text}
+                      </Tag>
+                    </div>
+                  ))}
                 </div>
-              </Col>
-              <Col span={8}>
-                <Card
-                  title={
-                    <Space size={8}>
-                      <CalendarOutlined style={{ color: "#1890ff" }} />
-                      <Title
-                        level={5}
-                        style={{
-                          marginBottom: 0,
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                        }}
-                      >
-                        Thống kê tháng {selectedMonth.format("MM/YYYY")}
-                      </Title>
-                    </Space>
-                  }
-                  size="small"
-                  style={{
-                    marginBottom: 16,
-                    backgroundColor: "#f9fafb",
-                    border: "1px solid #e5e7eb",
-                  }}
-                >
-                  <Row gutter={[16, 8]}>
-                    <Col span={24}>
-                      <Space
-                        align="center"
-                        style={{
-                          width: "100%",
-                          justifyContent: "space-between",
-                        }}
-                      >
-                        <Text strong>Tổng số công:</Text>
-                        <Text>{attendanceStatistics.totalWorkDays}</Text>
-                      </Space>
-                    </Col>
-                    <Col span={24}>
-                      <Space
-                        align="center"
-                        style={{
-                          width: "100%",
-                          justifyContent: "space-between",
-                        }}
-                      >
-                        <Text strong>Tổng giờ làm thực tế:</Text>
-                        <Text>{attendanceStatistics.totalActualWorkHours}</Text>
-                      </Space>
-                    </Col>
-                    <Col span={24}>
-                      <Space
-                        align="center"
-                        style={{
-                          width: "100%",
-                          justifyContent: "space-between",
-                        }}
-                      >
-                        <Text strong>Số ngày tăng ca:</Text>
-                        <Text>{attendanceStatistics.totalOvertimeDays}</Text>
-                      </Space>
-                    </Col>
-                    <Col span={24}>
-                      <Space
-                        align="center"
-                        style={{
-                          width: "100%",
-                          justifyContent: "space-between",
-                        }}
-                      >
-                        <Text strong>Số ngày nghỉ lễ/phép:</Text>
-                        <Text>
-                          {attendanceStatistics.totalHolidayDays +
-                            attendanceStatistics.totalLeaveDays}
-                        </Text>
-                      </Space>
-                    </Col>
-                  </Row>
-                </Card>
+              </Card>
 
-                <Card
-                  title={
-                    <Space size={8}>
-                      <CalendarOutlined style={{ color: "#1890ff" }} />
-                      <Title
-                        level={5}
-                        style={{
-                          marginBottom: 0,
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                        }}
-                      >
-                        Tổng kết nghỉ phép năm {dayjs(selectedMonth).year()}
-                      </Title>
-                    </Space>
-                  }
-                  size="small"
-                  style={{
-                    backgroundColor: "#f9fafb",
-                    border: "1px solid #e5e7eb",
-                  }}
+              <div
+                style={{
+                  border: "1px solid #e0e0e0",
+                  borderRadius: "4px",
+                  overflow: "hidden",
+                }}
+              >
+                <Row
+                  justify="start"
+                  style={{ backgroundColor: "#f5f5f5", fontWeight: "bold" }}
                 >
-                  <Row gutter={[16, 8]}>
-                    <Col span={24}>
-                      <Space
-                        align="center"
-                        style={{
-                          width: "100%",
-                          justifyContent: "space-between",
-                        }}
-                      >
-                        <Text strong>Số ngày phép cả năm:</Text>
-                        <Text>{attendanceStatistics.annualLeaveQuota}</Text>
-                      </Space>
+                  {weekDays.map((day) => (
+                    <Col
+                      key={day.name}
+                      style={{
+                        textAlign: "center",
+                        color: day.color,
+                        width: "14.28%",
+                      }}
+                    >
+                      {day.name}
                     </Col>
-                    <Col span={24}>
-                      <Space
-                        align="center"
-                        style={{
-                          width: "100%",
-                          justifyContent: "space-between",
-                        }}
-                      >
-                        <Text strong>Số ngày phép đã nghỉ:</Text>
-                        <Text>{attendanceStatistics.leaveTaken}</Text>
-                      </Space>
-                    </Col>
-                    <Col span={24}>
-                      <Space
-                        align="center"
-                        style={{
-                          width: "100%",
-                          justifyContent: "space-between",
-                        }}
-                      >
-                        <Text strong>Số ngày phép còn lại:</Text>
-                        <Text>{attendanceStatistics.leaveRemaining}</Text>
-                      </Space>
-                    </Col>
-                    <Col span={24}>
-                      <Space
-                        align="center"
-                        style={{
-                          width: "100%",
-                          justifyContent: "space-between",
-                        }}
-                      >
-                        <Text strong>Số ngày phép tích lũy:</Text>
-                        <Text>{attendanceStatistics.leaveAccumulated}</Text>
-                      </Space>
-                    </Col>
-                    <Col span={24}>
-                      <Space
-                        align="center"
-                        style={{
-                          width: "100%",
-                          justifyContent: "space-between",
-                        }}
-                      >
-                        <Text strong>Số tiền ngày phép quy đổi:</Text>
-                        <Text strong style={{ fontSize: "16px", color: "red" }}>
-                          {new Intl.NumberFormat("vi-VN", {
-                            style: "currency",
-                            currency: "VND",
-                            minimumFractionDigits: 0,
-                            maximumFractionDigits: 0,
-                          }).format(
-                            Number(thongTinTienQuyDoiPhep?.soTienQuyDoi ?? 0)
-                          )}
-                        </Text>
-                      </Space>
-                    </Col>
+                  ))}
+                </Row>
+                {weeks.map((week, weekIndex) => (
+                  <Row
+                    key={weekIndex}
+                    gutter={[0, 0]}
+                    style={{
+                      display: "flex",
+                      alignItems: "stretch",
+                    }}
+                  >
+                    {week.map((cell) =>
+                      cell.type === "empty" ? (
+                        <Col
+                          key={cell.key}
+                          style={{
+                            width: "14.28%",
+                            minWidth: "45px",
+                            height: "100px",
+                            minHeigh: "100px",
+                            padding: 0,
+                          }}
+                          className="day-cell-empty"
+                        />
+                      ) : (
+                        <Col
+                          key={cell.key}
+                          style={{
+                            width: "14.28%",
+                            minWidth: "45px",
+                            height: "100px",
+                            minHeigh: "100px",
+                            padding: 0,
+                          }}
+                          className="day-cell"
+                        >
+                          {renderDayCell(cell.data)}
+                        </Col>
+                      )
+                    )}
                   </Row>
-                </Card>
-              </Col>
-            </Row>
-          </div>
-        </ConfigProvider>
-      </Modal>
+                ))}
+              </div>
+            </Col>
+            <Col xs={24} md={8}>
+              <Card
+                title={
+                  <Space size={8}>
+                    <Title
+                      level={5}
+                      style={{
+                        marginBottom: 0,
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      <CalendarOutlined style={{ color: "#1890ff" }} /> Thống kê
+                      tháng {selectedMonth.format("MM/YYYY")}
+                    </Title>
+                  </Space>
+                }
+                size="small"
+                style={{
+                  marginBottom: 16,
+                  backgroundColor: "#f9fafb",
+                  border: "1px solid #e5e7eb",
+                }}
+              >
+                <Row gutter={[16, 8]}>
+                  <Col span={24}>
+                    <Space
+                      align="center"
+                      style={{ width: "100%", justifyContent: "space-between" }}
+                    >
+                      <Text strong>Tổng số công:</Text>
+                      <Text>{attendanceStatistics.totalWorkDays}</Text>
+                    </Space>
+                  </Col>
+                  <Col span={24}>
+                    <Space
+                      align="center"
+                      style={{ width: "100%", justifyContent: "space-between" }}
+                    >
+                      <Text strong>Tổng giờ làm thực tế:</Text>
+                      <Text>{attendanceStatistics.totalActualWorkHours}</Text>
+                    </Space>
+                  </Col>
+                  <Col span={24}>
+                    <Space
+                      align="center"
+                      style={{ width: "100%", justifyContent: "space-between" }}
+                    >
+                      <Text strong>Số ngày tăng ca:</Text>
+                      <Text>{attendanceStatistics.totalOvertimeDays}</Text>
+                    </Space>
+                  </Col>
+                  <Col span={24}>
+                    <Space
+                      align="center"
+                      style={{ width: "100%", justifyContent: "space-between" }}
+                    >
+                      <Text strong>Số ngày nghỉ lễ/phép:</Text>
+                      <Text>
+                        {attendanceStatistics.totalHolidayDays +
+                          attendanceStatistics.totalLeaveDays}
+                      </Text>
+                    </Space>
+                  </Col>
+                </Row>
+              </Card>
+
+              <Card
+                title={
+                  <Space size={8}>
+                    <Title
+                      level={5}
+                      style={{
+                        marginBottom: 0,
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      <CalendarOutlined style={{ color: "#1890ff" }} /> Tổng kết
+                      nghỉ phép năm {dayjs(selectedMonth).year()}
+                    </Title>
+                  </Space>
+                }
+                size="small"
+                style={{
+                  backgroundColor: "#f9fafb",
+                  border: "1px solid #e5e7eb",
+                }}
+              >
+                <Row gutter={[16, 8]}>
+                  <Col span={24}>
+                    <Space
+                      align="center"
+                      style={{ width: "100%", justifyContent: "space-between" }}
+                    >
+                      <Text strong>Số ngày phép cả năm:</Text>
+                      <Text>{attendanceStatistics.annualLeaveQuota}</Text>
+                    </Space>
+                  </Col>
+                  <Col span={24}>
+                    <Space
+                      align="center"
+                      style={{ width: "100%", justifyContent: "space-between" }}
+                    >
+                      <Text strong>Số ngày phép đã nghỉ:</Text>
+                      <Text>{attendanceStatistics.leaveTaken}</Text>
+                    </Space>
+                  </Col>
+                  <Col span={24}>
+                    <Space
+                      align="center"
+                      style={{ width: "100%", justifyContent: "space-between" }}
+                    >
+                      <Text strong>Số ngày phép còn lại:</Text>
+                      <Text>{attendanceStatistics.leaveRemaining}</Text>
+                    </Space>
+                  </Col>
+                  <Col span={24}>
+                    <Space
+                      align="center"
+                      style={{ width: "100%", justifyContent: "space-between" }}
+                    >
+                      <Text strong>Số ngày phép tích lũy:</Text>
+                      <Text>{attendanceStatistics.leaveAccumulated}</Text>
+                    </Space>
+                  </Col>
+                  <Col span={24}>
+                    <Space
+                      align="center"
+                      style={{ width: "100%", justifyContent: "space-between" }}
+                    >
+                      <Text strong>Số tiền quy đổi:</Text>
+                      <Text>{Intl.NumberFormat("vi-VN").format(Number(thongTinTienQuyDoiPhep?.soTienQuyDoi ?? 0)) } VNĐ</Text>
+                    </Space>
+                  </Col>
+                </Row>
+              </Card>
+            </Col>
+          </Row>
+        </div>
+      </ConfigProvider>
       <style>{`
       .day-cell {
         box-sizing: border-box;
@@ -813,6 +885,6 @@ export default function ModalChiTietChamCong({
         border: 2px solid #6100b3 !important;
       }
 `}</style>
-    </>
+    </Modal>
   );
 }

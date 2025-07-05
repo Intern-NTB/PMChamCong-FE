@@ -749,7 +749,7 @@ export default function GiaLapChamCong() {
             size="small"
           >
             <Row gutter={[8, 8]}>
-              <Col span={12}>
+              <Col xs={24} sm={12}>
                 <Card size="small">
                   <Statistic
                     title="Đang làm việc"
@@ -758,7 +758,7 @@ export default function GiaLapChamCong() {
                   />
                 </Card>
               </Col>
-              <Col span={12}>
+              <Col xs={24} sm={12}>
                 <Card size="small">
                   <Statistic
                     title="Hoàn thành hôm nay"
@@ -767,7 +767,7 @@ export default function GiaLapChamCong() {
                   />
                 </Card>
               </Col>
-              <Col span={12}>
+              <Col xs={24} sm={12}>
                 <Card size="small">
                   <Statistic
                     title="Nhân viên vắng"

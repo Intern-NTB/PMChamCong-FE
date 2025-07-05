@@ -440,14 +440,12 @@ export default function PhuCapComponent() {
             title: "Mã Phụ Cấp",
             dataIndex: "maPhuCap",
             key: "maPhuCap",
-            width: 100,
             render: (text) => <Text color="blue">{text}</Text>,
         },
         {
             title: "Tên Vai Trò",
             dataIndex: "tenVaiTro",
             key: "tenVaiTro",
-            width: 150,
             render: (text) => <Text strong>{text}</Text>,
             sorter: (a, b) =>
                 a.tenVaiTro.toLowerCase().localeCompare(b.tenVaiTro.toLowerCase()),
@@ -456,7 +454,6 @@ export default function PhuCapComponent() {
             title: "Tên Phụ Cấp",
             dataIndex: "tenPhuCap",
             key: "tenPhuCap",
-            width: 150,
             render: (text) => <Text strong>{text}</Text>,
             sorter: (a, b) =>
                 a.tenPhuCap.toLowerCase().localeCompare(b.tenPhuCap.toLowerCase()),
@@ -465,14 +462,13 @@ export default function PhuCapComponent() {
             title: "Tiền phụ cấp",
             dataIndex: "soTienPhuCap",
             key: "soTienPhuCap",
-            width: 150,
             render: (value) => `${Number(value).toLocaleString()} VNĐ`
         },
         {
             title: "Thao Tác",
             key: "action",
             width: 120,
-            fixed: "right",
+            //fixed: "right",
             render: (_, record) => (
                 <Space>
                     <Button
@@ -482,11 +478,27 @@ export default function PhuCapComponent() {
                         size="middle"
                     />
                     <Popconfirm
-                        title="Xóa tài khoản"
+                        title="Xóa phụ cấp"
                         description="Bạn có chắc chắn muốn xóa loại phụ cấp này?"
                         onConfirm={() => handleDelete(record.maPhuCap, record.maVaiTro)}
                         okText="Có"
                         cancelText="Không"
+                        okButtonProps={{
+                            style: {
+                                minWidth: 64,
+                                maxWidth: 100,
+                                padding: "0 12px",
+                                whiteSpace: "nowrap",
+                            },
+                        }}
+                        cancelButtonProps={{
+                            style: {
+                                minWidth: 64,
+                                maxWidth: 100,
+                                padding: "0 12px",
+                                whiteSpace: "nowrap",
+                            },
+                        }}
                     >
                         <Button
                             danger
@@ -566,6 +578,22 @@ export default function PhuCapComponent() {
                         }
                         okText="Có"
                         cancelText="Không"
+                        okButtonProps={{
+                            style: {
+                                minWidth: 64,
+                                maxWidth: 100,
+                                padding: "0 12px",
+                                whiteSpace: "nowrap",
+                            },
+                        }}
+                        cancelButtonProps={{
+                            style: {
+                                minWidth: 64,
+                                maxWidth: 100,
+                                padding: "0 12px",
+                                whiteSpace: "nowrap",
+                            },
+                        }}
                     >
                         <Button
                             danger
@@ -582,7 +610,7 @@ export default function PhuCapComponent() {
     return (
         <div style={{ maxWidth: "1400px", margin: "0 auto" }}>
             {/* Header */}
-            <Card style={{ marginBottom: 8 }}>
+            <Card style={{ marginBottom: 32 }}>
                 <Title
                     level={2}
                     style={{
@@ -602,7 +630,7 @@ export default function PhuCapComponent() {
 
             {/* Statistics Cards */}
             <Row gutter={24} style={{ marginBottom: "32px" }}>
-                <Col xs={24} sm={8}>
+                <Col xs={24} sm={8} style={{ marginBottom: 20 }}>
                     <Card style={{ height: "100%" }}>
                         <Statistic
                             title="Tổng các phụ cấp"
@@ -613,7 +641,7 @@ export default function PhuCapComponent() {
                         />
                     </Card>
                 </Col>
-                <Col xs={24} sm={8}>
+                <Col xs={24} sm={8} style={{ marginBottom: 20 }}>
                     <Card style={{ height: "100%" }}>
                         <Statistic
                             title="Tổng đang phụ cấp"
@@ -841,6 +869,7 @@ export default function PhuCapComponent() {
                                 showTotal: (total, range) =>
                                     `${range[0]}-${range[1]} của ${total} bản ghi`,
                             }}
+                            scroll={{ x: 1000 }}
                         />
                     </TabPane>
                 </Tabs>

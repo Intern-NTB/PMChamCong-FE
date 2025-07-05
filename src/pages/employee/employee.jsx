@@ -404,7 +404,7 @@ export default function NhanVien() {
       title: "Thông tin nhân viên",
       key: "info",
       render: (_, record) => (
-        <div style={{ padding: "8px 0" }}>
+        <div style={{ padding: "8px 0"}}>
           <div style={{ fontWeight: "bold", marginBottom: "4px" }}>
             {highlightText(record.hoTen)}
           </div>

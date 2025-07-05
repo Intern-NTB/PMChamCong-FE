@@ -530,26 +530,28 @@ export default function NgayLeComponent() {
           width={400}
           onCancel={() =>
             setIsModalConfirmVisible({ visible: false, data: null })
-          }
+          }          
           footer={[
-            <AntButton
-              key="cancel"
-              onClick={() =>
-                setIsModalConfirmVisible({ visible: false, data: null })
-              }
-              size="large"
-            >
-              Hủy
-            </AntButton>,
-            <AntButton
-              key="delete"
-              type="primary"
-              danger
-              onClick={handleConfirmDelete}
-              size="large"
-            >
-              Xóa
-            </AntButton>,
+            <Space  style={{ display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+              <AntButton
+                key="cancel"
+                onClick={() =>
+                  setIsModalConfirmVisible({ visible: false, data: null })
+                }
+                size="large"
+              >
+                Hủy
+              </AntButton>
+              <AntButton
+                key="delete"
+                type="primary"
+                danger
+                onClick={handleConfirmDelete}
+                size="large"
+              >
+                Xóa
+              </AntButton>
+            </Space>
           ]}
         >
           <div style={{ padding: "16px 0" }}>
@@ -603,32 +605,33 @@ export default function NgayLeComponent() {
               />
             </Form.Item>
 
-                        <Form.Item
-                            name="dateRange"
-                            label="Thời gian nghỉ lễ"
-                            rules={[
-                                {
-                                    required: true, validator: (_, value) => {
-                                        if (!value || value.length !== 2) {
-                                            return Promise.reject('Vui lòng chọn thời gian nghỉ lễ!');
-                                        }
-                                        const [newStart, newEnd] = value;
-                                        
-                                        if (isOverlapping(newStart, newEnd, danhSachNgayLe, editingId)) {
-                                            return Promise.reject('Khoảng thời gian đã trùng với kỳ nghỉ lễ khác!');
-                                        }
-                                        return Promise.resolve();
-                                    }
-                                }
-                            ]}
-                        >
-                            <RangePicker
-                                style={{ wmaNgayLeth: '100%', borderRadius: 8 }}
-                                size="large"
-                                format="DD/MM/YYYY"
-                                placeholder={['Ngày bắt đầu', 'Ngày kết thúc']}
-                            />
-                        </Form.Item>
+            <Form.Item
+              name="dateRange"
+              label="Thời gian nghỉ lễ"
+              rules={[
+                {
+                  required: true, validator: (_, value) => {
+                    if (!value || value.length !== 2) {
+                      return Promise.reject('Vui lòng chọn thời gian nghỉ lễ!');
+                    }
+                    const [newStart, newEnd] = value;
+
+                    if (isOverlapping(newStart, newEnd, danhSachNgayLe, editingId)) {
+                      return Promise.reject('Khoảng thời gian đã trùng với kỳ nghỉ lễ khác!');
+                    }
+                    return Promise.resolve();
+                  }
+                }
+              ]}
+            >
+              <RangePicker
+                style={{ width: '100%', borderRadius: 8}}
+                size="large"
+                format="DD/MM/YYYY"
+                placeholder={['Ngày bắt đầu', 'Ngày kết thúc']}
+                dropdownClassName="one-calendar-only"
+              />
+            </Form.Item>
 
             <Form.Item style={{ marginBottom: 0, marginTop: 32 }}>
               <Space

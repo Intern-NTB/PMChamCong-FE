@@ -260,8 +260,7 @@ export default function CaLamComponent() {
     {
       title: "Thao Tác",
       key: "action",
-      width: 150,
-      fixed: "right",
+      width: 80,
       render: (_, record) => (
         <Space>
           <Button
@@ -276,6 +275,22 @@ export default function CaLamComponent() {
             onConfirm={() => handleDelete(record.maCa)}
             okText="Có"
             cancelText="Không"
+            okButtonProps={{
+              style: {
+                minWidth: 64,
+                maxWidth: 100,
+                padding: "0 12px",
+                whiteSpace: "nowrap",
+              },
+            }}
+            cancelButtonProps={{
+              style: {
+                minWidth: 64,
+                maxWidth: 100,
+                padding: "0 12px",
+                whiteSpace: "nowrap",
+              },
+            }}
           >
             <Button
               danger

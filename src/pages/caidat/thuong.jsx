@@ -526,6 +526,22 @@ export default function ThuongComponent() {
             }
             okText="Có"
             cancelText="Không"
+            okButtonProps={{
+              style: {
+                minWidth: 64,
+                maxWidth: 100,
+                padding: "0 12px",
+                whiteSpace: "nowrap",
+              },
+            }}
+            cancelButtonProps={{
+              style: {
+                minWidth: 64,
+                maxWidth: 100,
+                padding: "0 12px",
+                whiteSpace: "nowrap",
+              },
+            }}
           >
             <Button
               danger
@@ -577,6 +593,22 @@ export default function ThuongComponent() {
             onConfirm={() => handleDeleteLoaiThuong(record.maLoaiTienThuong)}
             okText="Có"
             cancelText="Không"
+            okButtonProps={{
+              style: {
+                minWidth: 64,
+                maxWidth: 100,
+                padding: "0 12px",
+                whiteSpace: "nowrap",
+              },
+            }}
+            cancelButtonProps={{
+              style: {
+                minWidth: 64,
+                maxWidth: 100,
+                padding: "0 12px",
+                whiteSpace: "nowrap",
+              },
+            }}
           >
             <Button
               danger
@@ -874,6 +906,22 @@ export default function ThuongComponent() {
           width={600}
           okText="Lưu"
           cancelText="Hủy"
+          okButtonProps={{
+              style: {
+                minWidth: 64,
+                maxWidth: 100,
+                padding: "0 12px",
+                whiteSpace: "nowrap",
+              },
+            }}
+            cancelButtonProps={{
+              style: {
+                minWidth: 64,
+                maxWidth: 100,
+                padding: "0 12px",
+                whiteSpace: "nowrap",
+              },
+            }}
         >
           <Form
             form={form}
@@ -940,7 +988,7 @@ export default function ThuongComponent() {
                 </Form.Item>
 
                 <Row gutter={16}>
-                  <Col span={12}>
+                  <Col xs={24} md={12}>
                     <Form.Item name="soTienThuongKhac" label={
                       <span>
                         {donVi === "%" ? "Phần trăm thưởng mong muốn" : "Số tiền thưởng mong muốn"}{" "}
@@ -961,7 +1009,7 @@ export default function ThuongComponent() {
                       />
                     </Form.Item>
                   </Col>
-                  <Col span={12}>
+                  <Col xs={24} md={12}>
                     <Form.Item
                       name="ngayThuong"
                       label="Ngày thưởng"

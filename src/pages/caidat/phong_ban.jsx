@@ -508,6 +508,7 @@ export default function PhongBanComponent  ()  {
                         key="cancel"
                         onClick={() => setIsModalConfirmVisible({ visible: false, data: null })}
                         size="large"
+                        style={{ width: 80 }}
                     >
                         Hủy
                     </AntButton>,
@@ -517,6 +518,7 @@ export default function PhongBanComponent  ()  {
                         danger
                         onClick={handleConfirmDelete}
                         size="large"
+                        style={{ width: 120 }}
                     >
                         Xóa
                     </AntButton>

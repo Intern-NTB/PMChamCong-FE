@@ -649,10 +649,12 @@ const ModalChiTietCaLam = ({
   return (
     <Modal
       title={
-        <Space style={{ fontFamily: "Times New Roman" }}>
+        <div style={{ fontFamily: "Times New Roman", display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
           <EyeOutlined />
-          Chi Tiết Ca Làm: {shiftData?.tenCa} (Mã Ca: {shiftData?.maCa})
-        </Space>
+          <span>
+            Chi Tiết Ca Làm: {shiftData?.tenCa} (Mã Ca: {shiftData?.maCa})
+          </span>
+        </div>
       }
       open={isVisible}
       onCancel={onCancel}
