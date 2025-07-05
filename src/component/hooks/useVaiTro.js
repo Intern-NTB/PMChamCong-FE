@@ -4,6 +4,9 @@ import {
   deleteVaiTroServices,
   createVaiTroServices,
   updateVaiTroServices,
+  assignPermissionToRole,
+  removePermissionFromRole,
+  getAllQuyenHanServices,
 } from "../../services/vaitroServices.js";
 
 export const useVaiTro = () => {
@@ -32,9 +35,10 @@ export const useVaiTro = () => {
     setLoading(true);
 
     try {
-      await createVaiTroServices(tenVaiTro);
+      const res = await createVaiTroServices(tenVaiTro);
       setIsCreatedVaiTro(true);
       await getAllVaiTro();
+      return res; 
     } catch (error) { 
       console.error("Lỗi khi tạo vai trò:", error);
       setIsCreatedVaiTro(false);
@@ -74,6 +78,40 @@ export const useVaiTro = () => {
     }
   }, [getAllVaiTro]); 
 
+  const getQuyenTheoVaiTro = useCallback(async (maVaiTro) => {
+    try {
+      const response = await getAllQuyenHanServices(maVaiTro);
+      return response.data;
+    } catch (error) {
+      console.error("Lỗi khi lấy quyền theo vai trò:", error);
+      return [];
+    }
+  }, [getAllVaiTro]);
+
+  const ganQuyenChoVaiTro = useCallback(async (maVaiTro, danhSachMaQuyenHan) => {
+    try {
+      await Promise.all(
+        danhSachMaQuyenHan.map((maQuyenHan) =>
+          assignPermissionToRole(maVaiTro, maQuyenHan)
+        )
+      );
+    } catch (error) {
+      console.error("Lỗi khi gán quyền:", error);
+    }
+  }, []);
+
+  const goQuyenKhoiVaiTro = useCallback(async (maVaiTro, danhSachMaQuyenHan) => {
+    try {
+      await Promise.all(
+        danhSachMaQuyenHan.map((maQuyenHan) =>
+          removePermissionFromRole(maVaiTro, maQuyenHan)
+        )
+      );
+    } catch (error) {
+      console.error("Lỗi khi gỡ quyền:", error);
+    }
+  }, []);
+
   useEffect(() => {
     getAllVaiTro();
   }, [getAllVaiTro]); 
@@ -101,5 +139,8 @@ export const useVaiTro = () => {
     deleteVaiTro,
     createVaiTro,
     updateVaiTro,
+    ganQuyenChoVaiTro,
+    goQuyenKhoiVaiTro,
+    getQuyenTheoVaiTro,
   };
 };
