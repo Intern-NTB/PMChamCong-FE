@@ -1,4 +1,3 @@
-// src/pages/auth/login/Login.jsx
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './login.css'
@@ -28,31 +27,66 @@ const Login = () => {
     e.preventDefault()
 
     if (!tenDangNhap || !matKhau) {
-      openNotification('error', 'Thiếu thông tin', 'Vui lòng nhập tên đăng nhập và mật khẩu')
+      openNotification('error', 'Thiếu thông tin', 'Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.')
       return
     }
-
+    const usernameRegex = /^[a-zA-Z0-9._-]+$/;
+    if (!usernameRegex.test(tenDangNhap)) {
+      openNotification(
+        'error',
+        'Tên đăng nhập không hợp lệ',
+        'Tên đăng nhập chỉ được chứa chữ cái, số, dấu chấm (.), dấu gạch dưới (_), hoặc dấu gạch ngang (-).'
+      );
+      return; 
+    }
     try {
-      // Hàm `login` từ useTaiKhoan hook giờ đây trả về `success`, `token`, `taiKhoan`, và `permissions`
       const result = await login(tenDangNhap, matKhau)
       console.log('Login result:', result)
 
       if (result && result.success) {
-        // Lưu ý: token, taiKhoan và userPermissions đã được lưu trong useTaiKhoan.js.
-        // Bạn không cần phải thêm logic localStorage.setItem ở đây nữa.
-        
-        // Điều hướng đến trang chính sau khi đăng nhập thành công
         navigate('/main-layout/trangchu');
       } else {
-        openNotification('error', 'Đăng nhập thất bại', result.message || 'Tên đăng nhập hoặc mật khẩu không đúng')
+        let errorMessage = 'Đăng nhập thất bại. Vui lòng thử lại.';
+
+        if (result && result.message) {
+          switch (result.message.toLowerCase().trim()) {
+            case "tên đăng nhập không tồn tại.":
+            case "invalid username":
+              errorMessage = "Tên đăng nhập không tồn tại trong hệ thống. Vui lòng kiểm tra lại.";
+              break;
+            case "mật khẩu không đúng.":
+            case "incorrect password":
+            case "invalid password":
+              errorMessage = "Mật khẩu không đúng. Vui lòng nhập lại mật khẩu chính xác.";
+              break;
+            case "tài khoản đã bị khóa.":
+            case "account locked":
+              errorMessage = "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên để được hỗ trợ.";
+              break;
+            case "tài khoản chưa được kích hoạt.":
+            case "account not activated":
+              errorMessage = "Tài khoản của bạn chưa được kích hoạt. Vui lòng kiểm tra email hoặc liên hệ quản trị viên.";
+              break;
+            case "yêu cầu không hợp lệ.":
+            case "invalid request":
+            case "invalid credentials":
+              errorMessage = "Dữ liệu đăng nhập không hợp lệ. Vui lòng kiểm tra định dạng hoặc thông tin đã nhập.";
+              break;
+            default:
+              errorMessage = "Đã xảy ra lỗi không xác định. Vui lòng liên hệ hỗ trợ.";
+              break;
+          }
+        }
+
+        openNotification('error', 'Đăng nhập thất bại', errorMessage);
       }
     } catch (error) {
-      console.error('Login error:', error)
+      console.error('Login error (unexpected - network/system):', error);
       openNotification(
         'error',
-        'Lỗi đăng nhập',
-        error.message || 'Có lỗi xảy ra trong quá trình đăng nhập. Vui lòng thử lại.'
-      )
+        'Lỗi kết nối',
+        'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng và thử lại.'
+      );
     }
   }
 
@@ -98,4 +132,4 @@ const Login = () => {
   )
 }
 
-export default Login
+export default Login;

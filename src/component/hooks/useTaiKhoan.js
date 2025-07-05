@@ -1,4 +1,3 @@
-// src/component/hooks/useTaiKhoan.js
 import { useEffect, useState } from "react";
 import {
   loginServices,
@@ -6,96 +5,108 @@ import {
   createTaiKhoanServices,
   deleteTaiKhoanServices,
   updateTaiKhoanServices,
-} from "../../services/taikhoanServices"; // Đảm bảo đường dẫn này chính xác
+} from "../../services/taikhoanServices"; 
 
 export const useTaiKhoan = () => {
   const [danhsachTaiKhoan, setDanhSachTaiKhoan] = useState([]);
-  const [isValid, setIsValid] = useState(false);
   const [loadingDangNhap, setLoadingDangNhap] = useState(false);
   const [loadingTaiKhoan, setLoadingTaiKhoan] = useState(false);
-  const [isCreatedTaiKhoan, setIsCreatedTaiKhoan] = useState(false);
-  const [isDeletedTaiKhoan, setIsDeletedTaikhoan] = useState(false);
-  const [isUpdatedTaiKhoan, setIsUpdatedTaikhoan] = useState(false);
+  const [actionSuccess, setActionSuccess] = useState(false); 
+  const [actionError, setActionError] = useState(null); 
 
   const getAllTaiKhoan = async () => {
     setLoadingTaiKhoan(true);
+    setActionError(null); 
     try {
       const res = await getAllTaiKhoanServices();
       setDanhSachTaiKhoan(res.data);
-    } catch {
-      setDanhSachTaiKhoan([]);
-    } finally {
-      setLoadingTaiKhoan(false);
-    }
-  };
-  //Thêm
-  const createTaiKhoan = async (newUser) => {
-    setLoadingTaiKhoan(true);
-    try {
-      await createTaiKhoanServices(newUser);
-      setIsCreatedTaiKhoan(true);
-    } catch {
-      setIsCreatedTaiKhoan(true);
-    } finally {
-      setLoadingTaiKhoan(false);
-    }
-  };
-  //Xóa
-  const deleteTaikhoan = async (maNhanVien) => {
-    setLoadingTaiKhoan(true);
-    try {
-      await deleteTaiKhoanServices(maNhanVien);
-      setIsDeletedTaikhoan(true);
-    } catch {
-      setIsDeletedTaikhoan(true);
-    } finally {
-      setLoadingTaiKhoan(false);
-    }
-  };
-  //Sửa
-  const updateTaiKhoan = async (dulieuTaiKhoan) => {
-    setLoadingTaiKhoan(true);
-    try {
-      await updateTaiKhoanServices(dulieuTaiKhoan);
-      setIsUpdatedTaikhoan(true);
-    } catch {
-      setIsUpdatedTaikhoan(true);
+    } catch (error) {
+      console.error("Error fetching accounts:", error);
+      setDanhSachTaiKhoan([]); 
+      setActionError(error.response?.data?.message || 'Không thể tải danh sách tài khoản.');
     } finally {
       setLoadingTaiKhoan(false);
     }
   };
 
-  // Login - CẬP NHẬT ĐỂ TRẢ VỀ DỮ LIỆU ĐẦY ĐỦ BAO GỒM PERMISSIONS
+  const createTaiKhoan = async (newUser) => {
+    setLoadingTaiKhoan(true);
+    setActionSuccess(false); 
+    setActionError(null);
+    try {
+      await createTaiKhoanServices(newUser);
+      setActionSuccess(true); 
+      await getAllTaiKhoan(); 
+      return { success: true, message: 'Tạo tài khoản thành công.' };
+    } catch (error) {
+      console.error("Error creating account:", error);
+      const errorMessage = error.response?.data?.message || 'Không thể tạo tài khoản mới.';
+      setActionError(errorMessage);
+      return { success: false, message: errorMessage, error: error };
+    } finally {
+      setLoadingTaiKhoan(false);
+    }
+  };
+
+  const deleteTaikhoan = async (maNhanVien) => {
+    setLoadingTaiKhoan(true);
+    setActionSuccess(false);
+    setActionError(null);
+    try {
+      await deleteTaiKhoanServices(maNhanVien);
+      setActionSuccess(true); 
+      await getAllTaiKhoan(); 
+      return { success: true, message: 'Xóa tài khoản thành công.' };
+    } catch (error) {
+      console.error("Error deleting account:", error);
+      const errorMessage = error.response?.data?.message || 'Không thể xóa tài khoản.';
+      setActionError(errorMessage);
+      return { success: false, message: errorMessage, error: error };
+    } finally {
+      setLoadingTaiKhoan(false);
+    }
+  };
+
+  const updateTaiKhoan = async (dulieuTaiKhoan) => {
+    setLoadingTaiKhoan(true);
+    setActionSuccess(false);
+    setActionError(null);
+    try {
+      await updateTaiKhoanServices(dulieuTaiKhoan);
+      setActionSuccess(true); 
+      await getAllTaiKhoan(); 
+      return { success: true, message: 'Cập nhật tài khoản thành công.' };
+    } catch (error) {
+      console.error("Error updating account:", error);
+      const errorMessage = error.response?.data?.message || 'Không thể cập nhật tài khoản.';
+      setActionError(errorMessage);
+      return { success: false, message: errorMessage, error: error };
+    } finally {
+      setLoadingTaiKhoan(false);
+    }
+  };
+
   const login = async (tenDangNhap, matKhau) => {
     setLoadingDangNhap(true);
     try {
       const res = await loginServices(tenDangNhap, matKhau);
 
-      // Backend của bạn cần trả về cấu trúc như:
-      // {
-      //   token: "...",
-      //   taiKhoan: { maVaiTro: ..., ... },
-      //   permissions: ["permission:key:1", "permission:key:2", ...] // Mảng các string quyền
-      // }
-
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("taiKhoan", JSON.stringify(res.data.taiKhoan));
-      
-      // Nếu backend trả về permissions, hãy lưu nó vào localStorage
+
       if (res.data.permissions && Array.isArray(res.data.permissions)) {
         localStorage.setItem("userPermissions", JSON.stringify(res.data.permissions));
+      } else {
+        localStorage.setItem("userPermissions", JSON.stringify([]));
       }
 
-      setIsValid(true);
-      // Trả về toàn bộ dữ liệu từ res.data để Login.jsx có thể sử dụng (ví dụ: permissions)
-      return { success: true, ...res.data }; // Trả về tất cả thuộc tính của res.data
+      return { success: true, ...res.data };
     } catch (error) {
-      setIsValid(false);
-      // Quan trọng: Trả về thông tin lỗi rõ ràng hơn
-      return { 
-        success: false, 
-        message: error.response?.data?.message || 'Tên đăng nhập hoặc mật khẩu không đúng.',
-        error: error 
+      console.error('Login error:', error);
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Đã xảy ra lỗi không xác định khi đăng nhập.', 
+        error: error
       };
     } finally {
       setLoadingDangNhap(false);
@@ -103,27 +114,15 @@ export const useTaiKhoan = () => {
   };
 
   useEffect(() => {
-    if (isCreatedTaiKhoan || isDeletedTaiKhoan || isUpdatedTaiKhoan) {
-      getAllTaiKhoan();
-    }
-    // Đảm bảo reset trạng thái sau khi gọi getAllTaiKhoan
-    setIsCreatedTaiKhoan(false);
-    setIsDeletedTaikhoan(false);
-    setIsUpdatedTaikhoan(false);
-  }, [isCreatedTaiKhoan, isDeletedTaiKhoan, isUpdatedTaiKhoan]);
-  
-  useEffect(() => {
     getAllTaiKhoan();
-  }, []); // Chú ý: useEffect này chỉ chạy 1 lần khi component mount, không có dependency
+  }, []); 
 
   return {
-    isValid,
     loadingDangNhap,
     loadingTaiKhoan,
     danhsachTaiKhoan,
-    isCreatedTaiKhoan,
-    isDeletedTaiKhoan,
-    isUpdatedTaiKhoan,
+    actionSuccess, 
+    actionError, 
     login,
     getAllTaiKhoan,
     createTaiKhoan,
