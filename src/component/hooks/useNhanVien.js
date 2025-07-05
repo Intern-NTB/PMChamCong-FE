@@ -7,6 +7,7 @@ import {
   updateNhanVienService,
   reloadNhanVienServices,
   getNhanVienByCCCDServices,
+  updateEmailNhanVienServices,
 } from "../../services/nhanvienServices";
 import { useCallback } from "react";
 
@@ -18,6 +19,8 @@ export const useNhanVien = (isGetAllNhanvien = true) => {
   const [statusCreateNhanVien, setStatusCreateNhanVien] = useState(false);
   const [statusDeleteNhanVien, setStatusDeleteNhanVien] = useState(false);
   const [statusUpdateNhanVien, setStatusUpdateNhanVien] = useState(false);
+  const [statusUpdateEmailNhanVien, setStatusUpdateEmailNhanVien] =
+    useState(false);
 
   const fetchNhanVien = useCallback(async () => {
     setLoading(true);
@@ -44,6 +47,19 @@ export const useNhanVien = (isGetAllNhanvien = true) => {
       setLoading(false);
     }
   }, []);
+
+  const updateEmailNhanVien = async (maNhanVien, email) => {
+    setLoading(true);
+    try {
+      await updateEmailNhanVienServices(maNhanVien, email);
+      setStatusUpdateEmailNhanVien(true);
+    } catch (error) {
+      setStatusUpdateEmailNhanVien(false);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const addNhanVien = async (nhanVienData) => {
     setLoading(true);
@@ -114,9 +130,11 @@ export const useNhanVien = (isGetAllNhanvien = true) => {
       };
       initData();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return {
+    statusUpdateEmailNhanVien,
     thongTinNhanVien,
     danhSachVanTayNhanVien,
     danhSachNhanVien,
@@ -131,5 +149,6 @@ export const useNhanVien = (isGetAllNhanvien = true) => {
     reloadData,
     getAllFingerprintsOfNhanVien,
     fetchNhanVienByCCCD,
+    updateEmailNhanVien,
   };
 };

@@ -13,6 +13,17 @@ export const getAllNhanVienChiTietServices = async () => {
     throw error;
   }
 };
+export const updateEmailNhanVienServices = async (maNhanVien, email) => {
+  try {
+    const dataUpdate = {
+      email: email,
+    };
+    await axiosInstance.put(`/nhanvien/email/${maNhanVien}`, dataUpdate);
+  } catch (error) {
+    console.error("Lỗi khi lấy danh sách nhân viên:", error);
+    throw error;
+  }
+};
 
 /**
  * Lấy nhân viên theo ID
