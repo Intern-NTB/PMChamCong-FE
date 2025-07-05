@@ -20,10 +20,8 @@ import LichSuPhongBanComponent from '../pages/caidat/lich_su_phong_ban.jsx';
 import LichSuLuongComponent from '../pages/caidat/lich_su_luong.jsx';
 import HeThongComponent from '../pages/caidat/he_thong.jsx';
 import PhuCapComponent from '../pages/caidat/phu_cap.jsx';
-// Thêm import cho thành phần Máy chấm công
 import MayChamCong from '../pages/maychamcong/maychamcong.jsx'; 
-// Import component PhanQuyenPage mới
-import PhanQuyenComponent from '../pages/caidat/phan_quyen.jsx'; // <-- THÊM DÒNG NÀY
+import PhanQuyenComponent from '../pages/caidat/phan_quyen.jsx';
 
 export const privateRoutes = [
     {
@@ -35,8 +33,7 @@ export const privateRoutes = [
             { path: 'trangchu', element: <TrangChu /> },
             { path: 'nhanvien', element: <NhanVien /> },
             { path: 'chamcong', element: <ChamCong /> },
-            // Thêm tuyến đường cho Máy chấm công tại đây
-            { path: 'maychamcong', element: <MayChamCong /> }, // Đường dẫn: /main-layout/maychamcong
+            { path: 'maychamcong', element: <MayChamCong /> },
             { path: 'nghiphep', element: <NghiPhep /> },
             { path: 'luong', element: <Luong /> },
             {
@@ -45,9 +42,6 @@ export const privateRoutes = [
                 children: [
                     {
                         index: true,
-                        // Bạn có thể chọn một component mặc định khi vào /caidat,
-                        // hiện tại bạn đang dùng PhongBanComponent.
-                        // Nếu muốn HeThongComponent là mặc định, bạn có thể đổi ở đây.
                         element: <PhongBanComponent /> 
                     },
                     {
@@ -87,8 +81,8 @@ export const privateRoutes = [
                         element: <TaiKhoanComponent />
                     },
                     {
-                        path: 'phan-quyen', // <-- THÊM DÒNG NÀY VÀO ĐÂY
-                        element: <PhanQuyenComponent /> // <-- VÀ THÀNH PHẦN MỚI
+                        path: 'phan-quyen',
+                        element: <PhanQuyenComponent /> 
                     },
                     {
                         path: 'lich-su-phong-ban',

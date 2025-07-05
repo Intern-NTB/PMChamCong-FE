@@ -297,19 +297,20 @@ const Popup = ({
       onCancel={() => {
         onCancel();
       }}
-      footer={[
-        <Button
-          key="back"
-          onClick={() => {
-            onCancel();
+      footer={
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            justifyContent: "flex-end",
+            gap: 8,
+            paddingTop: 8,
           }}
         >
-          Hủy
-        </Button>,
-        <Button key="submit" type="primary" onClick={handleOk}>
-          Lưu
-        </Button>,
-      ]}
+          <Button onClick={onCancel}>Hủy</Button>
+          <Button type="primary" onClick={handleOk}>Lưu</Button>
+        </div>
+      }
     >
       <Form form={form} layout="vertical" name="employeeForm">
         <Row gutter={16}>

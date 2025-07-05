@@ -383,7 +383,7 @@ export default function DoiTuongUuTienComponent() {
       title: "Thao tác",
       key: "action",
       width: 120,
-      fixed: "right",
+      //fixed: "right",
       render: (_, record) => (
         <Space>
           <Button
@@ -398,6 +398,22 @@ export default function DoiTuongUuTienComponent() {
             onConfirm={() => handleDelete(record.maUuTien)}
             okText="Có"
             cancelText="Không"
+            okButtonProps={{
+              style: {
+                minWidth: 64,
+                maxWidth: 100,
+                padding: "0 12px",
+                whiteSpace: "nowrap",
+              },
+            }}
+            cancelButtonProps={{
+              style: {
+                minWidth: 64,
+                maxWidth: 100,
+                padding: "0 12px",
+                whiteSpace: "nowrap",
+              },
+            }}
           >
             <Button
               danger
@@ -451,7 +467,7 @@ export default function DoiTuongUuTienComponent() {
       title: "Thao tác",
       key: "action",
       width: 120,
-      fixed: "right",
+      //fixed: "right",
       render: (_, record) => (
         <Space>
           <Button
@@ -468,6 +484,22 @@ export default function DoiTuongUuTienComponent() {
             }
             okText="Có"
             cancelText="Không"
+            okButtonProps={{
+              style: {
+                minWidth: 64,
+                maxWidth: 100,
+                padding: "0 12px",
+                whiteSpace: "nowrap",
+              },
+            }}
+            cancelButtonProps={{
+              style: {
+                minWidth: 64,
+                maxWidth: 100,
+                padding: "0 12px",
+                whiteSpace: "nowrap",
+              },
+            }}
           >
             <Button
               danger
@@ -703,12 +735,20 @@ export default function DoiTuongUuTienComponent() {
         <Modal
           centered
           title={
-            <Space>
-              <UserOutlined style={{ color: "black" }} />
-              {editingId
-                ? "Chỉnh Sửa Đối Tượng Ưu Tiên"
-                : "Thêm Đối Tượng Ưu Tiên"}
-            </Space>
+            <div
+              style={{
+                textAlign: "center",
+                fontSize: "18px",
+                fontWeight: "bold",
+              }}
+            >
+              <Space wrap style={{ justifyContent: "center" }}>
+                <UserOutlined style={{ color: "black" }} />
+                {editingId
+                  ? "Chỉnh Sửa Đối Tượng Ưu Tiên"
+                  : "Thêm Đối Tượng Ưu Tiên"}
+              </Space>
+            </div>            
           }
           open={isModalVisible}
           onCancel={handleCancel}
@@ -750,7 +790,6 @@ export default function DoiTuongUuTienComponent() {
                 >
                   <Select
                     placeholder="Chọn phòng ban"
-                    size="large"
                     loading={loading}
                     options={datasourcePhongBan.map((item) => ({
                       value: item.maPhongBans,
@@ -850,7 +889,7 @@ export default function DoiTuongUuTienComponent() {
                 fontWeight: "bold",
               }}
             >
-              <Space>
+              <Space wrap style={{ justifyContent: "center" }}>
                 <HistoryOutlined style={{ color: "black" }} />
                 {editingHistoryId
                   ? "Chỉnh Sửa Lịch Sử Ưu Tiên"
@@ -880,7 +919,7 @@ export default function DoiTuongUuTienComponent() {
                     placeholder="Họ tên nhân viên"
                     showSearch
                     optionFilterProp="label"
-                    style={{ width: "100%" }}
+                    style={{ width: "100%"}}
                     onChange={handleChangeNhanVien}
                     filterOption={(input, option) =>
                       (option?.label ?? "")
@@ -943,7 +982,7 @@ export default function DoiTuongUuTienComponent() {
                   ]}
                 >
                   <DatePicker
-                    style={{ width: "100%" }}
+                    style={{ width: "100%"}}
                     format="DD/MM/YYYY"
                     placeholder="Chọn ngày bắt đầu"
                   />
