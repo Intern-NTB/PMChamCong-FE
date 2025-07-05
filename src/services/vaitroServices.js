@@ -12,12 +12,10 @@ export const getAllVaiTroServices = async () => {
 
 export const updateVaiTroServices = async (maVaiTro, tenVaiTro) => {
   await axiosInstance.put(`/vaitro/${maVaiTro}`, { tenVaiTro });
-  return response.data;
 };
 
 export const createVaiTroServices = async (tenVaiTro) => {
   await axiosInstance.post(`/vaitro`, { tenVaiTro });
-  return response.data;
 };
 
 export const deleteVaiTroServices = async (maVaiTro) => {
