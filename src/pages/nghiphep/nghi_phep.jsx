@@ -910,6 +910,7 @@ export default function NghiPhep() {
         dataSource={filteredList}
         rowKey={(record) => record.maNghiPhep}
         pagination={{ pageSize: 10 }}
+        scroll={{ y: 'calc(100vh - 460px)' }}
         sticky
         className="custom-header-table"
       />
