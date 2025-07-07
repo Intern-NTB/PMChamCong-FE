@@ -1,5 +1,11 @@
 /* eslint-disable no-undef */
-import React, { useState, useCallback, useMemo, useRef, useEffect } from "react";
+import React, {
+  useState,
+  useCallback,
+  useMemo,
+  useRef,
+  useEffect,
+} from "react";
 import {
   Row,
   Col,
@@ -16,7 +22,7 @@ import {
   Pagination,
   Badge,
   Tabs,
-  Switch 
+  Switch,
 } from "antd";
 import {
   PlusOutlined,
@@ -35,12 +41,20 @@ const { Search } = Input;
 const { TabPane } = Tabs;
 
 export default function VaiTroComponent() {
-  const { danhSachVaiTro, getAllVaiTro, deleteVaiTro, createVaiTro, updateVaiTro, ganQuyenChoVaiTro, goQuyenKhoiVaiTro, getQuyenTheoVaiTro} = useVaiTro();
-  const { danhSachQuyenHan } = useQuyenHan();  
+  const {
+    danhSachVaiTro,
+    getAllVaiTro,
+    deleteVaiTro,
+    createVaiTro,
+    updateVaiTro,
+    ganQuyenChoVaiTro,
+    goQuyenKhoiVaiTro,
+    getQuyenTheoVaiTro,
+  } = useVaiTro();
+  const { danhSachQuyenHan } = useQuyenHan();
   const { danhSachNhanVien } = useNhanVien();
   const [danhSachQuyenTheoVaiTro, setDanhSachQuyenTheoVaiTro] = useState({});
-  const [danhSachQuyenTheoVaiTroTruocDo, setDanhSachQuyenTheoVaiTroTruocDo] = useState([]);
-  const [editingRoleData, setEditingRoleData] = useState(null);
+  const [editingRoleData] = useState(null);
   const [form] = Form.useForm();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isModalConfirmVisible, setIsModalConfirmVisible] = useState({
@@ -56,32 +70,31 @@ export default function VaiTroComponent() {
   const apiNotification = useAppNotification();
   const previousValuesRef = useRef({});
 
-  
-
   // Lấy dữ liệu từ API
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const dataSource = Array.isArray(danhSachVaiTro)
     ? danhSachVaiTro.map((vt) => {
-      const tongNguoiDangDuocGan = Array.isArray(danhSachNhanVien)
-        ? danhSachNhanVien.filter((nv) => nv.maVaiTro === vt.maVaiTro).length
-        : 0;
+        const tongNguoiDangDuocGan = Array.isArray(danhSachNhanVien)
+          ? danhSachNhanVien.filter((nv) => nv.maVaiTro === vt.maVaiTro).length
+          : 0;
 
-      return {
-        maVaiTro: vt.maVaiTro,
-        tenVaiTro: vt.tenVaiTro || "",
-        tongNguoiDangDuocGan,
-      };
-    })
+        return {
+          maVaiTro: vt.maVaiTro,
+          tenVaiTro: vt.tenVaiTro || "",
+          tongNguoiDangDuocGan,
+        };
+      })
     : [];
-  
+
   //Dữ liệu quyền hạn.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const permissionsOptions = Array.isArray(danhSachQuyenHan)
     ? danhSachQuyenHan.map((qh) => ({
-      key: qh.MaQuyenHan,
-      MaQuyenHan: String(qh.MaQuyenHan),
-      TenQuyenHan: qh.TenQuyenHan,
-      MoTa: qh.MoTa,
-    }))
+        key: qh.MaQuyenHan,
+        MaQuyenHan: String(qh.MaQuyenHan),
+        TenQuyenHan: qh.TenQuyenHan,
+        MoTa: qh.MoTa,
+      }))
     : [];
 
   // tìm kiếm quyền hạng
@@ -120,31 +133,6 @@ export default function VaiTroComponent() {
     other: "⚙️ Quyền khác",
   };
 
-  const allPermissionKeys = permissionsOptions.map((p) => p.MaQuyenHan);
-
-  const onFormValuesChange = (changedValues, allValues) => {
-    if ("system:is_admin" in changedValues) {
-      const isAdmin = changedValues["system:is_admin"];
-
-      const allPermissionKeys = permissionsOptions.map((p) => p.MaQuyenHan);
-
-      if (isAdmin === true) {
-        const snapshot = {};
-        allPermissionKeys.forEach((key) => {
-          snapshot[key] = allValues[key] || false;
-        });
-        previousValuesRef.current = snapshot;
-        const newValues = {};
-        allPermissionKeys.forEach((key) => {
-          newValues[key] = true;
-        });
-        form.setFieldsValue(newValues);
-      } else {
-        form.setFieldsValue(previousValuesRef.current);
-      }
-    }
-  };
-
   useEffect(() => {
     if (editingRoleData) {
       const permissionKeys = permissionsOptions.map((p) => p.MaQuyenHan);
@@ -168,7 +156,7 @@ export default function VaiTroComponent() {
 
       form.setFieldsValue(newFormValues);
     }
-  }, [editingRoleData, permissionsOptions]);
+  }, [editingRoleData, form, permissionsOptions]);
 
   // Filter data
   const filteredData = useMemo(() => {
@@ -192,8 +180,9 @@ export default function VaiTroComponent() {
 
   const onFinish = async (values) => {
     const { tenVaiTro, ...quyenForm } = values;
-    
+
     let danhSachQuyenDuocChon = Object.entries(quyenForm)
+      // eslint-disable-next-line no-unused-vars
       .filter(([_, isChecked]) => isChecked)
       .map(([MaQuyenHan]) => MaQuyenHan);
 
@@ -229,10 +218,10 @@ export default function VaiTroComponent() {
           await ganQuyenChoVaiTro(newVaiTro.maVaiTro, danhSachQuyenDuocChon);
         }
         apiNotification.success({ message: "Thêm vai trò thành công!" });
-      }      
+      }
       handleCancel();
       getAllVaiTro();
-    } catch (error) {
+    } catch {
       apiNotification.error({ message: "Thao tác thất bại!" });
     }
   };
@@ -245,7 +234,7 @@ export default function VaiTroComponent() {
 
   const handleEdit = useCallback(
     async (data) => {
-      const danhSachQuyen  = await getQuyenTheoVaiTro(data.maVaiTro);
+      const danhSachQuyen = await getQuyenTheoVaiTro(data.maVaiTro);
 
       const permissionChecked = {};
       danhSachQuyen.forEach((id) => {
@@ -279,7 +268,7 @@ export default function VaiTroComponent() {
     },
     [form, getQuyenTheoVaiTro, permissionsOptions]
   );
-//////
+  //////
   const handleDelete = useCallback((data) => {
     setIsModalConfirmVisible({
       visible: true,
@@ -643,7 +632,13 @@ export default function VaiTroComponent() {
           setIsModalConfirmVisible({ visible: false, data: null })
         }
         footer={[
-          <Space style={{ display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+          <Space
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              flexWrap: "wrap",
+            }}
+          >
             <AntButton
               key="cancel"
               onClick={() =>
@@ -662,7 +657,7 @@ export default function VaiTroComponent() {
             >
               Xóa vai trò
             </AntButton>
-          </Space>
+          </Space>,
         ]}
         bodyStyle={{ textAlign: "center", padding: "24px" }}
       >
@@ -719,7 +714,9 @@ export default function VaiTroComponent() {
             if ("system:is_admin" in changedValues) {
               const isAdmin = changedValues["system:is_admin"];
 
-              const allPermissionKeys = permissionsOptions.map((p) => p.MaQuyenHan);
+              const allPermissionKeys = permissionsOptions.map(
+                (p) => p.MaQuyenHan
+              );
 
               if (isAdmin === true) {
                 const snapshot = {};
@@ -771,7 +768,9 @@ export default function VaiTroComponent() {
               />
               {[
                 "is", // Ưu tiên quyền đặc biệt đứng đầu
-                ...Object.keys(groupedPermissionsByAction).filter((key) => key !== "is"),
+                ...Object.keys(groupedPermissionsByAction).filter(
+                  (key) => key !== "is"
+                ),
               ].map((actionKey) => {
                 const items = groupedPermissionsByAction[actionKey];
                 if (!items || items.length === 0) return null;
@@ -792,7 +791,9 @@ export default function VaiTroComponent() {
                         label={
                           <div>
                             <strong>{item.TenQuyenHan}</strong>
-                            <div style={{ fontSize: 12, color: "#888" }}>{item.MoTa}</div>
+                            <div style={{ fontSize: 12, color: "#888" }}>
+                              {item.MoTa}
+                            </div>
                           </div>
                         }
                       >
@@ -821,7 +822,8 @@ export default function VaiTroComponent() {
                 style={{
                   borderRadius: 8,
                   minWidth: 100,
-                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  background:
+                    "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
                   border: "none",
                 }}
               >

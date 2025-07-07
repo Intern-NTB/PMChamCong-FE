@@ -21,7 +21,6 @@ import LichSuLuongComponent from '../pages/caidat/lich_su_luong.jsx';
 import HeThongComponent from '../pages/caidat/he_thong.jsx';
 import PhuCapComponent from '../pages/caidat/phu_cap.jsx';
 import MayChamCong from '../pages/maychamcong/maychamcong.jsx'; 
-import PhanQuyenComponent from '../pages/caidat/phan_quyen.jsx';
 
 export const privateRoutes = [
     {
@@ -79,10 +78,6 @@ export const privateRoutes = [
                     {
                         path: 'tai-khoan',
                         element: <TaiKhoanComponent />
-                    },
-                    {
-                        path: 'phan-quyen',
-                        element: <PhanQuyenComponent /> 
                     },
                     {
                         path: 'lich-su-phong-ban',
