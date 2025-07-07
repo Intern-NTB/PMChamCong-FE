@@ -1,5 +1,5 @@
 /* eslint-disable no-undef */
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import {
   Row,
   Col,
@@ -40,6 +40,7 @@ export default function VaiTroComponent() {
   const { danhSachNhanVien } = useNhanVien();
   const [danhSachQuyenTheoVaiTro, setDanhSachQuyenTheoVaiTro] = useState({});
   const [danhSachQuyenTheoVaiTroTruocDo, setDanhSachQuyenTheoVaiTroTruocDo] = useState([]);
+  const [editingRoleData, setEditingRoleData] = useState(null);
   const [form] = Form.useForm();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isModalConfirmVisible, setIsModalConfirmVisible] = useState({
@@ -49,9 +50,13 @@ export default function VaiTroComponent() {
   const [editingId, setEditingId] = useState(null);
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchText, setSearchText] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(12);
   const apiNotification = useAppNotification();
+  const previousValuesRef = useRef({});
+
+  
 
   // Lấy dữ liệu từ API
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -79,6 +84,92 @@ export default function VaiTroComponent() {
     }))
     : [];
 
+  // tìm kiếm quyền hạng
+  const filteredPermissions = useMemo(() => {
+    if (!searchText.trim()) return permissionsOptions;
+    const lowerSearch = searchText.toLowerCase();
+    return permissionsOptions.filter(
+      (item) =>
+        item.TenQuyenHan.toLowerCase().includes(lowerSearch) ||
+        item.MoTa.toLowerCase().includes(lowerSearch) ||
+        item.MaQuyenHan.toLowerCase().includes(lowerSearch)
+    );
+  }, [permissionsOptions, searchText]);
+
+  // Xử lý nhóm các quyền hạn theo action
+  const groupedPermissionsByAction = useMemo(() => {
+    return filteredPermissions.reduce((acc, item) => {
+      const [, actionFull] = item.MaQuyenHan.split(":");
+      const actionType = actionFull?.split("_")[0] || "other";
+      if (!acc[actionType]) acc[actionType] = [];
+      acc[actionType].push(item);
+      return acc;
+    }, {});
+  }, [filteredPermissions]);
+
+  const actionDisplayNames = {
+    is: "⚡ Quyền đặc biệt",
+    view: "👁️ Quyền xem dữ liệu",
+    manage: "🛠️ Quyền quản lý (Tạo/Sửa/Xóa)",
+    assign: "📥 Gán quyền cho nhân viên",
+    unassign: "❌ Hủy gán quyền khỏi nhân viên",
+    export: "📤 Quyền xuất dữ liệu",
+    delete: "🗑️ Quyền xóa dữ liệu",
+    create: "➕ Tạo yêu cầu",
+    update: "♻️ Cập nhật yêu cầu",
+    other: "⚙️ Quyền khác",
+  };
+
+  const allPermissionKeys = permissionsOptions.map((p) => p.MaQuyenHan);
+
+  const onFormValuesChange = (changedValues, allValues) => {
+    if ("system:is_admin" in changedValues) {
+      const isAdmin = changedValues["system:is_admin"];
+
+      const allPermissionKeys = permissionsOptions.map((p) => p.MaQuyenHan);
+
+      if (isAdmin === true) {
+        const snapshot = {};
+        allPermissionKeys.forEach((key) => {
+          snapshot[key] = allValues[key] || false;
+        });
+        previousValuesRef.current = snapshot;
+        const newValues = {};
+        allPermissionKeys.forEach((key) => {
+          newValues[key] = true;
+        });
+        form.setFieldsValue(newValues);
+      } else {
+        form.setFieldsValue(previousValuesRef.current);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (editingRoleData) {
+      const permissionKeys = permissionsOptions.map((p) => p.MaQuyenHan);
+      const newFormValues = {};
+
+      permissionKeys.forEach((key) => {
+        newFormValues[key] = editingRoleData.danhSachQuyen?.includes(key);
+      });
+
+      if (newFormValues["system:is_admin"]) {
+        permissionKeys.forEach((key) => {
+          newFormValues[key] = true;
+        });
+
+        const snapshot = {};
+        permissionKeys.forEach((key) => {
+          snapshot[key] = editingRoleData.danhSachQuyen?.includes(key);
+        });
+        previousValuesRef.current = snapshot;
+      }
+
+      form.setFieldsValue(newFormValues);
+    }
+  }, [editingRoleData, permissionsOptions]);
+
   // Filter data
   const filteredData = useMemo(() => {
     return dataSource.filter((item) => {
@@ -100,20 +191,20 @@ export default function VaiTroComponent() {
   const paginatedData = filteredData.slice(startIndex, endIndex);
 
   const onFinish = async (values) => {
-    console.log(values);
     const { tenVaiTro, ...quyenForm } = values;
     
-    const danhSachQuyenDuocChon = Object.entries(quyenForm)
+    let danhSachQuyenDuocChon = Object.entries(quyenForm)
       .filter(([_, isChecked]) => isChecked)
       .map(([MaQuyenHan]) => MaQuyenHan);
-    console.log("✅ Các quyền được chọn:", danhSachQuyenDuocChon);
+
+    const isAdminChecked = danhSachQuyenDuocChon.includes("system:is_admin");
+    if (isAdminChecked) {
+      danhSachQuyenDuocChon = ["system:is_admin"];
+    }
 
     try {
       if (editingId) {
-        // Cập nhật tên vai trò
         await updateVaiTro(editingId, tenVaiTro);
-
-        // Lấy danh sách quyền hiện tại đã gán (nếu bạn có dữ liệu)
         const quyenTruocDo = danhSachQuyenTheoVaiTro[editingId] || [];
 
         const quyenCanThem = danhSachQuyenDuocChon.filter(
@@ -161,6 +252,19 @@ export default function VaiTroComponent() {
         permissionChecked[id.toString()] = true;
       });
 
+      if (danhSachQuyen.includes("system:is_admin")) {
+        const allPermissionKeys = permissionsOptions.map((p) => p.MaQuyenHan);
+        allPermissionKeys.forEach((key) => {
+          permissionChecked[key] = true;
+        });
+
+        const snapshot = {};
+        allPermissionKeys.forEach((key) => {
+          snapshot[key] = danhSachQuyen.includes(key);
+        });
+        previousValuesRef.current = snapshot;
+      }
+
       form.setFieldsValue({
         tenVaiTro: data.tenVaiTro,
         ...permissionChecked,
@@ -173,9 +277,9 @@ export default function VaiTroComponent() {
       setEditingId(data.maVaiTro);
       setIsModalVisible(true);
     },
-    [form, getQuyenTheoVaiTro]
+    [form, getQuyenTheoVaiTro, permissionsOptions]
   );
-
+//////
   const handleDelete = useCallback((data) => {
     setIsModalConfirmVisible({
       visible: true,
@@ -611,6 +715,31 @@ export default function VaiTroComponent() {
           name="vaiTroForm"
           onFinish={onFinish}
           layout="vertical"
+          onValuesChange={(changedValues, allValues) => {
+            if ("system:is_admin" in changedValues) {
+              const isAdmin = changedValues["system:is_admin"];
+
+              const allPermissionKeys = permissionsOptions.map((p) => p.MaQuyenHan);
+
+              if (isAdmin === true) {
+                const snapshot = {};
+                allPermissionKeys.forEach((key) => {
+                  snapshot[key] = allValues[key] || false;
+                });
+                previousValuesRef.current = snapshot;
+                const newValues = {};
+                allPermissionKeys.forEach((key) => {
+                  newValues[key] = true;
+                });
+                form.setFieldsValue(newValues);
+              } else {
+                const restored = previousValuesRef.current || {};
+                restored["system:is_admin"] = false;
+
+                form.setFieldsValue(restored);
+              }
+            }
+          }}
           style={{ marginTop: 16 }}
         >
           <Tabs defaultActiveKey="1" centered>
@@ -633,24 +762,46 @@ export default function VaiTroComponent() {
             </TabPane>
 
             <TabPane tab="Chi tiết quyền" key="2">
-              <Divider orientation="left">Quyền chung</Divider>
-              {permissionsOptions.map((item) => (
-                <Form.Item
-                  key={item.MaQuyenHan}
-                  name={item.MaQuyenHan.toString()}
-                  valuePropName="checked"
-                  initialValue={false}
-                  style={{ marginBottom: 20 }}
-                  label={
-                    <div>
-                      <strong>{item.TenQuyenHan}</strong>
-                      <div style={{ fontSize: 12, color: "#888" }}>{item.MoTa}</div>
-                    </div>
-                  }
-                >
-                    <Switch checkedChildren="Bật" unCheckedChildren="Tắt" />
-                </Form.Item>
-              ))}
+              <Search
+                placeholder="Tìm quyền theo tên, mô tả hoặc mã..."
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                style={{ marginBottom: 24, maxWidth: 400 }}
+                allowClear
+              />
+              {[
+                "is", // Ưu tiên quyền đặc biệt đứng đầu
+                ...Object.keys(groupedPermissionsByAction).filter((key) => key !== "is"),
+              ].map((actionKey) => {
+                const items = groupedPermissionsByAction[actionKey];
+                if (!items || items.length === 0) return null;
+
+                return (
+                  <div key={actionKey}>
+                    <Divider orientation="left" size="large">
+                      {actionDisplayNames[actionKey] || `Nhóm: ${actionKey}`}
+                    </Divider>
+
+                    {items.map((item) => (
+                      <Form.Item
+                        key={item.MaQuyenHan}
+                        name={item.MaQuyenHan}
+                        valuePropName="checked"
+                        initialValue={false}
+                        style={{ marginBottom: 20 }}
+                        label={
+                          <div>
+                            <strong>{item.TenQuyenHan}</strong>
+                            <div style={{ fontSize: 12, color: "#888" }}>{item.MoTa}</div>
+                          </div>
+                        }
+                      >
+                        <Switch checkedChildren="Bật" unCheckedChildren="Tắt" />
+                      </Form.Item>
+                    ))}
+                  </div>
+                );
+              })}
             </TabPane>
           </Tabs>
 
