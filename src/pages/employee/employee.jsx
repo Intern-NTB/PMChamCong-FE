@@ -92,7 +92,12 @@ export default function NhanVien() {
       name: "cmnd",
       label: "Số CCCD",
       type: "text",
-      rules: [{ required: true, message: "Vui lòng nhập CCCD!" }],
+    },
+    {
+      name: "email", 
+      label: "Email",
+      type: "email",
+     
     },
     {
       name: "ngaySinh",
@@ -176,6 +181,7 @@ export default function NhanVien() {
       maNhanVien: nhanVien.maNhanVien,
       hoTen: nhanVien.hoTen || "N/A",
       cmnd: nhanVien.cmnd || "",
+      email: nhanVien.email || "", 
       ngaySinh: nhanVien.ngaySinh || "",
       diaChi: nhanVien.diaChi || "",
       soDienThoai: nhanVien.soDienThoai || "",
@@ -297,6 +303,13 @@ export default function NhanVien() {
       },
     },
     {
+      title: "Email", 
+      dataIndex: "email",
+      key: "email",
+      width: 180,
+      render: (text) => highlightText(text),
+    },
+    {
       title: "Ngày sinh",
       dataIndex: "ngaySinh",
       key: "ngaySinh",
@@ -407,6 +420,9 @@ export default function NhanVien() {
         <div style={{ padding: "8px 0" }}>
           <div style={{ fontWeight: "bold", marginBottom: "4px" }}>
             {highlightText(record.hoTen)}
+          </div>
+          <div style={{ fontSize: "12px", color: "#666", marginBottom: "4px" }}>
+            Email: {highlightText(record.email)} 
           </div>
           <div style={{ fontSize: "12px", color: "#666", marginBottom: "4px" }}>
             CCCD: {highlightText(record.cmnd)}
@@ -992,7 +1008,6 @@ export default function NhanVien() {
         </Row>
       )}
 
-      {/* Modal chi tiết chấm công (vẫn giữ nguyên) */}
       <ModalChiTietChamCong
         isVisible={isModalChamCongChiTietVisible}
         onCancel={() => setIsModalChamCongChiTietVisible(false)}
