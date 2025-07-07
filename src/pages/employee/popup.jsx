@@ -133,17 +133,13 @@ const Popup = ({
     form,
   ]);
 
-  // useEffect này không cần thiết để "watch" soDienThoai nữa vì chúng ta sẽ dùng Form.Item shouldUpdate
-  // để kiểm tra trùng lặp ngay tại input.
-  // Tuy nhiên, để đảm bảo kiểm tra ban đầu khi mở popup, ta sẽ giữ lại logic checkDuplicatePhone
-  // và gọi nó một lần trong useEffect chính khi popup hiển thị.
   useEffect(() => {
     if (visible && form) {
       // Chạy kiểm tra trùng lặp ban đầu khi popup mở
       const initialSoDienThoai = form.getFieldValue("soDienThoai");
       checkDuplicatePhone(initialSoDienThoai);
     }
-  }, [visible, form, danhSachNhanVien, initialValues?.maNhanVien]); // Thêm form vào dependency array
+  }, [visible, form, danhSachNhanVien, initialValues?.maNhanVien]); 
 
   const checkDuplicatePhone = useCallback(
     (value) => {
@@ -207,6 +203,24 @@ const Popup = ({
     return Promise.resolve();
   }, []);
 
+  const validateEmail = useCallback(async (_, value) => {
+    if (!value) {
+      return Promise.resolve();
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+      return Promise.reject("Vui lòng nhập định dạng email hợp lệ.");
+    }
+
+    const isDuplicate = danhSachNhanVien.some(
+      (nv) => nv.maNhanVien !== initialValues?.maNhanVien && nv.email === value
+    );
+    if (isDuplicate) {
+      return Promise.reject("Email này đã tồn tại trong hệ thống.");
+    }
+
+    return Promise.resolve();
+  }, [danhSachNhanVien, initialValues?.maNhanVien]);
+
   const handleOk = useCallback(() => {
     form
       .validateFields()
@@ -237,6 +251,7 @@ const Popup = ({
         values.soDienThoai = values.soDienThoai || null;
         values.hoTen = values.hoTen || null;
         values.cmnd = values.cmnd || null;
+        values.email = values.email || null;
 
         values.maPhongBan = values.maPhongBan
           ? Number(values.maPhongBan)
@@ -463,25 +478,19 @@ const Popup = ({
             <Form.Item
               name="cmnd"
               label="Căn cước công dân"
-              rules={[
-                { validator: validateCmnd },
-              ]}
+              rules={[{ validator: validateCmnd }]}
             >
               <Input placeholder="Nhập số cmnd" maxLength={12} />
             </Form.Item>
           </Col>
-          <Col span={24}>
-            {/* Sử dụng Form.Item với shouldUpdate để kiểm tra trùng lặp số điện thoại */}
+          <Col span={12}>
             <Form.Item
               name="soDienThoai"
               label="Số điện thoại"
-              rules={[
-                { validator: validateSoDienThoaiFormat },
-              ]}
+              rules={[{ validator: validateSoDienThoaiFormat }]}
             >
               <Input placeholder="Nhập số điện thoại" maxLength={10} />
             </Form.Item>
-            {/* Thêm một Form.Item độc lập chỉ để hiển thị cảnh báo trùng lặp SDT */}
             <Form.Item
               shouldUpdate={(prevValues, currentValues) =>
                 prevValues.soDienThoai !== currentValues.soDienThoai
@@ -494,7 +503,7 @@ const Popup = ({
                   (nv) =>
                     nv.maNhanVien !== initialValues?.maNhanVien &&
                     nv.soDienThoai === sdt &&
-                    sdt // Kiểm tra cả khi sdt tồn tại
+                    sdt 
                 );
 
                 if (isDuplicate) {
@@ -514,6 +523,19 @@ const Popup = ({
               }}
             </Form.Item>
           </Col>
+          <Col span={24}>
+            <Form.Item
+              name="email"
+              label="Email"
+              rules={[
+                { required: true, message: "Vui lòng nhập Email!" },
+                { validator: validateEmail },
+              ]}
+            >
+              <Input placeholder="Nhập email" type="email" />
+            </Form.Item>
+          </Col>
+
           {isEditMode && initialValues?.ngayVaoLam && (
             <Col span={12}>
               <Form.Item name="ngayVaoLam" label="Ngày Vào Làm">
