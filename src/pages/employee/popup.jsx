@@ -528,7 +528,6 @@ const Popup = ({
               name="email"
               label="Email"
               rules={[
-                { required: true, message: "Vui lòng nhập Email!" },
                 { validator: validateEmail },
               ]}
             >
