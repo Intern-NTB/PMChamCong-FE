@@ -124,6 +124,7 @@ export default function NghiPhep() {
 
   useEffect(() => {
     setReload(() => getAllNghiPhep);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Hàm để tính số ngày phép còn lại
