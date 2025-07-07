@@ -124,6 +124,7 @@ export default function NghiPhep() {
 
   useEffect(() => {
     setReload(() => getAllNghiPhep);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Hàm để tính số ngày phép còn lại
@@ -910,6 +911,7 @@ export default function NghiPhep() {
         dataSource={filteredList}
         rowKey={(record) => record.maNghiPhep}
         pagination={{ pageSize: 10 }}
+        scroll={{ y: 'calc(100vh - 460px)' }}
         sticky
         className="custom-header-table"
       />
