@@ -155,48 +155,49 @@ export default function TruComponent() {
 
   // Hàm lọc dữ liệu cho tìm kiếm, lọc theo thời gian( ngày, tháng )
   const getFilteredLichSu = () => {
-    let filteredData = dataSourceDanhSachLichSuTru;
+  let filteredData = dataSourceDanhSachLichSuTru;
 
-    // Lọc khoảng thời gian
-    if (dateRange[0] && dateRange[1]) {
-      filteredData = filteredData.filter((item) => {
-        const itemDate = dayjs(item.ngayTru);
-        return itemDate.isBetween(dateRange[0], dateRange[1], "day", "[]");
-      });
-    }
+  // Lọc khoảng thời gian
+  if (dateRange && dateRange[0] && dateRange[1]) { // Thêm kiểm tra cho chính dateRange
+    filteredData = filteredData.filter((item) => {
+      const itemDate = dayjs(item.ngayTru);
+      return itemDate.isBetween(dateRange[0], dateRange[1], "day", "[]");
+    });
+  }
 
-    // Lọc tháng
-    if (selectedMonth) {
-      filteredData = filteredData.filter((item) => {
-        const itemDate = dayjs(item.ngayTru);
-        return (
-          itemDate.month() === selectedMonth.month() &&
-          itemDate.year() === selectedMonth.year()
-        );
-      });
-    }
+  // Lọc tháng
+  if (selectedMonth) {
+    filteredData = filteredData.filter((item) => {
+      const itemDate = dayjs(item.ngayTru);
+      return (
+        itemDate.month() === selectedMonth.month() &&
+        itemDate.year() === selectedMonth.year()
+      );
+    });
+  }
 
-    // Lọc từ khóa tìm kiếm
-    if (searchTextLichSu) {
-      const searchLower = searchTextLichSu.toLowerCase();
-      filteredData = filteredData.filter((item) => {
-        const maNhanVienStr = item.maNhanVien?.toString().toLowerCase() || "";
-        const hoTenStr = item.hoTen?.toLowerCase() || "";
-        const lyDoStr = item.lyDo?.toLowerCase() || "";
-        const loaiTruNameStr =
-          getLoaiTruName(item.maLoaiTienTru)?.toLowerCase() || "";
+  // ... các phần còn lại của hàm của bạn ...
+  // Lọc từ khóa tìm kiếm
+  if (searchTextLichSu) {
+    const searchLower = searchTextLichSu.toLowerCase();
+    filteredData = filteredData.filter((item) => {
+      const maNhanVienStr = item.maNhanVien?.toString().toLowerCase() || "";
+      const hoTenStr = item.hoTen?.toLowerCase() || "";
+      const lyDoStr = item.lyDo?.toLowerCase() || "";
+      const loaiTruNameStr =
+        getLoaiTruName(item.maLoaiTienTru)?.toLowerCase() || "";
 
-        return (
-          maNhanVienStr.includes(searchLower) ||
-          hoTenStr.includes(searchLower) ||
-          loaiTruNameStr.includes(searchLower) ||
-          lyDoStr.includes(searchLower)
-        );
-      });
-    }
+      return (
+        maNhanVienStr.includes(searchLower) ||
+        hoTenStr.includes(searchLower) ||
+        loaiTruNameStr.includes(searchLower) ||
+        lyDoStr.includes(searchLower)
+      );
+    });
+  }
 
-    return filteredData;
-  };
+  return filteredData;
+};
 
   // Hàm tính tổng số lần trừ dựa trên danh sách đã lọc
   const getTotalLanTruFromFiltered = () => {

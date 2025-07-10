@@ -68,8 +68,13 @@ export default function CaLamComponent() {
           dscl.maCa.toString().toLowerCase().includes(searchText.toLowerCase())
       );
       setFilteredList(filtered);
+
+      // Add warning if no results found
+      if (filtered.length === 0) {
+        apiNotification.warning("Không tìm thấy ca làm nào khớp với tìm kiếm của bạn.");
+      }
     }
-  }, [searchText, danhSachCaLam]);
+  }, [searchText, danhSachCaLam, apiNotification]); // Added apiNotification to dependencies
 
   const handleSearchChange = (e) => {
     setSearchText(e.target.value);
@@ -93,7 +98,10 @@ export default function CaLamComponent() {
     async (maCa) => {
       setLoadingDetails(true);
       try {
-        await getAllCaLamTrongTuanByPhongBan(maCa);
+        const result = await getAllCaLamTrongTuanByPhongBan(maCa);
+        if (!result || result.length === 0) {
+            apiNotification.warning("Không có chi tiết ca làm trong tuần cho ca này.");
+        }
       } catch (error) {
         console.error("Lỗi khi tải chi tiết ca làm:", error);
         apiNotification.error(
@@ -104,8 +112,7 @@ export default function CaLamComponent() {
         setLoadingDetails(false);
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [apiNotification]
+    [apiNotification, getAllCaLamTrongTuanByPhongBan] // Added getAllCaLamTrongTuanByPhongBan to dependencies
   );
 
   useEffect(() => {
@@ -134,11 +141,12 @@ export default function CaLamComponent() {
     }
   };
 
-  // Xử lý submit form
+  // Xử lý submit form (Add/Edit Shift)
   const handleSubmit = async (values) => {
     try {
       let shiftData = {};
       if (currentRecord) {
+        // Edit existing shift
         shiftData = {
           maCa: currentRecord.maCa,
           tenCa: values.tenCa,
@@ -146,7 +154,7 @@ export default function CaLamComponent() {
         await updateCaLam(currentRecord.maCa, shiftData);
         apiNotification.success("Cập nhật ca làm thành công!");
       } else {
-        // Tạo ca làm mới
+        // Create new shift
         shiftData = {
           tenCa: values.tenCa,
         };
@@ -179,19 +187,18 @@ export default function CaLamComponent() {
     setIsModalVisible(true);
   };
 
-  // FIX: Xóa ca làm - sử dụng đúng field maCa
+  // Xóa ca làm
   const handleDelete = async (maCa) => {
     try {
       console.log("DEBUG CALAM : MÃ CA: ", maCa);
       await deleteCaLam(maCa);
-      apiNotification.success({ message: "Xóa ca làm thành công!" });
+      apiNotification.success("Xóa ca làm thành công!");
     } catch (err) {
       console.error("Error deleting shift:", err);
-      apiNotification.error({
-        message:
-          "Đã xảy ra lỗi khi xóa ca làm: " +
-          (err.response?.data?.message || err.message),
-      });
+      apiNotification.error(
+        "Đã xảy ra lỗi khi xóa ca làm: " +
+          (err.response?.data?.message || err.message)
+      );
     }
   };
 
@@ -202,7 +209,7 @@ export default function CaLamComponent() {
     setIsModalVisible(true);
   };
 
-  // FIX: Xử lý click vào cell để xem chi tiểt - đảm bảo data được truyền đúng
+  // Xử lý click vào cell để xem chi tiểt
   const handleCellClickForDetail = useCallback(
     async (record, e) => {
       if (e.target.closest(".ant-btn")) {
@@ -406,6 +413,8 @@ export default function CaLamComponent() {
             }}
             scroll={{ x: 800, y: tableScrollY }}
             size="middle"
+            // Add warning if no data is available
+            locale={{ emptyText: loadingCaLam ? "Đang tải dữ liệu..." : "Không có dữ liệu ca làm nào." }}
           />
 
           <Row justify="end" style={{ marginTop: "16px" }}>

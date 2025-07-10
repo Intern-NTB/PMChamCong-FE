@@ -66,7 +66,8 @@ export default function NgayLeComponent() {
     setReload(() => getAllNgayLe);
   }, []);
 
-  Array.isArray(danhSachNgayLe)
+  // Ensure danhSachNgayLe is an array before mapping
+  const mappedDanhSachNgayLe = Array.isArray(danhSachNgayLe)
     ? danhSachNgayLe.map((ngl) => ({
         key: ngl.maNgayLe,
         maNgayLe: ngl.maNgayLe,
@@ -78,7 +79,7 @@ export default function NgayLeComponent() {
     : [];
 
   // Filter data
-  const filteredData = danhSachNgayLe.filter((item) => {
+  const filteredData = mappedDanhSachNgayLe.filter((item) => {
     const matchSearch = item.tenNgayLe
       .toLowerCase()
       .includes(searchTerm.toLowerCase());
@@ -90,7 +91,7 @@ export default function NgayLeComponent() {
   const endIndex = startIndex + pageSize;
   const paginatedData = filteredData.slice(startIndex, endIndex);
 
-  const onFinish = (values) => {
+  const onFinish = async (values) => {
     const formData = {
       ...values,
       ngayBatDau: values.dateRange
@@ -102,31 +103,41 @@ export default function NgayLeComponent() {
     };
     delete formData.dateRange;
 
-    if (editingId) {
-      const updatedItem = {
-        maNgayLe: editingId,
-        ...formData,
-        updatedDate: new Date().toISOString().split("T")[0],
-      };
-      updateNgayLe(updatedItem);
-      apiNotification.success({
-        message: "Thành công!",
-        description: "Cập nhật ngày lễ thành công!",
-      });
-    } else {
-      const newItem = {
-        maNgayLe: Date.now(),
-        ...formData,
-        status: "Hoạt động",
-        createdDate: new Date().toISOString().split("T")[0],
-      };
-      createNgayLe(newItem);
-      apiNotification.success({
-        message: "Thành công!",
-        description: "Thêm ngày lễ thành công!",
+    try {
+      if (editingId) {
+        const updatedItem = {
+          maNgayLe: editingId,
+          ...formData,
+          updatedDate: new Date().toISOString().split("T")[0],
+        };
+        await updateNgayLe(updatedItem);
+        apiNotification.success({
+          message: "Thành công!",
+          description: "Cập nhật ngày lễ thành công!",
+        });
+      } else {
+        const newItem = {
+          maNgayLe: Date.now(),
+          ...formData,
+          status: "Hoạt động",
+          createdDate: new Date().toISOString().split("T")[0],
+        };
+        await createNgayLe(newItem);
+        apiNotification.success({
+          message: "Thành công!",
+          description: "Thêm ngày lễ thành công!",
+        });
+      }
+      handleCancel();
+    } catch (error) {
+      console.error("Error saving holiday:", error);
+      apiNotification.error({
+        message: "Lỗi!",
+        description: `Có lỗi xảy ra khi ${
+          editingId ? "cập nhật" : "thêm mới"
+        } ngày lễ. Vui lòng thử lại.`,
       });
     }
-    handleCancel();
   };
 
   const handleAdd = () => {
@@ -157,13 +168,34 @@ export default function NgayLeComponent() {
     });
   }, []);
 
-  const handleBulkDelete = () => {
+  const handleBulkDelete = async () => {
     if (selectedRowKeys.length === 0) {
       apiNotification.warning({
         message: "Cảnh báo",
         description: "Vui lòng chọn ít nhất một ngày lễ để xóa!",
       });
       return;
+    }
+    try {
+      // Assuming deleteNgayLe can handle multiple IDs or you'd loop through them
+      // For simplicity, let's assume it deletes one by one, or you'd have a bulk delete API.
+      // If `deleteNgayLe` only deletes one, you'd need a loop here.
+      for (const id of selectedRowKeys) {
+        await deleteNgayLe(id);
+      }
+      setSelectedRowKeys([]); // Clear selection after successful bulk delete
+      apiNotification.success({
+        message: "Thành công!",
+        description: `Đã xóa ${selectedRowKeys.length} ngày lễ đã chọn!`,
+      });
+    } catch (error) {
+      console.error("Error bulk deleting:", error);
+      apiNotification.error({
+        message: "Lỗi!",
+        description: "Có lỗi xảy ra khi xóa các ngày lễ đã chọn. Vui lòng thử lại.",
+      });
+    } finally {
+      setIsModalConfirmVisible({ visible: false, data: null });
     }
   };
 
@@ -173,15 +205,15 @@ export default function NgayLeComponent() {
       if (isModalConfirmVisible.data) {
         await deleteNgayLe(isModalConfirmVisible.data.maNgayLe);
         apiNotification.success({
-          message: "Thành công",
+          message: "Thành công!",
           description: "Xóa ngày lễ thành công!",
         });
       }
     } catch (error) {
       console.error("Error deleting:", error);
       apiNotification.error({
-        message: "Lỗi",
-        description: "Có lỗi xảy ra khi xóa!",
+        message: "Lỗi!",
+        description: "Có lỗi xảy ra khi xóa ngày lễ. Vui lòng thử lại.",
       });
     } finally {
       setIsModalConfirmVisible({ visible: false, data: null });
@@ -210,28 +242,26 @@ export default function NgayLeComponent() {
     }
   };
 
-    //Kiểm tra lịch nghỉ lễ bị trùng
-    const isOverlapping = (newStart, newEnd, existingList, currentId = null) => {
-        const start = new Date(newStart);
-        start.setHours(0, 0, 0, 0);
-        const end = new Date(newEnd);
-        end.setHours(23, 59, 59, 999);
-        return existingList.some(item => {
-            if (currentId && item.maNgayLe === currentId) {
-                return false; // bỏ qua chính ngày lễ đang chỉnh sửa
-            }
-            const existingStart = new Date(item.ngayBatDau);
-            existingStart.setHours(0, 0, 0, 0);
-            const existingEnd = new Date(item.ngayKetThuc);
-            existingEnd.setHours(23, 59, 59, 999);
-            return start <= existingEnd && end >= existingStart;
-        });
-    };
+  //Kiểm tra lịch nghỉ lễ bị trùng
+  const isOverlapping = (newStart, newEnd, existingList, currentId = null) => {
+    const start = dayjs(newStart).startOf("day");
+    const end = dayjs(newEnd).endOf("day");
+
+    return existingList.some((item) => {
+      if (currentId && item.maNgayLe === currentId) {
+        return false; // ignore the current item being edited
+      }
+      const existingStart = dayjs(item.ngayBatDau).startOf("day");
+      const existingEnd = dayjs(item.ngayKetThuc).endOf("day");
+
+      // Check for overlap: (StartA <= EndB) and (EndA >= StartB)
+      return start.isSameOrBefore(existingEnd) && end.isSameOrAfter(existingStart);
+    });
+  };
 
   const formatDate = (dateStr) => {
     if (!dateStr) return "";
-    const date = new Date(dateStr);
-    return date.toLocaleDateString("vi-VN");
+    return dayjs(dateStr).format("DD/MM/YYYY");
   };
 
   const renderNgayLeCard = (item) => (
@@ -247,8 +277,8 @@ export default function NgayLeComponent() {
             ? "0 4px 20px rgba(24, 144, 255, 0.3)"
             : "0 2px 12px rgba(0,0,0,0.08)",
           border: selectedRowKeys.includes(item.maNgayLe)
-            ? "2px solmaNgayLe #1890ff"
-            : "1px solmaNgayLe #f0f0f0",
+            ? "2px solid #1890ff"
+            : "1px solid #f0f0f0",
           background: "linear-gradient(135deg, #ffffff 0%, #fafafa 100%)",
           transition: "all 0.3s ease",
         }}
@@ -347,7 +377,7 @@ export default function NgayLeComponent() {
             display: "flex",
             justifyContent: "center",
             gap: 8,
-            borderTop: "1px solmaNgayLe #f0f0f0",
+            borderTop: "1px solid #f0f0f0",
             paddingTop: 12,
             marginTop: 12,
           }}
@@ -392,7 +422,7 @@ export default function NgayLeComponent() {
         {/* Header Section */}
         <Row
           justify="space-between"
-          align="mmaNgayLedle"
+          align="middle"
           style={{ marginBottom: 24 }}
         >
           <Col>
@@ -530,9 +560,9 @@ export default function NgayLeComponent() {
           width={400}
           onCancel={() =>
             setIsModalConfirmVisible({ visible: false, data: null })
-          }          
+          }
           footer={[
-            <Space  style={{ display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+            <Space style={{ display: "flex", justifyContent: "flex-end", flexWrap: "wrap" }}>
               <AntButton
                 key="cancel"
                 onClick={() =>
@@ -551,7 +581,7 @@ export default function NgayLeComponent() {
               >
                 Xóa
               </AntButton>
-            </Space>
+            </Space>,
           ]}
         >
           <div style={{ padding: "16px 0" }}>
@@ -580,7 +610,7 @@ export default function NgayLeComponent() {
           open={isModalVisible}
           onCancel={handleCancel}
           footer={null}
-          wmaNgayLeth={600}
+          width={600}
           style={{ borderRadius: 16 }}
         >
           <Form
@@ -610,32 +640,35 @@ export default function NgayLeComponent() {
               label="Thời gian nghỉ lễ"
               rules={[
                 {
-                  required: true, validator: (_, value) => {
+                  required: true,
+                  validator: (_, value) => {
                     if (!value || value.length !== 2) {
-                      return Promise.reject('Vui lòng chọn thời gian nghỉ lễ!');
+                      return Promise.reject("Vui lòng chọn thời gian nghỉ lễ!");
                     }
                     const [newStart, newEnd] = value;
 
                     if (isOverlapping(newStart, newEnd, danhSachNgayLe, editingId)) {
-                      return Promise.reject('Khoảng thời gian đã trùng với kỳ nghỉ lễ khác!');
+                      return Promise.reject(
+                        "Khoảng thời gian đã trùng với kỳ nghỉ lễ khác!"
+                      );
                     }
                     return Promise.resolve();
-                  }
-                }
+                  },
+                },
               ]}
             >
               <RangePicker
-                style={{ width: '100%', borderRadius: 8}}
+                style={{ width: "100%", borderRadius: 8 }}
                 size="large"
                 format="DD/MM/YYYY"
-                placeholder={['Ngày bắt đầu', 'Ngày kết thúc']}
+                placeholder={["Ngày bắt đầu", "Ngày kết thúc"]}
                 dropdownClassName="one-calendar-only"
               />
             </Form.Item>
 
             <Form.Item style={{ marginBottom: 0, marginTop: 32 }}>
               <Space
-                style={{ wmaNgayLeth: "100%", justifyContent: "flex-end" }}
+                style={{ width: "100%", justifyContent: "flex-end" }}
               >
                 <AntButton
                   onClick={handleCancel}

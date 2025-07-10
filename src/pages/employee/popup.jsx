@@ -10,7 +10,7 @@ import {
   Col,
   Select,
   InputNumber,
-  message,
+  message, 
   Switch,
 } from "antd";
 import { useEffect, useCallback, useState } from "react";
@@ -43,7 +43,8 @@ const Popup = ({
 
   const { danhSachPhongBan } = usePhongBan();
   const { danhSachVaiTro, loadingVaiTro, getAllVaiTro } = useVaiTro();
-  const { danhSachDoiTuongUuTien, loadingDoiTuongUuTien } = useDoiTuongUuTien();
+  const { danhSachDoiTuongUuTien, loadingDoiTuongUuTien } =
+    useDoiTuongUuTien();
   const { danhSachNhanVien } = useNhanVien();
 
   const parseDate = useCallback((dateString) => {
@@ -139,7 +140,7 @@ const Popup = ({
       const initialSoDienThoai = form.getFieldValue("soDienThoai");
       checkDuplicatePhone(initialSoDienThoai);
     }
-  }, [visible, form, danhSachNhanVien, initialValues?.maNhanVien]); 
+  }, [visible, form, danhSachNhanVien, initialValues?.maNhanVien]);
 
   const checkDuplicatePhone = useCallback(
     (value) => {
@@ -203,23 +204,26 @@ const Popup = ({
     return Promise.resolve();
   }, []);
 
-  const validateEmail = useCallback(async (_, value) => {
-    if (!value) {
+  const validateEmail = useCallback(
+    async (_, value) => {
+      if (!value) {
+        return Promise.resolve();
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+        return Promise.reject("Vui lòng nhập định dạng email hợp lệ.");
+      }
+
+      const isDuplicate = danhSachNhanVien.some(
+        (nv) => nv.maNhanVien !== initialValues?.maNhanVien && nv.email === value
+      );
+      if (isDuplicate) {
+        return Promise.reject("Email này đã tồn tại trong hệ thống.");
+      }
+
       return Promise.resolve();
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-      return Promise.reject("Vui lòng nhập định dạng email hợp lệ.");
-    }
-
-    const isDuplicate = danhSachNhanVien.some(
-      (nv) => nv.maNhanVien !== initialValues?.maNhanVien && nv.email === value
-    );
-    if (isDuplicate) {
-      return Promise.reject("Email này đã tồn tại trong hệ thống.");
-    }
-
-    return Promise.resolve();
-  }, [danhSachNhanVien, initialValues?.maNhanVien]);
+    },
+    [danhSachNhanVien, initialValues?.maNhanVien]
+  );
 
   const handleOk = useCallback(() => {
     form
@@ -271,9 +275,11 @@ const Popup = ({
       })
       .catch((info) => {
         console.warn("Validation failed:", info);
-        message.error(
-          "Vui lòng kiểm tra lại thông tin nhập liệu và các trường bị lỗi."
-        );
+        message.error({
+          content: "Vui lòng kiểm tra lại thông tin nhập liệu và các trường bị lỗi.",
+          duration: 3, 
+          key: 'validation-error-message' 
+        });
       });
   }, [form, onOk, isEditMode, hasPriority]);
 
@@ -503,7 +509,7 @@ const Popup = ({
                   (nv) =>
                     nv.maNhanVien !== initialValues?.maNhanVien &&
                     nv.soDienThoai === sdt &&
-                    sdt 
+                    sdt
                 );
 
                 if (isDuplicate) {
@@ -527,9 +533,7 @@ const Popup = ({
             <Form.Item
               name="email"
               label="Email"
-              rules={[
-                { validator: validateEmail },
-              ]}
+              rules={[{ validator: validateEmail }]}
             >
               <Input placeholder="Nhập email" type="email" />
             </Form.Item>

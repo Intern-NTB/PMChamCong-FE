@@ -8,6 +8,7 @@ import {
   syncFingerprintsToDBServices,
   uploadFingerprintsToMayChamCongServices,
 } from "../../services/maychamongServices";
+
 export const useMayChamCong = () => {
   const [isLoadingMayChamCong, setIsLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
@@ -21,6 +22,7 @@ export const useMayChamCong = () => {
   const [isUploadtedVanTayDenMayChamCong, setIsUploadtedVanTayDenMayChamCong] =
     useState(false);
   const [isSyncDataVanTay, setIsSyncDataVanTay] = useState(false);
+
   const checkConnection = async (host, port) => {
     setIsLoading(true);
     setIsConnected(false);
@@ -72,7 +74,7 @@ export const useMayChamCong = () => {
   };
 
   const deleteNhanVienMayChamCong = async (maNhanVien) => {
-    setIsLoading(true); // Thêm loading
+    setIsLoading(true);
     try {
       await deleteNhanVienMayChamCongServices(maNhanVien);
       setIsDeletedNhanVienMayChamCong(true);
@@ -81,7 +83,7 @@ export const useMayChamCong = () => {
       setIsDeletedNhanVienMayChamCong(false);
       return false;
     } finally {
-      setIsLoading(false); // Thêm finally block
+      setIsLoading(false);
     }
   };
 
@@ -89,7 +91,7 @@ export const useMayChamCong = () => {
     maNhanVien,
     viTriNgonTay
   ) => {
-    setIsLoading(true); // Thêm loading
+    setIsLoading(true);
     try {
       await deleteFingerprintDBAndMayChamCongServices(maNhanVien, viTriNgonTay);
       setIsDeletedVanTay(true);
@@ -98,42 +100,50 @@ export const useMayChamCong = () => {
       setIsDeletedVanTay(false);
       return false;
     } finally {
-      setIsLoading(false); // Thêm finally block
+      setIsLoading(false);
     }
   };
 
   const syncFingerprintsToDB = async () => {
+    setIsLoading(true);
     try {
       await syncFingerprintsToDBServices();
       setIsSyncDataVanTay(true);
+      return true;
     } catch (error) {
       setIsSyncDataVanTay(false);
       console.log("Lỗi trong quá trình đồng bộ vân tay: ", error);
+      return false;
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const uploadFingerprintsToMayChamCong = async (nhanVienIds) => {
+    setIsLoading(true);
     try {
       await uploadFingerprintsToMayChamCongServices(nhanVienIds);
       setIsUploadtedVanTayDenMayChamCong(true);
+      return true;
     } catch (error) {
       setIsUploadtedVanTayDenMayChamCong(false);
       console.log("Lỗi trong quá trình đồng bộ vân tay: ", error);
+      return false;
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Tách riêng useEffect cho sync fingerprints
-  useEffect(() => {
-    syncFingerprintsToDB();
-  }, []);
-
-  // Tách riêng useEffect cho handle sync data
+  
   useEffect(() => {
     const handleSyncData = async () => {
-      if (isCreatedNhanVienMayChamCong || isDeletedNhanVienMayChamCong) {
+      if (isCreatedNhanVienMayChamCong || isDeletedNhanVienMayChamCong || isDeletedVanTay || isSyncDataVanTay) {
         await getAllNhanVienMayChamCong();
+        // Reset tất cả các trạng thái cờ sau khi đã gọi API để tránh vòng lặp không mong muốn
         setIsCreatedNhanVienMayChamCong(false);
         setIsDeletedNhanVienMayChamCong(false);
+        setIsDeletedVanTay(false);
+        setIsSyncDataVanTay(false);
       }
     };
 
