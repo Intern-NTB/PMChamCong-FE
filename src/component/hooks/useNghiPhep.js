@@ -28,10 +28,12 @@ export const useNghiPhep = (isGetAllNgaynghiPhep = true) => {
   const updateNghiPhep = async (maNghiPhep, duLieuNghiPhep) => {
     setLoadingNghiPhep(true);
     try {
-      await updateNghiPhepServices(maNghiPhep, duLieuNghiPhep);
+      const res = await updateNghiPhepServices(maNghiPhep, duLieuNghiPhep);
       setIsUpdatedNghiPhep(true);
-    } catch {
+      return res;
+    } catch (error) {
       setIsUpdatedNghiPhep(false);
+      throw error;
     } finally {
       setLoadingNghiPhep(false);
     }
@@ -40,10 +42,12 @@ export const useNghiPhep = (isGetAllNgaynghiPhep = true) => {
   const createNghiPhep = async (duLieuNghiPhep) => {
     setLoadingNghiPhep(true);
     try {
-      await createNghiPhepServices(duLieuNghiPhep);
+      const res = await createNghiPhepServices(duLieuNghiPhep);
       setIsCreatedNghiPhep(true);
-    } catch {
-      setIsCreatedNghiPhep(true);
+      return res;
+    } catch (error) {
+      setIsCreatedNghiPhep(false);
+      throw error;
     } finally {
       setLoadingNghiPhep(false);
     }
@@ -52,10 +56,12 @@ export const useNghiPhep = (isGetAllNgaynghiPhep = true) => {
   const deleteNghiPhep = async (maNghiPhep) => {
     setLoadingNghiPhep(true);
     try {
-      await deleteNghiPhepServices(maNghiPhep);
+      const res = await deleteNghiPhepServices(maNghiPhep);
       setIsDeletedNghiPhep(true);
-    } catch {
+      return res;
+    } catch (error) {
       setIsDeletedNghiPhep(false);
+      throw error;
     } finally {
       setLoadingNghiPhep(false);
     }

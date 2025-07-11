@@ -12,9 +12,9 @@ export const getAllDoiTuongUuTienServices = async () => {
 export const createDoiTuongUuTienServices = async (duLieuUuTien) => {
   try {
     const response = await axiosInstance.post("/uutien", duLieuUuTien);
-    return response.data;
+    return response;
   } catch (error) {
-    console.log(error);
+    throw error;
   }
 };
 
@@ -24,17 +24,17 @@ export const updateDoiTuongUuTienServices = async (duLieuUuTien) => {
       `/uutien/${duLieuUuTien.maUuTien}`,
       duLieuUuTien
     );
-    return response.data;
+    return response;
   } catch (error) {
-    console.log(error);
+    throw error;
   }
 };
 
 export const deleteDoiTuongUuTienServices = async (maUuTien) => {
   try {
     const response = await axiosInstance.delete(`/uutien/${maUuTien}`);
-    return response.data;
+    return response;
   } catch (error) {
-    console.log(error);
+    throw error;
   }
 };

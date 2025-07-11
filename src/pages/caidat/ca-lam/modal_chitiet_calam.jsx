@@ -20,6 +20,7 @@ import {
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
+import { useAppNotification } from "../../../component/ui/notification";
 
 dayjs.extend(customParseFormat);
 
@@ -34,6 +35,7 @@ const ModalChiTietCaLam = ({
   createCaLamTrongTuan,
   updateCaLamTrongTuan,
 }) => {
+  const apiNotification = useAppNotification();
   const [isEditingDetails, setIsEditingDetails] = useState(false);
   const [detailForm] = Form.useForm();
   const [currentDetailsState, setCurrentDetailsState] = useState([]);
@@ -392,9 +394,19 @@ const ModalChiTietCaLam = ({
 
       for (const dataCaLamTrongTuan of formattedDetails) {
         if (dataCaLamTrongTuan.isExisting) {
-          await updateCaLamTrongTuan(dataCaLamTrongTuan);
+          const res = await updateCaLamTrongTuan(dataCaLamTrongTuan);
+          if (res?.status && String(res.status).startsWith('2')) {
+            apiNotification.notifyByStatus({ status: res.status, message: "Cập nhật chi tiết ca làm thành công!" });
+          } else {
+            apiNotification.notifyByStatus({ status: res?.status, message: "Cập nhật chi tiết ca làm thất bại!" });
+          }
         } else if (dataCaLamTrongTuan.coLamViec) {
-          await createCaLamTrongTuan(dataCaLamTrongTuan);
+          const res = await createCaLamTrongTuan(dataCaLamTrongTuan);
+          if (res?.status && String(res.status).startsWith('2')) {
+            apiNotification.notifyByStatus({ status: res.status, message: "Tạo chi tiết ca làm thành công!" });
+          } else {
+            apiNotification.notifyByStatus({ status: res?.status, message: "Tạo chi tiết ca làm thất bại!" });
+          }
         }
       }
 
@@ -428,6 +440,7 @@ const ModalChiTietCaLam = ({
       setIsEditingDetails(false);
       console.log("Lưu chi tiết ca làm thành công!");
     } catch (errorInfo) {
+      apiNotification.notifyByStatus({ status: errorInfo?.response?.status, message: "Lưu chi tiết ca làm thất bại!" });
       console.error("Lưu chi tiết ca làm thất bại: ", errorInfo);
     }
   };

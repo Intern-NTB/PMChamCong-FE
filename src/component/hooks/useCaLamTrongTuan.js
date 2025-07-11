@@ -46,11 +46,13 @@ export const useCaLamTrongTuan = () => {
   const createCaLamTrongTuan = async (dataCaLamTrongTuan) => {
     setLoadingCaLamTrongTuan(true);
     try {
-      await createCaLamTrongTuanServices(dataCaLamTrongTuan);
+      const res = await createCaLamTrongTuanServices(dataCaLamTrongTuan);
       setIsCreatedCaLamTrongTuan(true);
+      return res;
     } catch (error) {
       console.error("Lỗi khi lấy dữ liệu Ca Lam Trong Tuần:", error);
       setIsCreatedCaLamTrongTuan(false);
+      throw error;
     } finally {
       setLoadingCaLamTrongTuan(false);
     }
@@ -59,8 +61,9 @@ export const useCaLamTrongTuan = () => {
   const updateCaLamTrongTuan = async (duLieuCaLam) => {
     setLoadingCaLamTrongTuan(true);
     try {
-      await updateCaLamTrongTuanServices(duLieuCaLam);
+      const res = await updateCaLamTrongTuanServices(duLieuCaLam);
       setIsUpdatedCaLamTrongTuan(true);
+      return res;
     } catch (error) {
       console.error("Lỗi khi cập nhật Ca Lam Trong Tuần:", error);
       setIsUpdatedCaLamTrongTuan(false);

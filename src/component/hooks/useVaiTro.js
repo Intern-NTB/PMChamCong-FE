@@ -33,15 +33,15 @@ export const useVaiTro = () => {
 
   const createVaiTro = useCallback(async (tenVaiTro) => {
     setLoading(true);
-
     try {
       const res = await createVaiTroServices(tenVaiTro);
       setIsCreatedVaiTro(true);
       await getAllVaiTro();
-      return res; 
-    } catch (error) { 
+      return res; // trả về response
+    } catch (error) {
       console.error("Lỗi khi tạo vai trò:", error);
       setIsCreatedVaiTro(false);
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -49,14 +49,15 @@ export const useVaiTro = () => {
 
   const updateVaiTro = useCallback(async (maVaiTro, tenVaiTro) => {
     setLoading(true);
-
     try {
-      await updateVaiTroServices(maVaiTro, tenVaiTro);
+      const res = await updateVaiTroServices(maVaiTro, tenVaiTro);
       setIsUpdatedVaiTro(true);
-      await getAllVaiTro(); 
-    } catch (error) { 
+      await getAllVaiTro();
+      return res; // trả về response
+    } catch (error) {
       console.error("Lỗi khi cập nhật vai trò:", error);
       setIsUpdatedVaiTro(false);
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -65,14 +66,15 @@ export const useVaiTro = () => {
 
   const deleteVaiTro = useCallback(async (maVaiTro) => {
     setLoading(true);
-
     try {
-      await deleteVaiTroServices(maVaiTro);
+      const res = await deleteVaiTroServices(maVaiTro);
       setIsDeletedVaiTro(true);
-      await getAllVaiTro(); 
-    } catch (error) { 
+      await getAllVaiTro();
+      return res; // trả về response
+    } catch (error) {
       console.error("Lỗi khi xóa vai trò:", error);
       setIsDeletedVaiTro(false);
+      throw error;
     } finally {
       setLoading(false);
     }

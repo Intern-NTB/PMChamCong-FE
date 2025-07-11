@@ -23,12 +23,14 @@ export const usePhongBan = () => {
     const updatePhongBan = useCallback(async (duLieuPhongBan) => {
         setLoading(true)
         try {
-            await updatePhongBanServices(duLieuPhongBan)
+            const res = await updatePhongBanServices(duLieuPhongBan)
             await fetchPhongBan()
             setStatus(true)
+            return res;
         } catch (error) { 
             console.error('Lỗi khi cập nhật phòng ban:', error);
             setStatus(false)
+            throw error;
         } finally {
             setLoading(false)
         }
@@ -37,12 +39,14 @@ export const usePhongBan = () => {
     const createPhongBan = useCallback(async (duLieuPhongBan) => {
         setLoading(true)
         try {
-            await createPhongBanServices(duLieuPhongBan)
+            const res = await createPhongBanServices(duLieuPhongBan)
             await fetchPhongBan()
             setStatus(true)
+            return res;
         } catch (error) { 
             console.error('Lỗi khi tạo phòng ban:', error);
             setStatus(false)
+            throw error;
         } finally {
             setLoading(false)
         }
@@ -51,12 +55,14 @@ export const usePhongBan = () => {
     const deletePhongBan = useCallback(async (maPhongBan) => {
         setLoading(true)
         try {
-            await deletePhongBanServices(maPhongBan)
+            const res = await deletePhongBanServices(maPhongBan)
             await fetchPhongBan()
             setStatus(true)
+            return res;
         } catch (error) { 
             console.error('Lỗi khi xóa phòng ban:', error);
             setStatus(false)
+            throw error;
         } finally {
             setLoading(false)
         }

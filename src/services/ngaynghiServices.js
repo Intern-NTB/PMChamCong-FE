@@ -11,25 +11,30 @@ export const getAllNghiPhepServices = async () => {
 
 export const createNghiPhepServices = async (duLieuNghiPhep) => {
   try {
-    console.log("duLieuNghiPhep", duLieuNghiPhep);
-    await axiosInstance.post("/ngaynghi", duLieuNghiPhep);
-  } catch {
-    console.log("AXIOS! Lỗi lấy dữ liệu nghỉ phép");
+    const res = await axiosInstance.post("/ngaynghi", duLieuNghiPhep);
+    return res;
+  } catch (error) {
+    console.log("AXIOS! Lỗi tạo dữ liệu nghỉ phép");
+    throw error;
   }
 };
 
 export const deleteNghiPhepServices = async (maNghiPhep) => {
   try {
-    await axiosInstance.delete(`/ngaynghi/${maNghiPhep}`);
-  } catch {
+    const res = await axiosInstance.delete(`/ngaynghi/${maNghiPhep}`);
+    return res;
+  } catch (error) {
     console.log("AXIOS! Lỗi xoá dữ liệu nghỉ phép");
+    throw error;
   }
 };
 
 export const updateNghiPhepServices = async (maNghiPhep, duLieuNghiPhep) => {
   try {
-    await axiosInstance.put(`/ngaynghi/${maNghiPhep}`, duLieuNghiPhep);
-  } catch {
+    const res = await axiosInstance.put(`/ngaynghi/${maNghiPhep}`, duLieuNghiPhep);
+    return res;
+  } catch (error) {
     console.log("AXIOS! Lỗi cập nhật dữ liệu nghỉ phép");
+    throw error;
   }
 };

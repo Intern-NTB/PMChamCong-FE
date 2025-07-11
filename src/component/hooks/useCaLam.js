@@ -29,8 +29,9 @@ export const useCaLam = () => {
   const updateCaLam = async (maCa, duLieuCaLam) => {
     setLoadingCaLam(true);
     try {
-      await updateCaLamServices(maCa, duLieuCaLam);
+      const res = await updateCaLamServices(maCa, duLieuCaLam);
       setIsUpdatedCaLam(true);
+      return res;
     } catch (error) {
       console.error("Lỗi khi cập nhật Ca Lam:", error);
       setIsUpdatedCaLam(false);
@@ -43,8 +44,9 @@ export const useCaLam = () => {
   const deleteCaLam = async (maCaLam) => {
     setLoadingCaLam(true);
     try {
-      await deleteCaLamServices(maCaLam);
+      const res = await deleteCaLamServices(maCaLam);
       setIsDeletedCaLam(true);
+      return res;
     } catch (error) {
       console.error("Lỗi khi xóa Ca Lam:", error);
       setIsDeletedCaLam(false);
@@ -57,8 +59,9 @@ export const useCaLam = () => {
   const createCaLam = async (duLieuCaLam) => {
     setLoadingCaLam(true);
     try {
-      await createCaLamServices(duLieuCaLam);
+      const res = await createCaLamServices(duLieuCaLam);
       setIsCreatedCaLam(true);
+      return res;
     } catch (error) {
       console.error("Lỗi khi tạo Ca Lam:", error);
       setIsCreatedCaLam(false);

@@ -25,8 +25,9 @@ export const useHeThong = () => {
   const updateHeThong = async (duLieuHeThong) => {
     setLoadingHeThong(true);
     try {
-      await updateHeThongServices(duLieuHeThong);
+      const res = await updateHeThongServices(duLieuHeThong);
       setIsUpdatedHeThong(true);
+      return res;
     } catch (error) {
       setIsUpdatedHeThong(false);
       throw error;

@@ -10,7 +10,7 @@ export const getAllCaLamServices = async () => {
 
 export const updateCaLamServices = async (maCa, duLieuCaLam) => {
   try {
-    await axiosInstance.put(`/calam/${maCa}`, duLieuCaLam);
+    return await axiosInstance.put(`/calam/${maCa}`, duLieuCaLam);
   } catch (error) {
     console.error(`Lỗi Axios Cập nhật Ca Làm : ${error}`);
   }
@@ -18,7 +18,7 @@ export const updateCaLamServices = async (maCa, duLieuCaLam) => {
 
 export const createCaLamServices = async (duLieuCaLam) => {
   try {
-    await axiosInstance.post("/calam", duLieuCaLam);
+    return await axiosInstance.post("/calam", duLieuCaLam);
   } catch (error) {
     console.error(`Lỗi Axios Xoá Ca Làm : ${error}`);
   }
@@ -27,7 +27,7 @@ export const createCaLamServices = async (duLieuCaLam) => {
 export const deleteCaLamServices = async (maCaLam) => {
   try {
     console.log("Debug CaLam: ",maCaLam)
-    await axiosInstance.delete(`/calam/${Number(maCaLam)}`);
+    return await axiosInstance.delete(`/calam/${Number(maCaLam)}`);
   } catch (error) {
     console.error(`Lỗi Axios Ca Làm : ${error}`);
   }

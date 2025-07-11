@@ -36,7 +36,7 @@ export const createNhanVienServices = async (nhanVienData) => {
     console.log("Data sending to API for create:", nhanVienData); 
 
     const response = await axiosInstance.post("/nhanvien", nhanVienData);
-    return response.data;
+    return response;
   } catch (error) {
     console.error("Lỗi khi tạo nhân viên mới:", error);
     console.error("Error response from server:", error.response?.data); 
@@ -56,7 +56,7 @@ export const updateNhanVienService = async (maNhanVien, updateData) => {
       `/nhanvien/${maNhanVien}`,
       updateData
     );
-    return response.data;
+    return response;
   } catch (error) {
     console.error(`Lỗi khi cập nhật thông tin nhân viên với ID ${maNhanVien}:`, error);
     console.error("Error response from server:", error.response?.data);
@@ -70,8 +70,8 @@ export const updateNhanVienService = async (maNhanVien, updateData) => {
  */
 export const deleteNhanVienServices = async (maNhanVien) => {
   try {
-    await axiosInstance.delete(`/nhanvien/${maNhanVien}`);
-    return true;
+    const response = await axiosInstance.delete(`/nhanvien/${maNhanVien}`);
+    return response;
   } catch (error) {
     console.error(`Lỗi khi xóa nhân viên với ID ${maNhanVien}:`, error);
     console.error("Error response from server:", error.response?.data);

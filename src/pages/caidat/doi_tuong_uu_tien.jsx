@@ -139,6 +139,7 @@ export default function DoiTuongUuTienComponent() {
 
   const onFinish = async (values) => {
     try {
+      let res;
       if (editingId) {
         const formatedValues = {
           ...values,
@@ -148,8 +149,13 @@ export default function DoiTuongUuTienComponent() {
           thoiGianHieuLuc: parseInt(values.thoiGianHieuLuc),
           phongBan: values.phongBan,
         };
-        await updateDoiTuongUuTien(formatedValues);
-        api.success({ message: "Cập nhật đối tượng ưu tiên thành công!" });
+        res = await updateDoiTuongUuTien(formatedValues);
+        api.notifyByStatus({
+          status: res.status,
+          message: res.status && String(res.status).startsWith('2')
+            ? "Cập nhật đối tượng ưu tiên thành công!"
+            : "Cập nhật đối tượng ưu tiên thất bại",
+        });
       } else {
         const formatedValues = {
           ...values,
@@ -158,16 +164,21 @@ export default function DoiTuongUuTienComponent() {
           thoiGianHieuLuc: parseInt(values.thoiGianHieuLuc),
           phongBan: values.phongBan,
         };
-        await createDoiTuongUuTien(formatedValues);
-        api.success({ message: "Thêm đối tượng ưu tiên thành công!" });
+        res = await createDoiTuongUuTien(formatedValues);
+        api.notifyByStatus({
+          status: res.status,
+          message: res.status && String(res.status).startsWith('2')
+            ? "Thêm đối tượng ưu tiên thành công!"
+            : "Thêm đối tượng ưu tiên thất bại",
+        });
       }
       handleCancel();
     } catch (error) {
-      api.error({
+      api.notifyByStatus({
+        status: error?.response?.status,
         message: editingId
           ? "Cập nhật đối tượng ưu tiên thất bại"
           : "Thêm đối tượng ưu tiên thất bại",
-        description: error?.response?.data?.message || error.message,
       });
     }
   };
@@ -184,31 +195,35 @@ export default function DoiTuongUuTienComponent() {
     };
 
     try {
+      let res;
       if (editingHistoryId) {
-        await updateLichSuUuTien(
+        res = await updateLichSuUuTien(
           editingHistoryId,
           formattedValues.maNhanVien,
           formattedValues
         );
-        api.success({
-          message: "Thành công",
-          description: "Cập nhật lịch sử ưu tiên thành công!",
+        api.notifyByStatus({
+          status: res.status,
+          message: res.status && String(res.status).startsWith('2')
+            ? "Cập nhật lịch sử ưu tiên thành công!"
+            : "Cập nhật lịch sử ưu tiên thất bại",
         });
       } else {
-        await createLichSuDoiTuongUuTien(formattedValues);
-
-        api.success({
-          message: "Thành công",
-          description: "Thêm mới lịch sử ưu tiên thành công!",
+        res = await createLichSuDoiTuongUuTien(formattedValues);
+        api.notifyByStatus({
+          status: res.status,
+          message: res.status && String(res.status).startsWith('2')
+            ? "Thêm mới lịch sử ưu tiên thành công!"
+            : "Thêm mới lịch sử ưu tiên thất bại",
         });
       }
       handleHistoryCancel();
     } catch (error) {
-      api.error({
+      api.notifyByStatus({
+        status: error?.response?.status,
         message: editingHistoryId
-          ? "Lỗi khi cập nhật ưu tiên cho nhân viên"
-          : "Lỗi khi thêm ưu tiên cho nhân viên",
-        description: error?.response?.data?.message || error.message,
+          ? "Cập nhật lịch sử ưu tiên thất bại"
+          : "Thêm mới lịch sử ưu tiên thất bại",
       });
     }
   };
@@ -267,12 +282,17 @@ export default function DoiTuongUuTienComponent() {
 
   const handleDelete = async (maUuTien) => {
     try {
-      await deleteDoiTuongUuTien(maUuTien);
-      api.success({ message: `Xóa đối tượng ưu tiên ${maUuTien} thành công!` });
+      const res = await deleteDoiTuongUuTien(maUuTien);
+      api.notifyByStatus({
+        status: res.status,
+        message: res.status && String(res.status).startsWith('2')
+          ? `Xóa đối tượng ưu tiên ${maUuTien} thành công!`
+          : `Xóa đối tượng ưu tiên ${maUuTien} thất bại`,
+      });
     } catch (error) {
-      api.error({
-        message: `Đã xảy ra lỗi khi xóa đối tượng ưu tiên có mã ${maUuTien}`,
-        description: error?.response?.data?.message || error.message,
+      api.notifyByStatus({
+        status: error?.response?.status,
+        message: `Xóa đối tượng ưu tiên ${maUuTien} thất bại`,
       });
     }
   };
@@ -280,24 +300,25 @@ export default function DoiTuongUuTienComponent() {
   const handleDeleteMultiple = async () => {
     try {
       await Promise.all(selectedKeys.map((key) => handleDelete(key)));
-      api.success({ message: `Xóa ${selectedKeys.length} mục đã chọn thành công!` });
       setSelectedKeys([]);
     } catch (error) {
-      api.error({
-        message: "Xóa các đối tượng ưu tiên đã chọn thất bại",
-        description: error?.response?.data?.message || error.message,
-      });
+      // No notification here, handled in handleDelete
     }
   };
 
   const handleDeleteHistory = async (maNhanVien, maUuTien) => {
     try {
-      await deleteLichSuUuTien(maNhanVien, maUuTien);
-      api.success({ message: "Xóa lịch sử ưu tiên thành công!" });
+      const res = await deleteLichSuUuTien(maNhanVien, maUuTien);
+      api.notifyByStatus({
+        status: res.status,
+        message: res.status && String(res.status).startsWith('2')
+          ? "Xóa lịch sử ưu tiên thành công!"
+          : "Xóa lịch sử ưu tiên thất bại",
+      });
     } catch (error) {
-      api.error({
-        message: "Đã xảy ra lỗi khi xóa lịch sử ưu tiên",
-        description: error?.response?.data?.message || error.message,
+      api.notifyByStatus({
+        status: error?.response?.status,
+        message: "Xóa lịch sử ưu tiên thất bại",
       });
     }
   };

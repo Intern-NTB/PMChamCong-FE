@@ -12,9 +12,10 @@ export const getAllLuongServices = async () => {
 export const createLuongServices = async (dataLuong) => {
   try {
     const res = await axiosInstance.post("/luong", dataLuong);
-    return res.data;
+    return res;
   } catch (error) {
     console.log(error);
+    throw error;
   }
 };
 
@@ -24,13 +25,12 @@ export const createLuongByIdServices = async (dataLuong) => {
       `/luong/${dataLuong.maNhanVien}`,
       dataLuong
     );
-    return res.data;
+    return res;
   } catch (error) {
     console.log(error);
+    throw error;
   }
 };
-
-
 
 export const getAllLuongDieuChinhServices = async () => {
   try {

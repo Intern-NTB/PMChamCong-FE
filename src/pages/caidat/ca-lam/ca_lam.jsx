@@ -68,13 +68,9 @@ export default function CaLamComponent() {
           dscl.maCa.toString().toLowerCase().includes(searchText.toLowerCase())
       );
       setFilteredList(filtered);
-
-      // Add warning if no results found
-      if (filtered.length === 0) {
-        apiNotification.warning("Không tìm thấy ca làm nào khớp với tìm kiếm của bạn.");
-      }
+      // Không hiện warning khi không tìm thấy ca làm
     }
-  }, [searchText, danhSachCaLam, apiNotification]); // Added apiNotification to dependencies
+  }, [searchText, danhSachCaLam]); // Bỏ apiNotification khỏi dependencies
 
   const handleSearchChange = (e) => {
     setSearchText(e.target.value);
@@ -99,20 +95,16 @@ export default function CaLamComponent() {
       setLoadingDetails(true);
       try {
         const result = await getAllCaLamTrongTuanByPhongBan(maCa);
-        if (!result || result.length === 0) {
-            apiNotification.warning("Không có chi tiết ca làm trong tuần cho ca này.");
-        }
+        // Không hiện warning khi không có chi tiết ca làm
       } catch (error) {
         console.error("Lỗi khi tải chi tiết ca làm:", error);
-        apiNotification.error(
-          "Không thể tải chi tiết ca làm. Vui lòng thử lại."
-        );
+        // Không hiện apiNotification.error khi lỗi get chi tiết ca làm
         setShiftDetailsByDay([]);
       } finally {
         setLoadingDetails(false);
       }
     },
-    [apiNotification, getAllCaLamTrongTuanByPhongBan] // Added getAllCaLamTrongTuanByPhongBan to dependencies
+    [getAllCaLamTrongTuanByPhongBan]
   );
 
   useEffect(() => {
@@ -127,16 +119,16 @@ export default function CaLamComponent() {
   // Cập nhật chi tiết ca làm hàng ngày
   const handleSaveDailyShiftDetails = async (maCa, updatedDetails) => {
     try {
-      await updateCaLamTrongTuan(maCa, updatedDetails);
-      apiNotification.success("Cập nhật chi tiết ca làm thành công!");
+      const res = await updateCaLamTrongTuan(maCa, updatedDetails);
+      if (res?.status && String(res.status).startsWith('2')) {
+        apiNotification.notifyByStatus({ status: res.status, message: "Cập nhật chi tiết ca làm thành công!" });
+      } else {
+        apiNotification.notifyByStatus({ status: res?.status, message: "Cập nhật chi tiết ca làm thất bại!" });
+      }
       // Refresh lại dữ liệu sau khi save
       await fetchAndSetShiftDetails(maCa);
     } catch (error) {
-      console.error("Lỗi khi lưu chi tiết ca làm:", error);
-      apiNotification.error(
-        "Lưu chi tiết ca làm thất bại: " +
-          (error.response?.data?.message || error.message)
-      );
+      apiNotification.notifyByStatus({ status: error?.response?.status, message: "Cập nhật chi tiết ca làm thất bại!" });
       throw error;
     }
   };
@@ -151,23 +143,29 @@ export default function CaLamComponent() {
           maCa: currentRecord.maCa,
           tenCa: values.tenCa,
         };
-        await updateCaLam(currentRecord.maCa, shiftData);
-        apiNotification.success("Cập nhật ca làm thành công!");
+        const res = await updateCaLam(currentRecord.maCa, shiftData);
+        if (res?.status && String(res.status).startsWith('2')) {
+          apiNotification.notifyByStatus({ status: res.status, message: "Cập nhật ca làm thành công!" });
+        } else {
+          apiNotification.notifyByStatus({ status: res?.status, message: "Cập nhật ca làm thất bại!" });
+        }
       } else {
         // Create new shift
         shiftData = {
           tenCa: values.tenCa,
         };
-        await createCaLam(shiftData);
-        apiNotification.success("Thêm ca làm thành công!");
+        const res = await createCaLam(shiftData);
+        if (res?.status && String(res.status).startsWith('2')) {
+          apiNotification.notifyByStatus({ status: res.status, message: "Thêm ca làm thành công!" });
+        } else {
+          apiNotification.notifyByStatus({ status: res?.status, message: "Tạo ca làm thất bại!" });
+        }
       }
       handleCancel();
     } catch (err) {
-      console.error("Error saving shift:", err);
-      apiNotification.error(
-        "Đã xảy ra lỗi khi lưu ca làm: " +
-          (err.response?.data?.message || err.message)
-      );
+      const status = err?.response?.status;
+      let message = currentRecord ? "Cập nhật ca làm thất bại!" : "Tạo ca làm thất bại!";
+      apiNotification.notifyByStatus({ status, message });
     }
   };
 
@@ -190,15 +188,14 @@ export default function CaLamComponent() {
   // Xóa ca làm
   const handleDelete = async (maCa) => {
     try {
-      console.log("DEBUG CALAM : MÃ CA: ", maCa);
-      await deleteCaLam(maCa);
-      apiNotification.success("Xóa ca làm thành công!");
+      const res = await deleteCaLam(maCa);
+      if (res?.status && String(res.status).startsWith('2')) {
+        apiNotification.notifyByStatus({ status: res.status, message: "Xóa ca làm thành công!" });
+      } else {
+        apiNotification.notifyByStatus({ status: res?.status, message: "Xóa ca làm thất bại!" });
+      }
     } catch (err) {
-      console.error("Error deleting shift:", err);
-      apiNotification.error(
-        "Đã xảy ra lỗi khi xóa ca làm: " +
-          (err.response?.data?.message || err.message)
-      );
+      apiNotification.notifyByStatus({ status: err?.response?.status, message: "Xóa ca làm thất bại!" });
     }
   };
 

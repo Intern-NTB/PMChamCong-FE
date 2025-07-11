@@ -47,16 +47,10 @@ export default function HeThongComponent() {
         };
 
         try {
-            await updateHeThong(dataToSend);
-            apiNotification.success({
-                message: "Thành công",
-                description: "Lưu cấu hình thành công!",
-            });
+            const res = await updateHeThong(dataToSend);
+            apiNotification.notifyByStatus({ status: res?.status, message: "Lưu cấu hình thành công!" });
         } catch (error) { 
-            apiNotification.error({
-                message: "Thất bại",
-                description: "Không thể lưu vào hệ thống! Vui lòng thử lại.", 
-            });
+            apiNotification.notifyByStatus({ status: error?.response?.status, message: "Lưu cấu hình thất bại!" });
             console.error("Failed to update system configuration:", error); 
         }
     };

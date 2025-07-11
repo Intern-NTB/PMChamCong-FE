@@ -583,35 +583,22 @@ export default function NghiPhep() {
 
       if (editingRecord) {
         try {
-          await updateNghiPhep(editingRecord, dataToSave);
-          api.success({
-            message: "Cập nhật nghỉ phép thành công",
-          });
+          const res = await updateNghiPhep(editingRecord, dataToSave);
+          api.notifyByStatus({ status: res?.status, message: res?.status && String(res.status).startsWith('2') ? "Cập nhật nghỉ phép thành công" : "Cập nhật nghỉ phép thất bại!" });
           setIsModalVisible(false);
           await getAllNgayPhep();
         } catch (error) {
-          console.error("Update error:", error);
-          api.error({
-            message: "Cập nhật nghỉ phép không thành công",
-            description: error.message || "Có lỗi xảy ra khi cập nhật",
-          });
+          api.notifyByStatus({ status: error?.response?.status, message: "Cập nhật nghỉ phép thất bại!" });
         }
       } else {
         // Tạo mới
         try {
-          await createNghiPhep(dataToSave);
-          api.success({
-            message: "Thành công",
-            description: "Đã thêm thành công đơn nghỉ phép",
-          });
+          const res = await createNghiPhep(dataToSave);
+          api.notifyByStatus({ status: res?.status, message: res?.status && String(res.status).startsWith('2') ? "Đã thêm thành công đơn nghỉ phép" : "Tạo đơn nghỉ phép thất bại!" });
           setIsModalVisible(false);
           await getAllNgayPhep();
         } catch (error) {
-          console.error("Create error:", error);
-          api.error({
-            message: "Có lỗi xảy ra",
-            description: error.message || "Đã xảy ra lỗi khi tạo mới",
-          });
+          api.notifyByStatus({ status: error?.response?.status, message: "Tạo đơn nghỉ phép thất bại!" });
         }
       }
     } catch (errorInfo) {
@@ -637,17 +624,11 @@ export default function NghiPhep() {
   // form xác nhận
   const handleDelete = async (maNghiPhep) => {
     try {
-      await deleteNghiPhep(maNghiPhep);
-      api.success({
-        message: "Xoá dữ liệu thành công",
-        description: "Đã xoá đơn nghỉ phép",
-      });
+      const res = await deleteNghiPhep(maNghiPhep);
+      api.notifyByStatus({ status: res?.status, message: res?.status && String(res.status).startsWith('2') ? "Đã xoá đơn nghỉ phép" : "Xoá đơn nghỉ phép thất bại!" });
       await getAllNgayPhep();
-    } catch {
-      api.error({
-        message: "Xoá dữ liệu không thành công",
-        description: "Xoá thất bại",
-      });
+    } catch (error) {
+      api.notifyByStatus({ status: error?.response?.status, message: "Xoá đơn nghỉ phép thất bại!" });
     }
   };
 

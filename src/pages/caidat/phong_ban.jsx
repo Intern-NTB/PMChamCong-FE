@@ -126,25 +126,15 @@ export default function PhongBanComponent  ()  {
                     maPhongBan: editingId,
                     ...values
                 };
-                await updatePhongBan(updatedData);
-                apiNotification.success({
-                    message: 'Thành công',
-                    description: 'Cập nhật phòng ban thành công!'
-                });
+                const res = await updatePhongBan(updatedData);
+                apiNotification.notifyByStatus({ status: res?.status, message: res?.status && String(res.status).startsWith('2') ? 'Cập nhật phòng ban thành công!' : 'Cập nhật phòng ban thất bại!' });
             } else {
-                await createPhongBan(values);
-                apiNotification.success({
-                    message: 'Thành công',
-                    description: 'Thêm phòng ban thành công!'
-                });
+                const res = await createPhongBan(values);
+                apiNotification.notifyByStatus({ status: res?.status, message: res?.status && String(res.status).startsWith('2') ? 'Thêm phòng ban thành công!' : 'Thêm phòng ban thất bại!' });
             }
             handleCancel();
         } catch (error) {
-            console.error('Error:', error);
-            apiNotification.error({
-                message: 'Lỗi',
-                description: 'Có lỗi xảy ra, vui lòng thử lại!'
-            });
+            apiNotification.notifyByStatus({ status: error?.response?.status, message: 'Có lỗi xảy ra, vui lòng thử lại!' });
         }
     }, [editingId, updatePhongBan, createPhongBan]);
 
@@ -213,18 +203,11 @@ export default function PhongBanComponent  ()  {
     const handleConfirmDelete = useCallback(async () => {
         try {
             if (isModalConfirmVisible.data) {
-                await deletePhongBan(isModalConfirmVisible.data.maPhongBan);
-                apiNotification.success({
-                    message: 'Thành công',
-                    description: 'Xóa phòng ban thành công!'
-                });
+                const res = await deletePhongBan(isModalConfirmVisible.data.maPhongBan);
+                apiNotification.notifyByStatus({ status: res?.status, message: res?.status && String(res.status).startsWith('2') ? 'Xóa phòng ban thành công!' : 'Xóa phòng ban thất bại!' });
             }
         } catch (error) {
-            console.error('Error deleting:', error);
-            apiNotification.error({
-                message: 'Lỗi',
-                description: 'Có lỗi xảy ra khi xóa!'
-            });
+            apiNotification.notifyByStatus({ status: error?.response?.status, message: 'Có lỗi xảy ra khi xóa!' });
         } finally {
             setIsModalConfirmVisible({ visible: false, data: null });
         }

@@ -11,8 +11,10 @@ export const getAllHeThongServices = async () => {
 
 export const updateHeThongServices = async (duLieuHeThong) => {
     try {
-        await axiosInstance.put('/hethong', duLieuHeThong);
-    } catch {
+        const res = await axiosInstance.put('/hethong', duLieuHeThong);
+        return res;
+    } catch (error) {
         console.log('AXIOS! Lỗi cập nhật dữ liệu hệ thống');
+        throw error;
     }
 }

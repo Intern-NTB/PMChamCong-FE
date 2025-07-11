@@ -11,15 +11,15 @@ export const getAllVaiTroServices = async () => {
 };
 
 export const updateVaiTroServices = async (maVaiTro, tenVaiTro) => {
-  await axiosInstance.put(`/vaitro/${maVaiTro}`, { tenVaiTro });
+  return await axiosInstance.put(`/vaitro/${maVaiTro}`, { tenVaiTro });
 };
 
 export const createVaiTroServices = async (tenVaiTro) => {
-  await axiosInstance.post(`/vaitro`, { tenVaiTro });
+  return await axiosInstance.post(`/vaitro`, { tenVaiTro });
 };
 
 export const deleteVaiTroServices = async (maVaiTro) => {
-  await axiosInstance.delete(`/vaitro/${maVaiTro}`);
+  return await axiosInstance.delete(`/vaitro/${maVaiTro}`);
 };
 
 export const getAllQuyenHanServices = async (maVaiTro) => {
@@ -28,9 +28,9 @@ export const getAllQuyenHanServices = async (maVaiTro) => {
 };
 
 export const assignPermissionToRole = async (maVaiTro, maQuyenHan) => {
-  await axiosInstance.post(`/vaitro/quyenhan/${maVaiTro}/${maQuyenHan}`);
+  return await axiosInstance.post(`/vaitro/quyenhan/${maVaiTro}/${maQuyenHan}`);
 };
 
 export const removePermissionFromRole = async (maVaiTro, maQuyenHan) => {
-  await axiosInstance.delete(`/vaitro/quyenhan/${maVaiTro}/${maQuyenHan}`);
+  return await axiosInstance.delete(`/vaitro/quyenhan/${maVaiTro}/${maQuyenHan}`);
 };

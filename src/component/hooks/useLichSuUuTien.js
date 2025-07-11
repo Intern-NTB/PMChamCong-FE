@@ -27,38 +27,21 @@ export const useLichSuUuTien = () => {
   };
 
   const createLichSuDoiTuongUuTien = async (duLieuUuTien) => {
-      try {
-        await createLichSuUuTienServices(duLieuUuTien);
-        getAllLichSuUuTien();
-      } catch (error) {
-        console.error("Lỗi thêm đối tượng ưu tiên:", error);
-      }
-    };
+    const res = await createLichSuUuTienServices(duLieuUuTien);
+    await getAllLichSuUuTien();
+    return res;
+  };
 
   const updateLichSuUuTien = async (maNhanVien, maUuTien,duLieuCapNhat) => {
-    setLoadingLichSuUuTien(true);
-    try {
-      await updateLichSuUuTienServices(maNhanVien, maUuTien,duLieuCapNhat);
-      setIsUpdatedLichSuUuTien(true);
-    } catch (error) {
-      console.error("Lỗi khi cập nhật lịch sử ưu tiên:", error);
-      setIsUpdatedLichSuUuTien(false);
-    } finally {
-      setLoadingLichSuUuTien(false);
-    }
+    const res = await updateLichSuUuTienServices(maNhanVien, maUuTien,duLieuCapNhat);
+    await getAllLichSuUuTien();
+    return res;
   };
 
   const deleteLichSuUuTien = async (maNhanVien, maUuTien) => {
-    setLoadingLichSuUuTien(true);
-    try {
-      await deleteLichSuUuTienServices(maNhanVien, maUuTien);
-      setIsDeletedLichSuUuTien(true);
-    } catch (error) {
-      console.error("Lỗi khi xoá lịch sử ưu tiên:", error);
-      setIsDeletedLichSuUuTien(false);
-    } finally {
-      setLoadingLichSuUuTien(false);
-    }
+    const res = await deleteLichSuUuTienServices(maNhanVien, maUuTien);
+    await getAllLichSuUuTien();
+    return res;
   };
 
   useEffect(() => {

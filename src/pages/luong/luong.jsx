@@ -543,28 +543,20 @@ export default function Luong() {
             thang: Number(dayjs(values.thangNam).format("MM")),
             maNhanVien,
           };
-          await createLuongById(valuesFormated);
+          const res = await createLuongById(valuesFormated);
+          apiNotification.notifyByStatus({ status: res?.status, message: res?.status && String(res.status).startsWith('2') ? "Tính lương cho nhân viên đã chọn thành công!" : "Tính lương cho nhân viên thất bại!" });
         }
-        apiNotification.success({
-          message: "Tính lương cho nhân viên đã chọn thành công!",
-        });
       } else {
         // Tính lương cho tất cả nhân viên
         const valuesFormated = {
           nam: Number(dayjs(values.thangNam).format("YYYY")),
           thang: Number(dayjs(values.thangNam).format("MM")),
         };
-        await createLuong(valuesFormated);
-        apiNotification.success({
-          message: "Tính lương cho tất cả nhân viên thành công!",
-        });
+        const res = await createLuong(valuesFormated);
+        apiNotification.notifyByStatus({ status: res?.status, message: res?.status && String(res.status).startsWith('2') ? "Tính lương cho tất cả nhân viên thành công!" : "Tính lương cho tất cả nhân viên thất bại!" });
       }
     } catch (error) {
-      console.error("Lỗi khi tính lương:", error);
-      apiNotification.error({
-        message: "Tính lương thất bại!",
-        description: error.message || "Đã có lỗi xảy ra trong quá trình tính lương.",
-      });
+      apiNotification.notifyByStatus({ status: error?.response?.status, message: "Tính lương thất bại!" });
     } finally {
       setIsTinhLuongModalVisible(false);
       tinhLuongForm.resetFields();

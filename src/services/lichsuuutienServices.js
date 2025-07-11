@@ -12,9 +12,9 @@ export const getAllLichSuUuTienServices = async () => {
 export const createLichSuUuTienServices = async (duLieuUuTien) => {
     try {
         const res = await axiosInstance.post('/lichsuuutien', duLieuUuTien)
-        return res.data
+        return res;
     } catch (error) {
-        console.log(error)
+        throw error;
     }
 };
 
@@ -22,9 +22,9 @@ export const createLichSuUuTienServices = async (duLieuUuTien) => {
 export const updateLichSuUuTienServices = async (maNhanVien,maUuTien,duLieuCapNhat) => {
     try {
         const res = await axiosInstance.put(`/lichsuuutien/${maNhanVien}/${maUuTien}`,duLieuCapNhat)
-        return res.data
+        return res;
     } catch (error) {
-        console.log(error)
+        throw error;
     }
 };
 
@@ -32,8 +32,8 @@ export const updateLichSuUuTienServices = async (maNhanVien,maUuTien,duLieuCapNh
 export const deleteLichSuUuTienServices = async (maNhanVien,maUuTien) => {
     try {
         const res = await axiosInstance.delete(`/lichsuuutien/${maNhanVien}/${maUuTien}`)
-        return res.data
+        return res;
     } catch (error) {
-        console.log(error)
+        throw error;
     }
 };

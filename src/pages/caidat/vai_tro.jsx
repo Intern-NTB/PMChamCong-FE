@@ -192,8 +192,7 @@ export default function VaiTroComponent() {
 
     try {
       if (editingId) {
-        // Update an existing role
-        await updateVaiTro(editingId, tenVaiTro);
+        const res = await updateVaiTro(editingId, tenVaiTro);
         const quyenTruocDo = danhSachQuyenTheoVaiTro[editingId] || [];
 
         const quyenCanThem = danhSachQuyenDuocChon.filter(
@@ -210,37 +209,26 @@ export default function VaiTroComponent() {
           await goQuyenKhoiVaiTro(editingId, quyenCanXoa);
         }
 
-        apiNotification.success({
-          message: "Cập nhật thành công!",
-          description: "Vai trò đã được cập nhật thành công.",
-        });
+        apiNotification.notifyByStatus({ status: res?.status, message: "Cập nhật vai trò thành công!" });
       } else {
-        // Create a new role
         const newVaiTro = await createVaiTro(tenVaiTro);
 
-        if (newVaiTro?.maVaiTro && danhSachQuyenDuocChon.length > 0) {
-          await ganQuyenChoVaiTro(newVaiTro.maVaiTro, danhSachQuyenDuocChon);
+        if (newVaiTro?.data?.maVaiTro && danhSachQuyenDuocChon.length > 0) {
+          await ganQuyenChoVaiTro(newVaiTro.data.maVaiTro, danhSachQuyenDuocChon);
         }
-        apiNotification.success({
-          message: "Thêm mới thành công!",
-          description: "Vai trò mới đã được thêm thành công.",
-        });
+        apiNotification.notifyByStatus({ status: newVaiTro?.status, message: "Thêm vai trò thành công!" });
       }
       handleCancel();
-      getAllVaiTro(); // Refresh the list after successful operation
+      getAllVaiTro();
     } catch (error) {
-      console.error("Lỗi khi gửi form vai trò:", error);
+      const status = error?.response?.status;
+      let message = "Thao tác thất bại!";
       if (editingId) {
-        apiNotification.error({
-          message: "Cập nhật thất bại!",
-          description: "Không thể cập nhật vai trò. Vui lòng thử lại.",
-        });
+        message = "Cập nhật vai trò thất bại!";
       } else {
-        apiNotification.error({
-          message: "Thêm mới thất bại!",
-          description: "Không thể thêm vai trò. Vui lòng thử lại.",
-        });
+        message = "Tạo vai trò thất bại!";
       }
+      apiNotification.notifyByStatus({ status, message });
     }
   };
 
@@ -304,22 +292,15 @@ export default function VaiTroComponent() {
 
   const handleDeleteVaiTro = async () => {
     try {
-      await deleteVaiTro(isModalConfirmVisible.data.maVaiTro);
-      apiNotification.success({
-        message: "Xóa thành công!",
-        description: "Vai trò đã được xóa thành công.",
-      });
+      const res = await deleteVaiTro(isModalConfirmVisible.data.maVaiTro);
+      apiNotification.notifyByStatus({ status: res?.status, message: "Xoá vai trò thành công" });
       setIsModalConfirmVisible({
         visible: false,
         data: [],
       });
-      getAllVaiTro(); // Refresh the list after successful deletion
+      getAllVaiTro();
     } catch (error) {
-      console.error("Lỗi khi xóa vai trò:", error);
-      apiNotification.error({
-        message: "Xóa thất bại!",
-        description: "Không thể xóa vai trò này. Vui lòng thử lại.",
-      });
+      apiNotification.notifyByStatus({ status: error?.response?.status, message: "Xoá vai trò thất bại!" });
     }
   };
 
@@ -331,7 +312,6 @@ export default function VaiTroComponent() {
       });
       return;
     }
-
     Modal.confirm({
       title: "Xác nhận xóa nhiều",
       content: `Bạn có chắc chắn muốn xóa ${selectedRowKeys.length} vai trò đã chọn?`,
@@ -340,23 +320,14 @@ export default function VaiTroComponent() {
       okType: "danger",
       onOk: async () => {
         try {
-          // Assuming deleteVaiTro can handle an array of IDs or you loop through them
-          // For simplicity, let's assume deleteVaiTro is called for each ID
           for (const id of selectedRowKeys) {
-            await deleteVaiTro(id);
+            const res = await deleteVaiTro(id);
+            apiNotification.notifyByStatus({ status: res?.status, message: `Xoá vai trò ${id} thành công!` });
           }
-          setSelectedRowKeys([]); // Clear selected keys
-          apiNotification.success({
-            message: "Xóa thành công!",
-            description: `Đã xóa ${selectedRowKeys.length} vai trò đã chọn thành công.`,
-          });
-          getAllVaiTro(); // Refresh the list after successful bulk deletion
+          setSelectedRowKeys([]);
+          getAllVaiTro();
         } catch (error) {
-          console.error("Lỗi khi xóa nhiều vai trò:", error);
-          apiNotification.error({
-            message: "Xóa thất bại!",
-            description: "Có lỗi xảy ra khi xóa các vai trò đã chọn. Vui lòng thử lại.",
-          });
+          apiNotification.notifyByStatus({ status: error?.response?.status, message: "Xoá vai trò thất bại!" });
         }
       },
       onCancel: () => {

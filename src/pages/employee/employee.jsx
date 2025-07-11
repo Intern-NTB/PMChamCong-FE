@@ -37,6 +37,7 @@ import "./employee.css";
 import MyAlert from "../../component/ui/alert";
 import ModalChiTietChamCong from "../chamcong/modal_chi_tiet_cham_cong";
 import dayjs from "dayjs";
+import { useAppNotification } from "../../component/ui/notification";
 
 const { Option } = Select;
 const { Search } = Input;
@@ -532,15 +533,16 @@ export default function NhanVien() {
     setTimeout(() => setAlert({ ...alert, visible: false }), 3000);
   };
 
+  const apiNotification = useAppNotification();
+
   const handleSaveCreateNhanVien = async (values) => {
     try {
-      await addNhanVien(values);
-      showAlert("success", "Thành công", "Thêm nhân viên thành công!");
+      const res = await addNhanVien(values);
+      apiNotification.notifyByStatus({ status: res?.status, message: res?.status && String(res.status).startsWith('2') ? "Thêm nhân viên thành công!" : "Thêm nhân viên thất bại!" });
       setIsModalCreateNhanVienVisible(false);
       await fetchNhanVien();
     } catch (error) {
-      console.error("Lỗi khi thêm nhân viên:", error);
-      showAlert("error", "Thất bại", "Thêm nhân viên thất bại. Vui lòng thử lại!");
+      apiNotification.notifyByStatus({ status: error?.response?.status, message: "Thêm nhân viên thất bại!" });
     }
   };
 
@@ -552,50 +554,37 @@ export default function NhanVien() {
 
   const handleDelete = async (maNhanVien) => {
     try {
-      await deleteNhanVien(maNhanVien);
-      showAlert("success", "Thành công", "Xoá nhân viên thành công!");
+      const res = await deleteNhanVien(maNhanVien);
+      apiNotification.notifyByStatus({ status: res?.status, message: res?.status && String(res.status).startsWith('2') ? "Xoá nhân viên thành công!" : "Xoá nhân viên thất bại!" });
       await fetchNhanVien();
     } catch (error) {
-      console.error("Lỗi khi xóa nhân viên:", error);
-      showAlert("error", "Thất bại", "Xoá nhân viên thất bại. Vui lòng thử lại.");
+      apiNotification.notifyByStatus({ status: error?.response?.status, message: "Xoá nhân viên thất bại!" });
     }
   };
 
   const handleSave = async (values) => {
     try {
-      await updateNhanVien(currentRecord.maNhanVien, values);
-      showAlert("success", "Thành công", "Cập nhật nhân viên thành công!");
+      const res = await updateNhanVien(currentRecord.maNhanVien, values);
+      apiNotification.notifyByStatus({ status: res?.status, message: res?.status && String(res.status).startsWith('2') ? "Cập nhật nhân viên thành công!" : "Cập nhật nhân viên thất bại!" });
       setIsModalVisible(false);
       await fetchNhanVien();
     } catch (error) {
-      console.error("Lỗi khi cập nhật:", error);
-      showAlert(
-        "error",
-        "Thất bại",
-        "Cập nhật nhân viên thất bại. Vui lòng thử lại."
-      );
+      apiNotification.notifyByStatus({ status: error?.response?.status, message: "Cập nhật nhân viên thất bại!" });
     }
   };
 
   const handleDeleteMultiple = async () => {
     try {
       await Promise.all(
-        selectedRowKeys.map((maNhanVien) => deleteNhanVien(maNhanVien))
+        selectedRowKeys.map(async (maNhanVien) => {
+          const res = await deleteNhanVien(maNhanVien);
+          apiNotification.notifyByStatus({ status: res?.status, message: res?.status && String(res.status).startsWith('2') ? `Xoá nhân viên ${maNhanVien} thành công!` : `Xoá nhân viên ${maNhanVien} thất bại!` });
+        })
       );
       await fetchNhanVien();
       setSelectedRowKeys([]);
-      showAlert(
-        "success",
-        "Thành công",
-        `Đã xoá ${selectedRowKeys.length} nhân viên.`
-      );
     } catch (error) {
-      console.error("Lỗi khi xóa nhiều nhân viên:", error);
-      showAlert(
-        "error",
-        "Thất bại",
-        "Xoá nhiều nhân viên thất bại. Vui lòng thử lại."
-      );
+      apiNotification.notifyByStatus({ status: error?.response?.status, message: "Xoá nhiều nhân viên thất bại!" });
     }
   };
 

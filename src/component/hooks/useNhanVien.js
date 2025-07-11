@@ -66,8 +66,10 @@ export const useNhanVien = (isGetAllNhanvien = true) => {
     try {
       const res = await createNhanVienServices(nhanVienData);
       setStatusCreateNhanVien(res.success);
+      return res;
     } catch (error) {
       console.log("API Response Error: ", error);
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -76,10 +78,12 @@ export const useNhanVien = (isGetAllNhanvien = true) => {
   const deleteNhanVien = async (maNhanVien) => {
     setLoading(true);
     try {
-      await deleteNhanVienServices(maNhanVien);
+      const res = await deleteNhanVienServices(maNhanVien);
       setStatusDeleteNhanVien(true);
-    } catch {
+      return res;
+    } catch (error) {
       setStatusDeleteNhanVien(false);
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -88,10 +92,12 @@ export const useNhanVien = (isGetAllNhanvien = true) => {
   const updateNhanVien = async (maNhanVien, nhanVienData) => {
     setLoading(true);
     try {
-      await updateNhanVienService(maNhanVien, nhanVienData);
+      const res = await updateNhanVienService(maNhanVien, nhanVienData);
       setStatusUpdateNhanVien(true);
-    } catch {
+      return res;
+    } catch (error) {
       setStatusUpdateNhanVien(false);
+      throw error;
     } finally {
       setLoading(false);
     }

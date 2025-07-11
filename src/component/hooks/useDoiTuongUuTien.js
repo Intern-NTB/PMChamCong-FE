@@ -23,31 +23,21 @@ export const useDoiTuongUuTien = () => {
   };
 
   const createDoiTuongUuTien = async (duLieuUuTien) => {
-    try {
-      await createDoiTuongUuTienServices(duLieuUuTien);
-      fetchAllDoiTuongUuTien();
-    } catch (error) {
-      console.error("Lỗi thêm đối tượng ưu tiên:", error);
-    }
+    const res = await createDoiTuongUuTienServices(duLieuUuTien);
+    await fetchAllDoiTuongUuTien();
+    return res;
   };
 
   const updateDoiTuongUuTien = async (duLieuUuTien) => {
-    try {
-      await updateDoiTuongUuTienServices(duLieuUuTien);
-      fetchAllDoiTuongUuTien();
-    } catch (error) {
-      console.error("Lỗi cập nhật đối tượng ưu tiên:", error);
-    }
+    const res = await updateDoiTuongUuTienServices(duLieuUuTien);
+    await fetchAllDoiTuongUuTien();
+    return res;
   };
 
   const deleteDoiTuongUuTien = async (maUuTien) => {
-    try {
-      await deleteDoiTuongUuTienServices(maUuTien);
-      fetchAllDoiTuongUuTien();
-    } catch (error) {
-      console.error("Lỗi xóa đối tượng ưu tiên:", error);
-      throw error;
-    }
+    const res = await deleteDoiTuongUuTienServices(maUuTien);
+    await fetchAllDoiTuongUuTien();
+    return res;
   };
 
   useEffect(() => {
