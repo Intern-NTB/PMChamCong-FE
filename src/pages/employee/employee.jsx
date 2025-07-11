@@ -94,10 +94,9 @@ export default function NhanVien() {
       type: "text",
     },
     {
-      name: "email", 
+      name: "email",
       label: "Email",
       type: "email",
-     
     },
     {
       name: "ngaySinh",
@@ -181,7 +180,7 @@ export default function NhanVien() {
       maNhanVien: nhanVien.maNhanVien,
       hoTen: nhanVien.hoTen || "N/A",
       cmnd: nhanVien.cmnd || "",
-      email: nhanVien.email || "", 
+      email: nhanVien.email || "",
       ngaySinh: nhanVien.ngaySinh || "",
       diaChi: nhanVien.diaChi || "",
       soDienThoai: nhanVien.soDienThoai || "",
@@ -303,7 +302,7 @@ export default function NhanVien() {
       },
     },
     {
-      title: "Email", 
+      title: "Email",
       dataIndex: "email",
       key: "email",
       width: 180,
@@ -417,12 +416,12 @@ export default function NhanVien() {
       title: "Thông tin nhân viên",
       key: "info",
       render: (_, record) => (
-        <div style={{ padding: "8px 0"}}>
+        <div style={{ padding: "8px 0" }}>
           <div style={{ fontWeight: "bold", marginBottom: "4px" }}>
             {highlightText(record.hoTen)}
           </div>
           <div style={{ fontSize: "12px", color: "#666", marginBottom: "4px" }}>
-            Email: {highlightText(record.email)} 
+            Email: {highlightText(record.email)}
           </div>
           <div style={{ fontSize: "12px", color: "#666", marginBottom: "4px" }}>
             CCCD: {highlightText(record.cmnd)}
@@ -452,7 +451,7 @@ export default function NhanVien() {
                   : "orange"
               }
               icon={
-                record.trangThai === "Đang làm" ? (
+                record.trangThai === "Đang làm" || record.trangThai === "Mới đăng ký" ? (
                   <CheckCircleOutlined />
                 ) : (
                   <CloseCircleOutlined />
@@ -541,7 +540,7 @@ export default function NhanVien() {
       await fetchNhanVien();
     } catch (error) {
       console.error("Lỗi khi thêm nhân viên:", error);
-      showAlert("error", "Lỗi", "Thêm nhân viên thất bại. Vui lòng thử lại.");
+      showAlert("error", "Thất bại", "Thêm nhân viên thất bại. Vui lòng thử lại!");
     }
   };
 
@@ -558,7 +557,7 @@ export default function NhanVien() {
       await fetchNhanVien();
     } catch (error) {
       console.error("Lỗi khi xóa nhân viên:", error);
-      showAlert("error", "Lỗi", "Xoá nhân viên thất bại. Vui lòng thử lại.");
+      showAlert("error", "Thất bại", "Xoá nhân viên thất bại. Vui lòng thử lại.");
     }
   };
 
@@ -572,7 +571,7 @@ export default function NhanVien() {
       console.error("Lỗi khi cập nhật:", error);
       showAlert(
         "error",
-        "Lỗi",
+        "Thất bại",
         "Cập nhật nhân viên thất bại. Vui lòng thử lại."
       );
     }
@@ -594,7 +593,7 @@ export default function NhanVien() {
       console.error("Lỗi khi xóa nhiều nhân viên:", error);
       showAlert(
         "error",
-        "Lỗi",
+        "Thất bại",
         "Xoá nhiều nhân viên thất bại. Vui lòng thử lại."
       );
     }

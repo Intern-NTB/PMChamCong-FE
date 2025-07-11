@@ -166,44 +166,44 @@ export default function ThuongComponent() {
 
   // Hàm lọc dữ liệu cho tìm kiếm, lọc theo thời gian
   const getFilteredLichSu = () => {
-    let filteredData = dataSourceDanhSachLichSuThuong;
+  let filteredData = dataSourceDanhSachLichSuThuong;
 
-    // Lọc khoảng thời gian
-    if (dateRange[0] && dateRange[1]) {
-      filteredData = filteredData.filter((item) => {
-        const itemDate = dayjs(item.ngayTru);
-        return itemDate.isBetween(dateRange[0], dateRange[1], "day", "[]");
-      });
-    }
+  // Thêm kiểm tra dateRange[0] và dateRange[1]
+  if (dateRange && dateRange[0] && dateRange[1]) {
+    filteredData = filteredData.filter((item) => {
+      const itemDate = dayjs(item.ngayTru);
+      return itemDate.isBetween(dateRange[0], dateRange[1], "day", "[]");
+    });
+  }
 
-    // Lọc tháng
-    if (selectedMonth) {
-      filteredData = filteredData.filter((item) => {
-        const itemDate = dayjs(item.ngayTru);
-        return (
-          itemDate.month() === selectedMonth.month() &&
-          itemDate.year() === selectedMonth.year()
-        );
-      });
-    }
+  // Phần lọc tháng không cần thay đổi vì nó đã có kiểm tra `if (selectedMonth)`
+  if (selectedMonth) {
+    filteredData = filteredData.filter((item) => {
+      const itemDate = dayjs(item.ngayTru);
+      return (
+        itemDate.month() === selectedMonth.month() &&
+        itemDate.year() === selectedMonth.year()
+      );
+    });
+  }
 
-    // Lọc theo từ khóa tìm kiếm
-    if (searchTextLichSu) {
-      const searchLower = searchTextLichSu.toLowerCase();
-      filteredData = filteredData.filter((item) => {
-        return (
-          item.maNhanVien?.toLowerCase().includes(searchLower) ||
-          item.hoTen?.toLowerCase().includes(searchLower) ||
-          getLoaiThuongName(item.maLoaiTienThuong)
-            ?.toLowerCase()
-            .includes(searchLower) ||
-          item.lyDo?.toLowerCase().includes(searchLower)
-        );
-      });
-    }
+  // Phần lọc theo từ khóa tìm kiếm không cần thay đổi
+  if (searchTextLichSu) {
+    const searchLower = searchTextLichSu.toLowerCase();
+    filteredData = filteredData.filter((item) => {
+      return (
+        item.maNhanVien?.toLowerCase().includes(searchLower) ||
+        item.hoTen?.toLowerCase().includes(searchLower) ||
+        getLoaiThuongName(item.maLoaiTienThuong)
+          ?.toLowerCase()
+          .includes(searchLower) ||
+        item.lyDo?.toLowerCase().includes(searchLower)
+      );
+    });
+  }
 
-    return filteredData;
-  };
+  return filteredData;
+};
 
   const getFilteredLoaiThuong = () => {
     if (!searchTextLoaiThuong) return danhSachLoaiTienThuong;

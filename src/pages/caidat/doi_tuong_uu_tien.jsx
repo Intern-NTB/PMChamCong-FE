@@ -138,29 +138,38 @@ export default function DoiTuongUuTienComponent() {
   };
 
   const onFinish = async (values) => {
-    if (editingId) {
-      const formatedValues = {
-        ...values,
-        maUuTien: editingId,
-        thoiGianBatDauCa: values.thoiGianBatDauCa?.format("HH:mm:ss"),
-        thoiGianKetThucCa: values.thoiGianKetThucCa?.format("HH:mm:ss"),
-        thoiGianHieuLuc: parseInt(values.thoiGianHieuLuc),
-        phongBan: values.phongBan,
-      };
-      await updateDoiTuongUuTien(formatedValues);
-      api.success({ message: "Cập nhật đối tượng ưu tiên thành công!" });
-    } else {
-      const formatedValues = {
-        ...values,
-        thoiGianBatDauCa: values.thoiGianBatDauCa?.format("HH:mm:ss"),
-        thoiGianKetThucCa: values.thoiGianKetThucCa?.format("HH:mm:ss"),
-        thoiGianHieuLuc: parseInt(values.thoiGianHieuLuc),
-        phongBan: values.phongBan,
-      };
-      await createDoiTuongUuTien(formatedValues);
-      api.success({ message: "Thêm đối tượng ưu tiên thành công!" });
+    try {
+      if (editingId) {
+        const formatedValues = {
+          ...values,
+          maUuTien: editingId,
+          thoiGianBatDauCa: values.thoiGianBatDauCa?.format("HH:mm:ss"),
+          thoiGianKetThucCa: values.thoiGianKetThucCa?.format("HH:mm:ss"),
+          thoiGianHieuLuc: parseInt(values.thoiGianHieuLuc),
+          phongBan: values.phongBan,
+        };
+        await updateDoiTuongUuTien(formatedValues);
+        api.success({ message: "Cập nhật đối tượng ưu tiên thành công!" });
+      } else {
+        const formatedValues = {
+          ...values,
+          thoiGianBatDauCa: values.thoiGianBatDauCa?.format("HH:mm:ss"),
+          thoiGianKetThucCa: values.thoiGianKetThucCa?.format("HH:mm:ss"),
+          thoiGianHieuLuc: parseInt(values.thoiGianHieuLuc),
+          phongBan: values.phongBan,
+        };
+        await createDoiTuongUuTien(formatedValues);
+        api.success({ message: "Thêm đối tượng ưu tiên thành công!" });
+      }
+      handleCancel();
+    } catch (error) {
+      api.error({
+        message: editingId
+          ? "Cập nhật đối tượng ưu tiên thất bại"
+          : "Thêm đối tượng ưu tiên thất bại",
+        description: error?.response?.data?.message || error.message,
+      });
     }
-    handleCancel();
   };
 
   const onHistoryFinish = async (values) => {
@@ -174,33 +183,34 @@ export default function DoiTuongUuTienComponent() {
         : null,
     };
 
-    if (editingHistoryId) {
-      await updateLichSuUuTien(
-        editingHistoryId,
-        formattedValues.maNhanVien,
-        formattedValues
-      );
-      api.success({
-        message: "Thành công",
-        description: "Cập nhật lịch sử ưu tiên thành công!",
-      });
-    } else {
-      try {
+    try {
+      if (editingHistoryId) {
+        await updateLichSuUuTien(
+          editingHistoryId,
+          formattedValues.maNhanVien,
+          formattedValues
+        );
+        api.success({
+          message: "Thành công",
+          description: "Cập nhật lịch sử ưu tiên thành công!",
+        });
+      } else {
         await createLichSuDoiTuongUuTien(formattedValues);
 
         api.success({
           message: "Thành công",
           description: "Thêm mới lịch sử ưu tiên thành công!",
         });
-      } catch (error) {
-        api.error({
-          message: "Lỗi khi thêm ưu tiên cho nhân viên",
-          description: error?.response?.data?.message || error.message,
-        });
       }
+      handleHistoryCancel();
+    } catch (error) {
+      api.error({
+        message: editingHistoryId
+          ? "Lỗi khi cập nhật ưu tiên cho nhân viên"
+          : "Lỗi khi thêm ưu tiên cho nhân viên",
+        description: error?.response?.data?.message || error.message,
+      });
     }
-
-    handleHistoryCancel();
   };
 
   const handleAdd = () => {
@@ -242,10 +252,10 @@ export default function DoiTuongUuTienComponent() {
         hoTen: record.hoTen,
         maUuTien: record.maUuTien,
         thoiGianHieuLucBatDau: record.thoiGianHieuLucBatDau
-          ? dayjs(record.thoiGianHieuLucBatDau, "HH:mm:ss")
+          ? dayjs(record.thoiGianHieuLucBatDau, "YYYY-MM-DD")
           : null,
         thoiGianHieuLucKetThuc: record.thoiGianHieuLucKetThuc
-          ? dayjs(record.thoiGianHieuLucKetThuc, "HH:mm:ss")
+          ? dayjs(record.thoiGianHieuLucKetThuc, "YYYY-MM-DD")
           : null,
         lyDo: record.lyDo,
         trangThai: record.trangThai,
@@ -262,17 +272,22 @@ export default function DoiTuongUuTienComponent() {
     } catch (error) {
       api.error({
         message: `Đã xảy ra lỗi khi xóa đối tượng ưu tiên có mã ${maUuTien}`,
-        description: error,
+        description: error?.response?.data?.message || error.message,
       });
     }
   };
 
-  const handleDeleteMultiple = () => {
-    selectedKeys.map((key) => {
-      handleDelete(key);
-    });
-
-    setSelectedKeys([]);
+  const handleDeleteMultiple = async () => {
+    try {
+      await Promise.all(selectedKeys.map((key) => handleDelete(key)));
+      api.success({ message: `Xóa ${selectedKeys.length} mục đã chọn thành công!` });
+      setSelectedKeys([]);
+    } catch (error) {
+      api.error({
+        message: "Xóa các đối tượng ưu tiên đã chọn thất bại",
+        description: error?.response?.data?.message || error.message,
+      });
+    }
   };
 
   const handleDeleteHistory = async (maNhanVien, maUuTien) => {
@@ -281,13 +296,39 @@ export default function DoiTuongUuTienComponent() {
       api.success({ message: "Xóa lịch sử ưu tiên thành công!" });
     } catch (error) {
       api.error({
-        api: "Đã xảy ra lỗi khi xóa lịch sử ưu tiên",
-        description: error,
+        message: "Đã xảy ra lỗi khi xóa lịch sử ưu tiên",
+        description: error?.response?.data?.message || error.message,
       });
     }
   };
 
-  const handleDeleteMultipleHistory = () => {};
+  const handleDeleteMultipleHistory = async () => {
+    try {
+      // Assuming selectedHistoryKeys stores objects with maNhanVien and maUuTien
+      await Promise.all(
+        selectedHistoryKeys.map((key) => {
+          // You might need to parse the key if it's a concatenated string like 'maNhanVien-maUuTien'
+          // For now, assuming your selectedHistoryKeys are actual objects if rowKey is complex.
+          // If rowKey creates a simple string, you'll need to split it.
+          // Example: const [maNhanVien, maUuTien] = key.split('-');
+          const record = dataSourceLichSuUuTien.find(
+            (item) => `${item.maNhanVien}-${item.maUuTien}` === key
+          );
+          if (record) {
+            return handleDeleteHistory(record.maNhanVien, record.maUuTien);
+          }
+          return Promise.resolve(); // If record not found, resolve immediately
+        })
+      );
+      api.success({ message: `Xóa ${selectedHistoryKeys.length} mục lịch sử đã chọn thành công!` });
+      setSelectedHistoryKeys([]);
+    } catch (error) {
+      api.error({
+        message: "Xóa các mục lịch sử ưu tiên đã chọn thất bại",
+        description: error?.response?.data?.message || error.message,
+      });
+    }
+  };
 
   const handleCancel = () => {
     setIsModalVisible(false);
@@ -340,8 +381,8 @@ export default function DoiTuongUuTienComponent() {
         return time.isValid() ? time.format("HH:mm:ss") : "Không hợp lệ";
       },
       sorter: (a, b) => {
-        const timeA = dayjs(a.thoiGianVeSom, "HH:mm:ss", true);
-        const timeB = dayjs(b.thoiGianVeSom, "HH:mm:ss", true);
+        const timeA = dayjs(a.thoiGianBatDauCa, "HH:mm:ss", true);
+        const timeB = dayjs(b.thoiGianBatDauCa, "HH:mm:ss", true);
         return timeA.isValid() && timeB.isValid()
           ? timeA.unix() - timeB.unix()
           : 0;
@@ -357,8 +398,8 @@ export default function DoiTuongUuTienComponent() {
         return time.isValid() ? time.format("HH:mm:ss") : "Không hợp lệ";
       },
       sorter: (a, b) => {
-        const timeA = dayjs(a.thoiGianVeSom, "HH:mm:ss", true);
-        const timeB = dayjs(b.thoiGianVeSom, "HH:mm:ss", true);
+        const timeA = dayjs(a.thoiGianKetThucCa, "HH:mm:ss", true);
+        const timeB = dayjs(b.thoiGianKetThucCa, "HH:mm:ss", true);
         return timeA.isValid() && timeB.isValid()
           ? timeA.unix() - timeB.unix()
           : 0;
@@ -377,7 +418,7 @@ export default function DoiTuongUuTienComponent() {
       dataIndex: "tenPhongBan",
       key: "tenPhongBan",
       width: 150,
-      //sorter: (a, b) => a.thoiGianHieuLuc - b.thoiGianHieuLuc,
+      //sorter: (a, b) => a.thoiGianHieuLuc - b.thoiGianHieuLuc, // Consider if string sorting is desired
     },
     {
       title: "Thao tác",
@@ -447,21 +488,21 @@ export default function DoiTuongUuTienComponent() {
       dataIndex: "thoiGianHieuLucBatDau",
       key: "thoiGianHieuLucBatDau",
       width: 120,
-      render: (date) => dayjs(date, "DD/MM/YYYY").format("DD/MM/YYYY"),
+      render: (date) => (date ? dayjs(date).format("DD/MM/YYYY") : "N/A"),
     },
     {
       title: "Ngày kết thúc",
       dataIndex: "thoiGianHieuLucKetThuc",
       key: "thoiGianHieuLucKetThuc",
       width: 120,
-      render: (date) => dayjs(date, "DD/MM/YYYY").format("DD/MM/YYYY"),
+      render: (date) => (date ? dayjs(date).format("DD/MM/YYYY") : "N/A"),
     },
     {
       title: "Phòng ban",
       dataIndex: "phongBan",
       key: "phongBan",
       width: 150,
-      //sorter: (a, b) => a.thoiGianHieuLuc - b.thoiGianHieuLuc,
+      //sorter: (a, b) => a.thoiGianHieuLuc - b.thoiGianHieuLuc, // Consider if string sorting is desired
     },
     {
       title: "Thao tác",
@@ -514,10 +555,13 @@ export default function DoiTuongUuTienComponent() {
 
   // Tính toán thống kê
   const totalObjects = dataSource.length;
+  // Assuming 'status' is a property of your doiTuongUuTien items.
+  // If not, you might need to adjust how 'activeObjects' is determined.
   const activeObjects = dataSource.filter(
     (item) => item.status === "Hoạt động"
   ).length;
 
+  // Assuming 'trangThai' is a property of your lichSuUuTien items.
   const activeHistoryCount = dataSourceLichSuUuTien.filter(
     (item) => item.trangThai === "Đang áp dụng"
   ).length;
@@ -627,14 +671,37 @@ export default function DoiTuongUuTienComponent() {
                     Thêm Ưu tiên
                   </Button>
                   {selectedHistoryKeys.length > 0 && (
-                    <Button
-                      type="primary"
-                      danger
-                      icon={<DeleteOutlined />}
-                      onClick={handleDeleteMultipleHistory}
+                    <Popconfirm
+                      title="Xóa các mục lịch sử ưu tiên"
+                      description={`Bạn có chắc chắn muốn xóa ${selectedHistoryKeys.length} mục đã chọn?`}
+                      onConfirm={handleDeleteMultipleHistory}
+                      okText="Có"
+                      cancelText="Không"
+                      okButtonProps={{
+                        style: {
+                          minWidth: 64,
+                          maxWidth: 100,
+                          padding: "0 12px",
+                          whiteSpace: "nowrap",
+                        },
+                      }}
+                      cancelButtonProps={{
+                        style: {
+                          minWidth: 64,
+                          maxWidth: 100,
+                          padding: "0 12px",
+                          whiteSpace: "nowrap",
+                        },
+                      }}
                     >
-                      Xóa {selectedHistoryKeys.length} mục đã chọn
-                    </Button>
+                      <Button
+                        type="primary"
+                        danger
+                        icon={<DeleteOutlined />}
+                      >
+                        Xóa {selectedHistoryKeys.length} mục đã chọn
+                      </Button>
+                    </Popconfirm>
                   )}
                 </Space>
                 <Search
@@ -691,14 +758,37 @@ export default function DoiTuongUuTienComponent() {
                         Thêm Đối Tượng Ưu Tiên
                       </Button>
                       {selectedKeys.length > 0 && (
-                        <Button
-                          type="primary"
-                          danger
-                          icon={<DeleteOutlined />}
-                          onClick={handleDeleteMultiple}
+                        <Popconfirm
+                          title="Xóa các đối tượng ưu tiên"
+                          description={`Bạn có chắc chắn muốn xóa ${selectedKeys.length} mục đã chọn?`}
+                          onConfirm={handleDeleteMultiple}
+                          okText="Có"
+                          cancelText="Không"
+                          okButtonProps={{
+                            style: {
+                              minWidth: 64,
+                              maxWidth: 100,
+                              padding: "0 12px",
+                              whiteSpace: "nowrap",
+                            },
+                          }}
+                          cancelButtonProps={{
+                            style: {
+                              minWidth: 64,
+                              maxWidth: 100,
+                              padding: "0 12px",
+                              whiteSpace: "nowrap",
+                            },
+                          }}
                         >
-                          Xóa {selectedKeys.length} mục đã chọn
-                        </Button>
+                          <Button
+                            type="primary"
+                            danger
+                            icon={<DeleteOutlined />}
+                          >
+                            Xóa {selectedKeys.length} mục đã chọn
+                          </Button>
+                        </Popconfirm>
                       )}
                     </Space>
                     <Search
@@ -748,7 +838,7 @@ export default function DoiTuongUuTienComponent() {
                   ? "Chỉnh Sửa Đối Tượng Ưu Tiên"
                   : "Thêm Đối Tượng Ưu Tiên"}
               </Space>
-            </div>            
+            </div>
           }
           open={isModalVisible}
           onCancel={handleCancel}
@@ -919,7 +1009,7 @@ export default function DoiTuongUuTienComponent() {
                     placeholder="Họ tên nhân viên"
                     showSearch
                     optionFilterProp="label"
-                    style={{ width: "100%"}}
+                    style={{ width: "100%" }}
                     onChange={handleChangeNhanVien}
                     filterOption={(input, option) =>
                       (option?.label ?? "")
@@ -948,7 +1038,7 @@ export default function DoiTuongUuTienComponent() {
                   ]}
                 >
                   <Select
-                    disabled={editingHistoryId ? false : false}
+                    disabled={editingHistoryId ? false : false} // This seems to be intentionally not disabled during edit.
                     placeholder="Chọn đối tượng ưu tiên"
                     showSearch
                     optionFilterProp="children"
@@ -976,13 +1066,13 @@ export default function DoiTuongUuTienComponent() {
                   name="thoiGianHieuLucBatDau"
                   rules={[
                     {
-                      required: editingHistoryId ? true : false,
+                      required: editingHistoryId ? true : false, // Assuming it's always required when adding/editing history.
                       message: "Vui lòng chọn ngày bắt đầu!",
                     },
                   ]}
                 >
                   <DatePicker
-                    style={{ width: "100%"}}
+                    style={{ width: "100%" }}
                     format="DD/MM/YYYY"
                     placeholder="Chọn ngày bắt đầu"
                   />

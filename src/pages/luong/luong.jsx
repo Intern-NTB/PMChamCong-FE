@@ -486,24 +486,24 @@ export default function Luong() {
     );
   };
 
- const generateSummaryPDFHandler = async () => {
-  const selectedData = filteredData.filter((record) =>
-    selectedRows.includes(record.maNhanVien)
-  );
-  
-  if (selectedData.length === 0) {
-    alert("Vui lòng chọn ít nhất một nhân viên để in.");
-    return;
-  }
+  const generateSummaryPDFHandler = async () => {
+    const selectedData = filteredData.filter((record) =>
+      selectedRows.includes(record.maNhanVien)
+    );
 
-  // Tạo PDF duy nhất với nhiều trang (một trang cho mỗi nhân viên)
-  generateSinglePDFMultiplePages(
-    selectedData,
-    selectedMonthYear.format("MM/YYYY"),
-    duLieuThongTinTienQuyDoi,
-    isBaoGomTienQuyDoiPhep
-  );
-};
+    if (selectedData.length === 0) {
+      alert("Vui lòng chọn ít nhất một nhân viên để in.");
+      return;
+    }
+
+    // Tạo PDF duy nhất với nhiều trang (một trang cho mỗi nhân viên)
+    generateSinglePDFMultiplePages(
+      selectedData,
+      selectedMonthYear.format("MM/YYYY"),
+      duLieuThongTinTienQuyDoi,
+      isBaoGomTienQuyDoiPhep
+    );
+  };
 
   const generateMultipagePDFHandler = async () => {
     const selectedData = filteredData.filter((record) =>
@@ -534,24 +534,41 @@ export default function Luong() {
   };
 
   const handleTinhLuongSubmit = async (values) => {
-    if (values.nhanVienIds) {
-      values.nhanVienIds.map(async (maNhanVien) => {
+    try {
+      if (values.nhanVienIds && values.nhanVienIds.length > 0) {
+        // Tính lương cho các nhân viên cụ thể
+        for (const maNhanVien of values.nhanVienIds) {
+          const valuesFormated = {
+            nam: Number(dayjs(values.thangNam).format("YYYY")),
+            thang: Number(dayjs(values.thangNam).format("MM")),
+            maNhanVien,
+          };
+          await createLuongById(valuesFormated);
+        }
+        apiNotification.success({
+          message: "Tính lương cho nhân viên đã chọn thành công!",
+        });
+      } else {
+        // Tính lương cho tất cả nhân viên
         const valuesFormated = {
-          nam: Number(dayjs(values.thangNam, "MM/YYYY").format("YYYY")),
-          thang: Number(dayjs(values.thangNam, "MM/YYYY").format("MM")),
-          maNhanVien,
+          nam: Number(dayjs(values.thangNam).format("YYYY")),
+          thang: Number(dayjs(values.thangNam).format("MM")),
         };
-        await createLuongById(valuesFormated);
+        await createLuong(valuesFormated);
+        apiNotification.success({
+          message: "Tính lương cho tất cả nhân viên thành công!",
+        });
+      }
+    } catch (error) {
+      console.error("Lỗi khi tính lương:", error);
+      apiNotification.error({
+        message: "Tính lương thất bại!",
+        description: error.message || "Đã có lỗi xảy ra trong quá trình tính lương.",
       });
-    } else {
-      const valuesFormated = {
-        nam: Number(dayjs(values.thangNam, "MM/YYYY").format("YYYY")),
-        thang: Number(dayjs(values.thangNam, "MM/YYYY").format("MM")),
-      };
-      await createLuong(valuesFormated);
+    } finally {
+      setIsTinhLuongModalVisible(false);
+      tinhLuongForm.resetFields();
     }
-    setIsTinhLuongModalVisible(false);
-    tinhLuongForm.resetFields();
   };
 
   // Update selectAll state based on selectedRows
@@ -691,8 +708,10 @@ export default function Luong() {
         }}
         onChange={(e) => {
           e.stopPropagation();
-          setIsBaoGomTienQuyDoiPhep(true);
+          // Thay đổi logic này để cho phép bật/tắt
+          setIsBaoGomTienQuyDoiPhep(e.target.checked);
         }}
+        checked={isBaoGomTienQuyDoiPhep} // Thêm thuộc tính checked để hiển thị trạng thái
       >
         Thêm thông tin tiền quy đổi phép
       </Checkbox>
