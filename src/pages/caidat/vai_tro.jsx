@@ -1,4 +1,3 @@
-/* eslint-disable no-undef */
 import React, {
   useState,
   useCallback,
@@ -193,6 +192,7 @@ export default function VaiTroComponent() {
 
     try {
       if (editingId) {
+        // Update an existing role
         await updateVaiTro(editingId, tenVaiTro);
         const quyenTruocDo = danhSachQuyenTheoVaiTro[editingId] || [];
 
@@ -210,19 +210,37 @@ export default function VaiTroComponent() {
           await goQuyenKhoiVaiTro(editingId, quyenCanXoa);
         }
 
-        apiNotification.success({ message: "Cập nhật vai trò thành công!" });
+        apiNotification.success({
+          message: "Cập nhật thành công!",
+          description: "Vai trò đã được cập nhật thành công.",
+        });
       } else {
+        // Create a new role
         const newVaiTro = await createVaiTro(tenVaiTro);
 
         if (newVaiTro?.maVaiTro && danhSachQuyenDuocChon.length > 0) {
           await ganQuyenChoVaiTro(newVaiTro.maVaiTro, danhSachQuyenDuocChon);
         }
-        apiNotification.success({ message: "Thêm vai trò thành công!" });
+        apiNotification.success({
+          message: "Thêm mới thành công!",
+          description: "Vai trò mới đã được thêm thành công.",
+        });
       }
       handleCancel();
-      getAllVaiTro();
-    } catch {
-      apiNotification.error({ message: "Thao tác thất bại!" });
+      getAllVaiTro(); // Refresh the list after successful operation
+    } catch (error) {
+      console.error("Lỗi khi gửi form vai trò:", error);
+      if (editingId) {
+        apiNotification.error({
+          message: "Cập nhật thất bại!",
+          description: "Không thể cập nhật vai trò. Vui lòng thử lại.",
+        });
+      } else {
+        apiNotification.error({
+          message: "Thêm mới thất bại!",
+          description: "Không thể thêm vai trò. Vui lòng thử lại.",
+        });
+      }
     }
   };
 
@@ -234,39 +252,47 @@ export default function VaiTroComponent() {
 
   const handleEdit = useCallback(
     async (data) => {
-      const danhSachQuyen = await getQuyenTheoVaiTro(data.maVaiTro);
+      try {
+        const danhSachQuyen = await getQuyenTheoVaiTro(data.maVaiTro);
 
-      const permissionChecked = {};
-      danhSachQuyen.forEach((id) => {
-        permissionChecked[id.toString()] = true;
-      });
-
-      if (danhSachQuyen.includes("system:is_admin")) {
-        const allPermissionKeys = permissionsOptions.map((p) => p.MaQuyenHan);
-        allPermissionKeys.forEach((key) => {
-          permissionChecked[key] = true;
+        const permissionChecked = {};
+        danhSachQuyen.forEach((id) => {
+          permissionChecked[id.toString()] = true;
         });
 
-        const snapshot = {};
-        allPermissionKeys.forEach((key) => {
-          snapshot[key] = danhSachQuyen.includes(key);
+        if (danhSachQuyen.includes("system:is_admin")) {
+          const allPermissionKeys = permissionsOptions.map((p) => p.MaQuyenHan);
+          allPermissionKeys.forEach((key) => {
+            permissionChecked[key] = true;
+          });
+
+          const snapshot = {};
+          allPermissionKeys.forEach((key) => {
+            snapshot[key] = danhSachQuyen.includes(key);
+          });
+          previousValuesRef.current = snapshot;
+        }
+
+        form.setFieldsValue({
+          tenVaiTro: data.tenVaiTro,
+          ...permissionChecked,
         });
-        previousValuesRef.current = snapshot;
+
+        setDanhSachQuyenTheoVaiTro((prev) => ({
+          ...prev,
+          [data.maVaiTro]: danhSachQuyen.map(String),
+        }));
+        setEditingId(data.maVaiTro);
+        setIsModalVisible(true);
+      } catch (error) {
+        console.error("Lỗi khi tải quyền theo vai trò:", error);
+        apiNotification.error({
+          message: "Lỗi!",
+          description: "Không thể tải chi tiết vai trò. Vui lòng thử lại.",
+        });
       }
-
-      form.setFieldsValue({
-        tenVaiTro: data.tenVaiTro,
-        ...permissionChecked,
-      });
-
-      setDanhSachQuyenTheoVaiTro((prev) => ({
-        ...prev,
-        [data.maVaiTro]: danhSachQuyen.map(String),
-      }));
-      setEditingId(data.maVaiTro);
-      setIsModalVisible(true);
     },
-    [form, getQuyenTheoVaiTro, permissionsOptions]
+    [form, getQuyenTheoVaiTro, permissionsOptions, apiNotification]
   );
   //////
   const handleDelete = useCallback((data) => {
@@ -279,19 +305,30 @@ export default function VaiTroComponent() {
   const handleDeleteVaiTro = async () => {
     try {
       await deleteVaiTro(isModalConfirmVisible.data.maVaiTro);
-      apiNotification.success({ message: "Xoá vai trò thành công" });
+      apiNotification.success({
+        message: "Xóa thành công!",
+        description: "Vai trò đã được xóa thành công.",
+      });
       setIsModalConfirmVisible({
         visible: false,
         data: [],
       });
-    } catch {
-      apiNotification.error({ message: "Lỗi khi xoá vai trò" });
+      getAllVaiTro(); // Refresh the list after successful deletion
+    } catch (error) {
+      console.error("Lỗi khi xóa vai trò:", error);
+      apiNotification.error({
+        message: "Xóa thất bại!",
+        description: "Không thể xóa vai trò này. Vui lòng thử lại.",
+      });
     }
   };
 
-  const handleBulkDelete = () => {
+  const handleBulkDelete = async () => {
     if (selectedRowKeys.length === 0) {
-      apiNotification.warning("Vui lòng chọn ít nhất một vai trò để xóa!");
+      apiNotification.warning({
+        message: "Cảnh báo!",
+        description: "Vui lòng chọn ít nhất một vai trò để xóa.",
+      });
       return;
     }
 
@@ -301,14 +338,32 @@ export default function VaiTroComponent() {
       okText: "Xóa",
       cancelText: "Hủy",
       okType: "danger",
-      onOk: () => {
-        setVaiTroList((prev) =>
-          prev.filter((item) => !selectedRowKeys.includes(item.id))
-        );
-        setSelectedRowKeys([]);
-        apiNotification.success(
-          `Đã xóa ${selectedRowKeys.length} vai trò thành công!`
-        );
+      onOk: async () => {
+        try {
+          // Assuming deleteVaiTro can handle an array of IDs or you loop through them
+          // For simplicity, let's assume deleteVaiTro is called for each ID
+          for (const id of selectedRowKeys) {
+            await deleteVaiTro(id);
+          }
+          setSelectedRowKeys([]); // Clear selected keys
+          apiNotification.success({
+            message: "Xóa thành công!",
+            description: `Đã xóa ${selectedRowKeys.length} vai trò đã chọn thành công.`,
+          });
+          getAllVaiTro(); // Refresh the list after successful bulk deletion
+        } catch (error) {
+          console.error("Lỗi khi xóa nhiều vai trò:", error);
+          apiNotification.error({
+            message: "Xóa thất bại!",
+            description: "Có lỗi xảy ra khi xóa các vai trò đã chọn. Vui lòng thử lại.",
+          });
+        }
+      },
+      onCancel: () => {
+        apiNotification.info({
+          message: "Thông báo",
+          description: "Hủy bỏ thao tác xóa hàng loạt.",
+        });
       },
     });
   };
@@ -329,27 +384,27 @@ export default function VaiTroComponent() {
 
   const handleSelectAll = (checked) => {
     if (checked) {
-      setSelectedRowKeys(paginatedData.map((item) => item.id));
+      setSelectedRowKeys(paginatedData.map((item) => item.maVaiTro)); // Use maVaiTro as the key
     } else {
       setSelectedRowKeys([]);
     }
   };
 
   const renderVaiTroCard = (item) => (
-    <Col xs={24} sm={12} md={8} lg={6} key={item.id}>
+    <Col xs={24} sm={12} md={8} lg={6} key={item.maVaiTro}> {/* Use item.maVaiTro as key */}
       <Card
         hoverable
         style={{
           marginBottom: 16,
           borderRadius: 12,
-          boxShadow: selectedRowKeys.includes(item.id)
+          boxShadow: selectedRowKeys.includes(item.maVaiTro)
             ? "0 4px 20px rgba(24, 144, 255, 0.3)"
             : "0 2px 12px rgba(0, 0, 0, 0.08)",
-          border: selectedRowKeys.includes(item.id)
+          border: selectedRowKeys.includes(item.maVaiTro)
             ? "2px solid #1890ff"
             : "1px solid #f0f0f0",
           transition: "all 0.3s ease",
-          background: selectedRowKeys.includes(item.id)
+          background: selectedRowKeys.includes(item.maVaiTro)
             ? "linear-gradient(145deg, #f6fcff, #ffffff)"
             : "#ffffff",
         }}
@@ -546,7 +601,8 @@ export default function VaiTroComponent() {
             <Checkbox
               checked={
                 paginatedData.length > 0 &&
-                selectedRowKeys.length === paginatedData.length
+                selectedRowKeys.length === paginatedData.length &&
+                paginatedData.every((item) => selectedRowKeys.includes(item.maVaiTro)) // Ensure all paginated items are selected
               }
               indeterminate={
                 selectedRowKeys.length > 0 &&

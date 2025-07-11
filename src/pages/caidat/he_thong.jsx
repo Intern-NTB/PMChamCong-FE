@@ -52,11 +52,12 @@ export default function HeThongComponent() {
                 message: "Thành công",
                 description: "Lưu cấu hình thành công!",
             });
-        } catch {
+        } catch (error) { 
             apiNotification.error({
                 message: "Thất bại",
-                description: "Không thể lưu vào hệ thống!",
+                description: "Không thể lưu vào hệ thống! Vui lòng thử lại.", 
             });
+            console.error("Failed to update system configuration:", error); 
         }
     };
 

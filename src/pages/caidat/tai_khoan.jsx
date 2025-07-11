@@ -1,4 +1,4 @@
-import React, {  useState, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import {
   Table,
   Button,
@@ -58,6 +58,7 @@ export default function TaiKhoanComponent() {
     form.resetFields();
     setIsModalVisible(true);
   }, [form]);
+
   const handleEdit = useCallback(
     (data) => {
       setEditingId(data.maNhanVien);
@@ -70,18 +71,19 @@ export default function TaiKhoanComponent() {
     },
     [form]
   );
+
   const handleDelete = async (maNhanVien) => {
-    console.log(maNhanVien);
     try {
       await deleteTaikhoan(maNhanVien);
       apiNotification.success({
         message: "Thành công!",
-        description: "Xóa tài khoản làm thành công!",
+        description: "Xóa tài khoản thành công.",
       });
-    } catch {
+    } catch (error) {
+      console.error("Lỗi khi xóa tài khoản:", error);
       apiNotification.error({
-        message: "Lỗi!",
-        description: "Xóa tài khoản không thành công!",
+        message: "Thất bại!",
+        description: "Không thể xóa tài khoản. Vui lòng thử lại.",
       });
     }
   };
@@ -122,25 +124,32 @@ export default function TaiKhoanComponent() {
             maNhanVien: Number(editingId),
             ...values,
           };
-          updateTaiKhoan(updatedData);
+          await updateTaiKhoan(updatedData); 
           apiNotification.success({
             message: "Thành công!",
-            description: "Cập nhật tài khoản thành công!",
+            description: "Cập nhật tài khoản thành công.",
           });
         } else {
           await createTaiKhoan(values);
           apiNotification.success({
-            message: "Thành công",
-            description: "Thêm tài khoản thành công!",
+            message: "Thành công!",
+            description: "Thêm tài khoản thành công.",
           });
         }
         handleCancel();
       } catch (error) {
-        console.error("Error:", error);
-        apiNotification.error({
-          message: "Lỗi",
-          description: "Có lỗi xảy ra, vui lòng thử lại!",
-        });
+        console.error("Lỗi khi gửi form tài khoản:", error);
+        if (editingId) {
+          apiNotification.error({
+            message: "Cập nhật thất bại!",
+            description: "Không thể cập nhật tài khoản. Vui lòng thử lại.",
+          });
+        } else {
+          apiNotification.error({
+            message: "Thêm mới thất bại!",
+            description: "Không thể thêm tài khoản. Vui lòng thử lại.",
+          });
+        }
       }
     },
     [apiNotification, createTaiKhoan, editingId, handleCancel, updateTaiKhoan]
@@ -153,7 +162,6 @@ export default function TaiKhoanComponent() {
       key: "maNhanVien",
       width: 100,
       render: (text) => <Tag color="blue">{text}</Tag>,
-      //filteredValue: searchText ? [searchText] : null,
       onFilter: (value, record) =>
         record.maNhanVien
           ?.toString()
