@@ -1,5 +1,3 @@
-/* eslint-disable no-unused-vars */
-// ===== Thư viện bên ngoài =====
 import { useState, useEffect, useCallback, useMemo, useContext } from "react";
 import dayjs from "dayjs";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
@@ -21,7 +19,6 @@ import {
   Form,
   Typography,
   Input,
-  notification,
 } from "antd";
 import {
   ClockCircleOutlined,
@@ -86,14 +83,11 @@ export default function GiaLapChamCong() {
     dayjs().startOf("day"),
     dayjs().endOf("day"),
   ]);
-  const [selectedMonth, setSelectedMonth] = useState(null);
+  const [selectedMonth, setSelectedMonth] = useState(dayjs()); 
   const apiNotification = useAppNotification();
 
   const [isMobile, setIsMobile] = useState(false);
-  const [selectedDate, setSelectedDate] = useState({
-    selected: false,
-    dateValue: null,
-  });
+
   const [searchText, setSearchText] = useState("");
   const [selectedPhongBan, setSelectedPhongBan] = useState({
     selected: false,
@@ -217,7 +211,7 @@ export default function GiaLapChamCong() {
   const formatGio = (gioStr) => {
     if (!gioStr) return "";
 
-    const [gio, phut, giay] = gioStr.split(":");
+    const [gio, phut] = gioStr.split(":");
     return phut === "00" ? `${gio}h` : `${gio}h${phut}`;
   };
 
@@ -258,9 +252,10 @@ export default function GiaLapChamCong() {
 
     return (
       <div>
-        {thuNgayTrongTuan[caTrongTuan.ngayTrongTuan - 1]} <br />(
-        {formatGio(caTrongTuan.gioBatDau)} - {formatGio(caTrongTuan.gioKetThuc)}
-        )
+        {thuNgayTrongTuan[caTrongTuan.ngayTrongTuan - 1]} <br />({
+          formatGio(caTrongTuan.gioBatDau)
+        }{" "}
+        - {formatGio(caTrongTuan.gioKetThuc)})
       </div>
     );
   };
@@ -331,7 +326,6 @@ export default function GiaLapChamCong() {
     );
   };
 
-  //Hàm xử lý lấy thời gian tăng ca (vào/ra)
   const getTimeTangCa = (maNhanVien, ngayChamCong) => {
     const thongTin = getThongTinCaTrongNgay(maNhanVien, ngayChamCong);
     if (!thongTin) return "Không tìm thấy nhân viên";
@@ -379,13 +373,12 @@ export default function GiaLapChamCong() {
       document.head.removeChild(styleSheet);
     };
   }, []);
-  const addRowClass = (record, index) => {
+  const addRowClass = (record) => {
     // Kiểm tra dữ liệu cần thiết
     if (!record || !record.thoiGianRa || !isDataReady) {
       return "";
     }
 
-    // Lấy thông tin ca làm việc
     const thongTin = getThongTinCaTrongNgay(
       record.maNhanVien,
       record.ngayChamCong
@@ -397,7 +390,6 @@ export default function GiaLapChamCong() {
 
     const { caTrongTuan } = thongTin;
 
-    // Kiểm tra nếu nhân viên chưa ra về (thoiGianRa là null hoặc "N/A")
     if (
       !record.thoiGianRa ||
       record.thoiGianRa === "N/A" ||
@@ -436,9 +428,8 @@ export default function GiaLapChamCong() {
         return "";
       }
 
-      // So sánh thời gian: nếu ra sớm hơn giờ kết thúc ca thì highlight đỏ
       if (thoiGianRa.isBefore(thoiGianKetThucCa, "minute")) {
-        return "row-early-leave"; // Sử dụng class CSS thay vì Tailwind
+        return "row-early-leave"; 
       }
 
       return "";
@@ -599,6 +590,7 @@ export default function GiaLapChamCong() {
       danhSachLichSuUuTien,
       danhSachDoiTuongUuTien,
       danhSachTangCa,
+      isDataReady // Added isDataReady to memo dependencies
     ]
   );
 
@@ -653,13 +645,11 @@ export default function GiaLapChamCong() {
               >
                 Giờ tăng ca
               </div>
-              {getTimeTangCa(record.maNhanVien, record.ngayChamCong) ? (
+              {getTimeTangCa(record.maNhanVien, record.ngayChamCong) !== "-" ? (
                 <Space size={[12, 8]} wrap>
                   <span style={{ fontSize: "13px" }}>
                     <strong>Khoảng thời gian:</strong>{" "}
-                    {formatTime(
-                      getTimeTangCa(record.maNhanVien, record.ngayChamCong)
-                    )}
+                    {getTimeTangCa(record.maNhanVien, record.ngayChamCong)}
                   </span>
                 </Space>
               ) : (
@@ -759,31 +749,40 @@ export default function GiaLapChamCong() {
         )
     ).length;
 
-    const tongSoGioTangCaThang = danhSachTangCa.reduce((total, tc) => {
+    const overtimeHoursByDepartment = {};
+    const thangHienTai = (selectedMonth ?? dayjs()).month();
+    const namHienTai = (selectedMonth ?? dayjs()).year();
+
+    danhSachTangCa.forEach((tc) => {
       const ngayTangCa = dayjs(tc.ngayChamCongTangCa);
       const thang = ngayTangCa.month();
       const nam = ngayTangCa.year();
 
-      const thangHienTai = (selectedMonth ?? dayjs()).month();
-      const namHienTai = (selectedMonth ?? dayjs()).year();
-
       if (thang === thangHienTai && nam === namHienTai) {
-        const gioBatDau = dayjs(tc.gioTangCaBatDau, "HH:mm");
-        const gioKetThuc = dayjs(tc.gioTangCaKetThuc, "HH:mm");
+        const gioBatDau = dayjs(`2000-01-01 ${tc.gioTangCaBatDau}`);
+        const gioKetThuc = dayjs(`2000-01-01 ${tc.gioTangCaKetThuc}`);
 
-        const soPhutTangCa = gioKetThuc.diff(gioBatDau, "minute");
-        return total + (soPhutTangCa / 60 || 0);
+        if (gioBatDau.isValid() && gioKetThuc.isValid()) {
+          const soPhutTangCa = gioKetThuc.diff(gioBatDau, "minute");
+          const soGioTangCa = soPhutTangCa / 60;
+
+          const phongBan = danhSachPhongBan.find(pb => pb.maPhongBan === tc.maPhongBan);
+          if (phongBan) {
+            if (!overtimeHoursByDepartment[phongBan.tenPhongBan]) {
+              overtimeHoursByDepartment[phongBan.tenPhongBan] = 0;
+            }
+            overtimeHoursByDepartment[phongBan.tenPhongBan] += soGioTangCa;
+          }
+        }
       }
-
-      return total;
-    }, 0);
+    });
 
     return {
       totalRecords,
       workingNow,
       completedToday,
       vangMatCount,
-      tongSoGioTangCaThang,
+      overtimeHoursByDepartment, 
     };
   }, [
     selectedPhongBan,
@@ -791,14 +790,8 @@ export default function GiaLapChamCong() {
     danhSachNhanVien,
     danhSachChamCongChiTiet,
     danhSachTangCa,
+    danhSachPhongBan, 
   ]);
-
-  const handleDateChange = useCallback((value) => {
-    setSelectedDate({
-      selected: true,
-      dateValue: value,
-    });
-  }, []);
 
   const handlePhongBanChange = useCallback((value) => {
     setSelectedPhongBan({
@@ -877,7 +870,7 @@ export default function GiaLapChamCong() {
           <Card title="Chấm công" size="small" extra={<CalendarOutlined />}>
             <Space direction="vertical" style={{ width: "100%" }} size="middle">
               <Row gutter={[8, 8]}>
-                <Col span={12}>
+                <Col span={24}> {/* Changed to 24 for full width on mobile */}
                   <Select
                     placeholder="Chọn phòng ban"
                     style={{ width: "100%" }}
@@ -887,6 +880,7 @@ export default function GiaLapChamCong() {
                       value: pb.tenPhongBan,
                       label: pb.tenPhongBan,
                     }))}
+                    allowClear 
                   />
                 </Col>
               </Row>
@@ -950,6 +944,21 @@ export default function GiaLapChamCong() {
                   />
                 </Card>
               </Col>
+              <Col xs={24}> {/* Added for monthly overtime stat on mobile */}
+                <Card size="small">
+                  <Typography.Title level={5} style={{ marginBottom: '8px' }}>Giờ tăng ca tháng này</Typography.Title>
+                  {Object.entries(statistics.overtimeHoursByDepartment).length > 0 ? (
+                    Object.entries(statistics.overtimeHoursByDepartment).map(([departmentName, hours]) => (
+                      <div key={departmentName} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                        <Text strong>{departmentName}:</Text>
+                        <Text style={{ color: "green", fontSize: "16px" }}>{hours.toFixed(2)}h</Text>
+                      </div>
+                    ))
+                  ) : (
+                    <Text type="secondary">Không có giờ tăng ca trong tháng này.</Text>
+                  )}
+                </Card>
+              </Col>
             </Row>
           </Card>
 
@@ -966,15 +975,18 @@ export default function GiaLapChamCong() {
             <Space
               direction="vertical"
               style={{ width: "100%", marginBottom: "16px" }}
+              size="middle"
             >
-              <span>Chọn khoảng thời gian:</span>
+              <Text strong>Chọn khoảng thời gian:</Text> {/* Changed to Text for better styling */}
               <RangePicker
                 value={dateRange}
                 onChange={handleDateRangeChange}
                 format="DD/MM/YYYY"
-                style={{ width: "100%", marginBottom: "8px" }}
+                style={{ width: "100%" }}
                 size="large"
               />
+              <Button onClick={handleTodayClick} block size="large">Hôm nay</Button> {/* Added block for full width */}
+              <Text strong>Chọn tháng:</Text> {/* Changed to Text for better styling */}
               <ConfigProvider locale={viVN}>
                 <DatePicker
                   placeholder="Chọn tháng"
@@ -996,7 +1008,6 @@ export default function GiaLapChamCong() {
                 allowClear
               />
             </Space>
-
             <Table
               rowClassName={addRowClass}
               columns={mobileColumns}
@@ -1014,10 +1025,10 @@ export default function GiaLapChamCong() {
               size="small"
               scroll={{ y: "calc(100vh - 300px)", sticky: true }}
               onChange={(pagination, filters) => {
-                const pb = filters.tenPhongBan?.[0];
+                const pb = filters.tenPhongBan && filters.tenPhongBan.length > 0 ? filters.tenPhongBan[0] : null;
                 setSelectedPhongBan({
-                  selected: true,
-                  phongBanValue: pb.tenPhongBan || null,
+                  selected: !!pb, 
+                  phongBanValue: pb,
                 });
               }}
             />
@@ -1031,10 +1042,10 @@ export default function GiaLapChamCong() {
                 width: "100%",
                 height: "100%",
                 borderRadius: "12px",
-                boxShadow: "0 4px 12px rgba",
+                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)", 
                 border: "1px solid #f0f0f0",
               }}
-              styles={{ body: { padding: "24px" } }}
+              bodyStyle={{ padding: "24px" }} 
               title={
                 <div
                   style={{
@@ -1150,17 +1161,24 @@ export default function GiaLapChamCong() {
                     border: "1px solid #e2e8f0",
                   }}
                 >
-                  <Row gutter={[16, 8]} justify={"center"}>
-                    <Col span={12}>
-                      <div style={{ textAlign: "center" }}>
-                        <Statistic
-                          title="Giờ tăng ca tháng này"
-                          value={statistics.tongSoGioTangCaThang.toFixed(2)}
-                          valueStyle={{ color: "green", fontSize: "24px" }}
-                        />
-                      </div>
-                    </Col>
-                  </Row>
+                  <Typography.Title level={5} style={{ marginBottom: '8px' }}>Giờ tăng ca tháng này theo phòng ban:</Typography.Title>
+                  {Object.entries(statistics.overtimeHoursByDepartment).length > 0 ? (
+                    Object.entries(statistics.overtimeHoursByDepartment).map(([departmentName, hours]) => (
+                      <Row key={departmentName} gutter={[16, 8]} justify="center">
+                        <Col span={24}>
+                          <div style={{ textAlign: "center" }}>
+                            <Statistic
+                              title={departmentName}
+                              value={hours.toFixed(2)}
+                              valueStyle={{ color: "green", fontSize: "20px" }}
+                            />
+                          </div>
+                        </Col>
+                      </Row>
+                    ))
+                  ) : (
+                    <Text type="secondary" style={{ display: 'block', textAlign: 'center' }}>Không có giờ tăng ca trong tháng này cho bất kỳ phòng ban nào.</Text>
+                  )}
                 </div>
               </Space>
             </Card>
@@ -1196,17 +1214,16 @@ export default function GiaLapChamCong() {
 
           <Col span={24}>
             <Card title="Lịch sử chấm công">
-              <Space style={{ marginBottom: "16px" }}>
-                <span>Chọn khoảng thời gian:</span>
+              <Space style={{ marginBottom: "16px" }} wrap> {/* Added wrap for better layout on smaller desktop screens */}
+                <Text strong>Chọn khoảng thời gian:</Text>
                 <RangePicker
                   value={dateRange}
                   onChange={handleDateRangeChange}
                   format="DD/MM/YYYY"
                 />
                 <Button onClick={handleTodayClick}>Hôm nay</Button>
-                <span style={{ marginLeft: "16px" }}>Chọn tháng:</span>
+                <Text strong style={{ marginLeft: "16px" }}>Chọn tháng:</Text>
                 <ConfigProvider locale={viVN}>
-                  {" "}
                   <DatePicker
                     placeholder="Chọn tháng"
                     picker="month"
@@ -1223,6 +1240,18 @@ export default function GiaLapChamCong() {
                   style={{ width: "250px" }}
                   allowClear
                 />
+                 <Select // Added Department filter for desktop
+                    placeholder="Lọc theo phòng ban"
+                    style={{ width: "200px" }}
+                    onChange={handlePhongBanChange}
+                    getPopupContainer={() => document.body}
+                    options={danhSachPhongBan.map((pb) => ({
+                      value: pb.tenPhongBan,
+                      label: pb.tenPhongBan,
+                    }))}
+                    allowClear
+                    value={selectedPhongBan.phongBanValue}
+                  />
               </Space>
 
               <Table
@@ -1246,11 +1275,11 @@ export default function GiaLapChamCong() {
                   y: "calc(100vh - 300px)",
                   sticky: true,
                 }}
-                onChange={(filters) => {
-                  const pb = filters.tenPhongBan?.[0];
+                onChange={(pagination, filters) => {
+                  const pb = filters.tenPhongBan && filters.tenPhongBan.length > 0 ? filters.tenPhongBan[0] : null;
                   setSelectedPhongBan({
-                    selected: true,
-                    phongBanValue: pb || null,
+                    selected: !!pb,
+                    phongBanValue: pb,
                   });
                 }}
                 onRow={(record) => {

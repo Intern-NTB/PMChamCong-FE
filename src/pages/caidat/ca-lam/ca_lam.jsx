@@ -103,7 +103,7 @@ export default function CaLamComponent() {
         const result = await getAllCaLamTrongTuanByPhongBan(maCa);
         if (!result || result.length === 0) {
           // apiNotification.warning(
-          //   "Không có chi tiết ca làm trong tuần cho ca này."
+          // "Không có chi tiết ca làm trong tuần cho ca này."
           // );
         }
       } catch (error) {
@@ -316,13 +316,6 @@ export default function CaLamComponent() {
 
   // Tính toán thống kê
   const totalShifts = Array.isArray(filteredList) ? filteredList.length : 0;
-  // const totalHours = filteredList.reduce(
-  //   (acc, shift) => acc + (shift.soGioLamViec || 0),
-  //   0
-  // );
-  // const averageHours =
-  //   totalShifts > 0 ? (totalHours / totalShifts).toFixed(1) : 0;
-
   return (
     <div
       style={{
@@ -364,29 +357,7 @@ export default function CaLamComponent() {
                 valueStyle={{ color: "#1890ff" }}
               />
             </Card>
-          </Col>
-          {/* <Col xs={24} sm={8}>
-            <Card>
-              <Statistic
-                title="Trung Bình Giờ/Ca"
-                value={averageHours}
-                suffix="h"
-                prefix={<ClockCircleOutlined style={{ color: "#52c41a" }} />}
-                valueStyle={{ color: "#52c41a" }}
-              />
-            </Card>
-          </Col>
-          <Col xs={24} sm={8}>
-            <Card>
-              <Statistic
-                title="Tổng Giờ Làm"
-                value={totalHours.toFixed(1)}
-                suffix="h"
-                prefix={<ClockCircleOutlined style={{ color: "#722ed1" }} />}
-                valueStyle={{ color: "#722ed1" }}
-              />
-            </Card>
-          </Col> */}
+          </Col>   
         </Row>
 
         <Card>
@@ -466,6 +437,29 @@ export default function CaLamComponent() {
                   rules={[
                     { required: true, message: "Vui lòng nhập tên ca!" },
                     { min: 2, message: "Tên ca phải có ít nhất 2 ký tự!" },
+                    {
+                      validator: (_, value) => {
+                        if (!value) {
+                          return Promise.resolve(); // Let required rule handle empty value
+                        }
+                        const isDuplicate = danhSachCaLam.some((shift) => {
+                          // For existing records, allow if the name hasn't changed
+                          if (currentRecord && shift.maCa === currentRecord.maCa) {
+                            return false; // It's the current record, so its name is allowed
+                          }
+                          return (
+                            shift.tenCa.toLowerCase() === value.toLowerCase()
+                          );
+                        });
+
+                        if (isDuplicate) {
+                          return Promise.reject(
+                            new Error("Tên ca này đã tồn tại!")
+                          );
+                        }
+                        return Promise.resolve();
+                      },
+                    },
                   ]}
                 >
                   <Input

@@ -35,7 +35,7 @@ const { Text, Title } = Typography;
 const { Search } = Input;
 const { Option } = Select;
 
-export default function PhongBanComponent  ()  {
+export default function PhongBanComponent () {
     const [form] = Form.useForm();
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [isModalConfirmVisible, setIsModalConfirmVisible] = useState({
@@ -63,14 +63,14 @@ export default function PhongBanComponent  ()  {
     const { danhSachCaLam, loadingCaLam } = useCaLam();
     const { setReload } = useContext(ReloadContext);
 
-    // Memoized data source với xử lý safe cho undefined
+    // Memoized data source with safe handling for undefined
     const dataSource = useMemo(() => {
         if (!danhSachPhongBan || !Array.isArray(danhSachPhongBan)) {
             return [];
         }
 
         return danhSachPhongBan.map(pb => {
-            // Safe check cho ca làm việc
+            // Safe check for ca làm việc
             const ca = danhSachCaLam?.find(ca => ca.maCa === pb.maCa) || {};
 
             return {
@@ -85,9 +85,9 @@ export default function PhongBanComponent  ()  {
 
     useEffect(() => {
         setReload(() => fetchPhongBan);
-    }, []); // Chỉ chạy một lần khi component mount
+    }, []); // Only run once when component mounts
 
-    // Filter data với safe check
+    // Filter data with safe check
     const filteredData = useMemo(() => {
         return dataSource.filter(item => {
             const searchText = searchTerm.toLowerCase();
@@ -120,6 +120,23 @@ export default function PhongBanComponent  ()  {
 
     // Handle form submission
     const onFinish = useCallback(async (values) => {
+        const newDepartmentName = values.tenPhongBan.toLowerCase().trim();
+
+        // Check for duplicate name
+        const isDuplicate = danhSachPhongBan?.some(pb =>
+            pb.tenPhongBan.toLowerCase().trim() === newDepartmentName &&
+            (editingId ? pb.maPhongBan !== editingId : true) // Exclude current item if editing
+        );
+
+        if (isDuplicate) {
+            apiNotification.warning({
+                message: 'Cảnh báo',
+                description: `Tên phòng ban "${values.tenPhongBan}" đã tồn tại. Vui lòng nhập tên khác.`,
+                duration: 3
+            });
+            return; // Stop the submission
+        }
+
         try {
             if (editingId) {
                 const updatedData = {
@@ -146,7 +163,7 @@ export default function PhongBanComponent  ()  {
                 description: 'Có lỗi xảy ra, vui lòng thử lại!'
             });
         }
-    }, [editingId, updatePhongBan, createPhongBan]);
+    }, [editingId, updatePhongBan, createPhongBan, danhSachPhongBan, apiNotification]); // Add danhSachPhongBan and apiNotification to dependencies
 
     const handleAdd = useCallback(() => {
         setEditingId(null);
@@ -180,7 +197,7 @@ export default function PhongBanComponent  ()  {
         }
         // Implement bulk delete logic here
         console.log('Bulk delete:', selectedRowKeys);
-    }, [selectedRowKeys]);
+    }, [selectedRowKeys, apiNotification]); // Add apiNotification to dependencies
 
     const handleCancel = () => {
         setIsModalVisible(false);
@@ -191,12 +208,12 @@ export default function PhongBanComponent  ()  {
     // Search and filter handlers
     const handleSearchChange = useCallback((e) => {
         setSearchTerm(e.target.value);
-        setCurrentPage(1); // Reset về trang đầu khi tìm kiếm
+        setCurrentPage(1); // Reset to first page when searching
     }, []);
 
     const handleStatusFilterChange = useCallback((value) => {
         setStatusFilter(value);
-        setCurrentPage(1); // Reset về trang đầu khi thay đổi filter
+        setCurrentPage(1); // Reset to first page when changing filter
     }, []);
 
     const handlePageChange = useCallback((page, size) => {
@@ -228,7 +245,7 @@ export default function PhongBanComponent  ()  {
         } finally {
             setIsModalConfirmVisible({ visible: false, data: null });
         }
-    }, [isModalConfirmVisible.data, deletePhongBan]);
+    }, [isModalConfirmVisible.data, deletePhongBan, apiNotification]); // Add apiNotification to dependencies
 
     // Render department card
     const renderPhongBanCard = useCallback((item) => (
@@ -254,7 +271,7 @@ export default function PhongBanComponent  ()  {
                         : '#ffffff'
                 }}
             >
-                {/* Header với checkbox và ID */}
+                {/* Header with checkbox and ID */}
                 <div style={{
                     display: 'flex',
                     justifyContent: 'space-between',
@@ -278,7 +295,7 @@ export default function PhongBanComponent  ()  {
                     flexDirection: 'column',
                     gap: 12
                 }}>
-                    {/* Icon và tên phòng ban */}
+                    {/* Icon and department name */}
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
                         <BankOutlined style={{
                             fontSize: 18,
@@ -300,7 +317,7 @@ export default function PhongBanComponent  ()  {
                         </Title>
                     </div>
 
-                    {/* Thông tin ca làm việc */}
+                    {/* Shift information */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <CalendarOutlined style={{
                             fontSize: 14,

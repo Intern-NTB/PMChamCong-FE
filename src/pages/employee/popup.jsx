@@ -11,7 +11,7 @@ import {
   Col,
   Select,
   InputNumber,
-  message, 
+  message,
   Switch,
 } from "antd";
 import { useEffect, useCallback, useState } from "react";
@@ -252,7 +252,7 @@ const Popup = ({
           values.ngayVaoLam = null;
         }
 
-        values.diaChi = values.diaChi || null;
+        values.diaChi = values.diaChi || null; // Ensure diaChi is set to null if empty
         values.soDienThoai = values.soDienThoai || null;
         values.hoTen = values.hoTen || null;
         values.cmnd = values.cmnd || null;
@@ -278,8 +278,8 @@ const Popup = ({
         console.warn("Validation failed:", info);
         message.error({
           content: "Vui lòng kiểm tra lại thông tin nhập liệu và các trường bị lỗi.",
-          duration: 3, 
-          key: 'validation-error-message' 
+          duration: 3,
+          key: 'validation-error-message'
         });
       });
   }, [form, onOk, isEditMode, hasPriority]);
@@ -480,7 +480,9 @@ const Popup = ({
               </Select>
             </Form.Item>
           </Col>
-
+        </Row>
+        {/* New Row to group CMND, So Dien Thoai, and Email */}
+        <Row gutter={16}>
           <Col span={12}>
             <Form.Item
               name="cmnd"
@@ -498,10 +500,12 @@ const Popup = ({
             >
               <Input placeholder="Nhập số điện thoại" maxLength={10} />
             </Form.Item>
+            {/* The warning message is kept outside the Form.Item to manage its own spacing */}
             <Form.Item
               shouldUpdate={(prevValues, currentValues) =>
                 prevValues.soDienThoai !== currentValues.soDienThoai
               }
+              noStyle // Important: Remove default Form.Item spacing for this one
             >
               {({ getFieldValue }) => {
                 const sdt = getFieldValue("soDienThoai");
@@ -518,8 +522,8 @@ const Popup = ({
                     <div
                       style={{
                         color: "orange",
-                        marginTop: "-15px",
-                        marginBottom: "15px",
+                        marginTop: "-15px", // Adjust as needed
+                        marginBottom: "5px", // Reduced from 15px to tighten
                       }}
                     >
                       Số điện thoại này đã tồn tại trong hệ thống.
@@ -530,17 +534,29 @@ const Popup = ({
               }}
             </Form.Item>
           </Col>
-          <Col span={24}>
+          <Col span={24}> {/* Email takes full width within this row */}
             <Form.Item
               name="email"
               label="Email"
               rules={[{ validator: validateEmail }]}
+              // No need for marginBottom style here if it's within the same row as the previous fields
             >
               <Input placeholder="Nhập email" type="email" />
             </Form.Item>
           </Col>
+        </Row>
 
-          {isEditMode && initialValues?.ngayVaoLam && (
+        {/* Dia chi field remains in its own row, as it's typically a separate block */}
+        <Row gutter={16}>
+          <Col span={24}>
+            <Form.Item name="diaChi" label="Địa chỉ">
+              <Input.TextArea rows={2} placeholder="Nhập địa chỉ" />
+            </Form.Item>
+          </Col>
+        </Row>
+
+        {isEditMode && initialValues?.ngayVaoLam && (
+          <Row gutter={16}>
             <Col span={12}>
               <Form.Item name="ngayVaoLam" label="Ngày Vào Làm">
                 <DatePicker
@@ -550,8 +566,8 @@ const Popup = ({
                 />
               </Form.Item>
             </Col>
-          )}
-        </Row>
+          </Row>
+        )}
       </Form>
     </Modal>
   );
