@@ -356,6 +356,97 @@ export default function GiaLapChamCong() {
       tangCa.gioTangCaKetThuc
     )})`;
   };
+  const styles = `
+  .row-early-leave {
+    background-color: #ffebee !important;
+    border-left: 4px solid #f44336 !important;
+  }
+  
+  .row-early-leave:hover {
+    background-color: #ffcdd2 !important;
+  }
+  
+  .ant-table-tbody > tr.row-early-leave > td {
+    background-color: inherit !important;
+  }
+`;
+  useEffect(() => {
+    const styleSheet = document.createElement("style");
+    styleSheet.innerText = styles;
+    document.head.appendChild(styleSheet);
+
+    return () => {
+      document.head.removeChild(styleSheet);
+    };
+  }, []);
+  const addRowClass = (record, index) => {
+    // Kiểm tra dữ liệu cần thiết
+    if (!record || !record.thoiGianRa || !isDataReady) {
+      return "";
+    }
+
+    // Lấy thông tin ca làm việc
+    const thongTin = getThongTinCaTrongNgay(
+      record.maNhanVien,
+      record.ngayChamCong
+    );
+
+    if (!thongTin) {
+      return "";
+    }
+
+    const { caTrongTuan } = thongTin;
+
+    // Kiểm tra nếu nhân viên chưa ra về (thoiGianRa là null hoặc "N/A")
+    if (
+      !record.thoiGianRa ||
+      record.thoiGianRa === "N/A" ||
+      record.thoiGianRa === "Invalid Date"
+    ) {
+      return "";
+    }
+
+    try {
+      // Parse thời gian ra của nhân viên
+      let thoiGianRa;
+      if (record.thoiGianRa.includes("T")) {
+        // Nếu là ISO string, lấy phần time
+        const timePart = record.thoiGianRa.split("T")[1];
+        const timeOnly = timePart.split(".")[0];
+        thoiGianRa = dayjs(timeOnly, "HH:mm:ss");
+      } else {
+        // Nếu là string thời gian thuần
+        thoiGianRa = dayjs(record.thoiGianRa, "HH:mm:ss");
+      }
+
+      // Parse thời gian kết thúc ca làm việc
+      let thoiGianKetThucCa;
+      if (typeof caTrongTuan.gioKetThuc === "string") {
+        thoiGianKetThucCa = dayjs(caTrongTuan.gioKetThuc, "HH:mm:ss");
+      } else {
+        thoiGianKetThucCa = dayjs(caTrongTuan.gioKetThuc);
+      }
+
+      // Kiểm tra nếu parse thành công
+      if (!thoiGianRa.isValid() || !thoiGianKetThucCa.isValid()) {
+        console.warn("Không thể parse thời gian:", {
+          thoiGianRa: record.thoiGianRa,
+          gioKetThuc: caTrongTuan.gioKetThuc,
+        });
+        return "";
+      }
+
+      // So sánh thời gian: nếu ra sớm hơn giờ kết thúc ca thì highlight đỏ
+      if (thoiGianRa.isBefore(thoiGianKetThucCa, "minute")) {
+        return "row-early-leave"; // Sử dụng class CSS thay vì Tailwind
+      }
+
+      return "";
+    } catch (error) {
+      console.error("Lỗi trong addRowClass:", error);
+      return "";
+    }
+  };
 
   const isDataReady = [
     danhSachNhanVien,
@@ -907,6 +998,7 @@ export default function GiaLapChamCong() {
             </Space>
 
             <Table
+              rowClassName={addRowClass}
               columns={mobileColumns}
               dataSource={filteredData}
               rowKey={(record) => `${record.ngayChamCong}_${record.maNhanVien}`}
@@ -1134,6 +1226,7 @@ export default function GiaLapChamCong() {
               </Space>
 
               <Table
+                rowClassName={addRowClass}
                 columns={columns}
                 dataSource={filteredData}
                 rowKey={(record) =>
@@ -1153,16 +1246,16 @@ export default function GiaLapChamCong() {
                   y: "calc(100vh - 300px)",
                   sticky: true,
                 }}
-                onChange={(pagination, filters) => {
+                onChange={(filters) => {
                   const pb = filters.tenPhongBan?.[0];
                   setSelectedPhongBan({
                     selected: true,
                     phongBanValue: pb || null,
                   });
                 }}
-                onRow={(record, rowIndex) => {
+                onRow={(record) => {
                   return {
-                    onClick: (event) => {
+                    onClick: () => {
                       setSelectedNhanVien(record);
                       setIsModalChiTietVisible(true);
                     },

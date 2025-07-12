@@ -505,8 +505,6 @@ export default function ModalChiTietChamCong({
     ];
   }, []);
 
-  console.log("weekDays", weekDays);
-
   const firstDay = selectedMonth.startOf("month").day();
   const dbDay = firstDay === 0 ? 1 : firstDay + 1;
   const startOffset = dbDay === 1 ? 6 : dbDay - 2;
@@ -534,10 +532,6 @@ export default function ModalChiTietChamCong({
   for (let i = 0; i < calendarCells.length; i += 7) {
     weeks.push(calendarCells.slice(i, i + 7));
   }
-
-  weeks.forEach((week, i) => {
-    console.log(`Week ${i} has ${week.length} days`, week);
-  });
 
   if (isLoading)
     return (
