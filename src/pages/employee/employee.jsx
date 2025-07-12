@@ -381,6 +381,20 @@ export default function NhanVien() {
       width: 120,
       render: (text) => highlightText(text),
     },
+        {
+      title: "Địa chỉ",
+      dataIndex: "diaChi",
+      key: "diaChi",
+      width: 120,
+      render: (text) => highlightText(text),
+    },
+         {
+      title: "Hệ số tăng ca",
+      dataIndex: "heSoTangCa",
+      key: "heSoTangCa",
+      width: 120,
+      render: (text) => highlightText(text),
+    },
     {
       title: "Lương CB",
       dataIndex: "luongCoBan",

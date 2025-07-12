@@ -42,10 +42,10 @@ const calculateAmount = (value, unit, baseSalary) => {
 const createBonusRows = (bonusData, startIndex, baseSalary = 0) => {
   const rows = [];
   if (!bonusData || (Array.isArray(bonusData) && bonusData.length === 0)) {
-    return [[`${startIndex}`, "Chi tiết Thưởng", "Không có thưởng"]];
+    return [[`${startIndex}`, "Chi Tiết Lương Thưởng", "Không có thưởng"]];
   }
 
-  rows.push([`${startIndex}`, "Chi tiết Thưởng", ""]);
+  rows.push([`${startIndex}`, "Chi Tiết Lương Thưởng", ""]);
 
   if (Array.isArray(bonusData)) {
     bonusData.forEach((bonus, index) => {
@@ -109,10 +109,10 @@ const createPenaltyRows = (penaltyData, startIndex, baseSalary = 0) => {
     !penaltyData ||
     (Array.isArray(penaltyData) && penaltyData.length === 0)
   ) {
-    return [[`${startIndex}`, "Chi tiết Phạt", "Không có phạt"]];
+    return [[`${startIndex}`, "Chi Tiết Lương Trừ", "Khong có trừ"]];
   }
 
-  rows.push([`${startIndex}`, "Chi tiết Phạt", ""]);
+  rows.push([`${startIndex}`, "Chi Tiết Lương Trừ", ""]);
 
   if (Array.isArray(penaltyData)) {
     penaltyData.forEach((penalty, index) => {
@@ -296,11 +296,11 @@ export const generateDetailedSalaryPDF = (
   tableData = tableData.concat(bonusRows);
   currentIndex += bonusRows.length;
 
-  // Tổng tiền thưởng
+  // Tổng Lương Thưởng
   const totalBonusRow = [
     isBaoGomTienQuyDoiPhep ? "28" : "25",
 
-    "Tổng Tiền Thưởng",
+    "Tổng Lương Thưởng",
     formatCurrency(employeeData.tienThuong || 0),
   ];
   tableData.push(totalBonusRow);
@@ -315,10 +315,10 @@ export const generateDetailedSalaryPDF = (
   tableData = tableData.concat(penaltyRows);
   currentIndex += penaltyRows.length;
 
-  // Tổng tiền phạt
+  // Tổng Lương Trừ
   const totalPenaltyRow = [
     isBaoGomTienQuyDoiPhep ? "30" : "27",
-    "Tổng Tiền Phạt",
+    "Tổng Lương Trừ",
     formatCurrency(employeeData.tienTru || 0),
   ];
   tableData.push(totalPenaltyRow);
@@ -358,15 +358,15 @@ export const generateDetailedSalaryPDF = (
       }
       const cellText = data.row.cells[1]?.text?.[0];
       const isDetailHeader =
-        cellText === "Chi tiết Thưởng" || cellText === "Chi tiết Phạt";
+        cellText === "Chi Tiết Lương Thưởng" || cellText === "Chi Tiết Lương Trừ";
       if (isDetailHeader) {
         data.cell.styles.fillColor = [169, 169, 169];
         data.cell.styles.textColor = [255, 255, 255];
         return;
       }
       const isImportantRow = [
-        "Tổng Tiền Thưởng",
-        "Tổng Tiền Phạt",
+        "Tổng Lương Thưởng",
+        "Tổng Lương Trừ",
         "Lương thực lãnh",
         "Số tiền phép quy đổi",
         "Tổng lương",
@@ -577,11 +577,11 @@ export const generateSinglePDFMultiplePages = (
     tableData = tableData.concat(bonusRows);
     currentIndex += bonusRows.length;
 
-    // Tổng tiền thưởng
+    // Tổng Lương Thưởng
     const totalBonusRow = [
       isBaoGomTienQuyDoiPhep ? "28" : "25",
 
-      "Tổng Tiền Thưởng",
+      "Tổng Lương Thưởng",
       formatCurrency(employeeData.tienThuong || 0),
     ];
     tableData.push(totalBonusRow);
@@ -596,10 +596,10 @@ export const generateSinglePDFMultiplePages = (
     tableData = tableData.concat(penaltyRows);
     currentIndex += penaltyRows.length;
 
-    // Tổng tiền phạt
+    // Tổng Lương Trừ
     const totalPenaltyRow = [
       isBaoGomTienQuyDoiPhep ? "30" : "27",
-      "Tổng Tiền Phạt",
+      "Tổng Lương Trừ",
       formatCurrency(employeeData.tienTru || 0),
     ];
     tableData.push(totalPenaltyRow);
@@ -639,15 +639,15 @@ export const generateSinglePDFMultiplePages = (
         }
         const cellText = data.row.cells[1]?.text?.[0];
         const isDetailHeader =
-          cellText === "Chi tiết Thưởng" || cellText === "Chi tiết Phạt";
+          cellText === "Chi Tiết Lương Thưởng" || cellText === "Chi Tiết Lương Trừ";
         if (isDetailHeader) {
           data.cell.styles.fillColor = [169, 169, 169];
           data.cell.styles.textColor = [255, 255, 255];
           return;
         }
         const isImportantRow = [
-          "Tổng Tiền Thưởng",
-          "Tổng Tiền Phạt",
+          "Tổng Lương Thưởng",
+          "Tổng Lương Trừ",
           "Lương thực lãnh",
           "Tổng lương",
           "Số tiền phép quy đổi",

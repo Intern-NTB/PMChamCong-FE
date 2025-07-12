@@ -116,6 +116,16 @@ export default function GiaLapChamCong() {
   });
   const [form] = Form.useForm();
 
+  const thuNgayTrongTuan = [
+    "Chủ nhật",
+    "Thứ 2",
+    "Thứ 3",
+    "Thứ 4",
+    "Thứ 5",
+    "Thứ 6",
+    "Thứ 7",
+  ];
+
   useEffect(() => {
     setReload(getAllChamCongDetail);
   }, [getAllChamCongDetail, setReload]);
@@ -213,20 +223,25 @@ export default function GiaLapChamCong() {
 
   //Hàm xử lý lấy thông tin ca làm, giờ làm việc theo ngày.
   const getThongTinCaTrongNgay = (maNhanVien, ngayChamCong) => {
-    const nhanVien = danhSachNhanVien.find(nv => nv.maNhanVien === maNhanVien);
+    const nhanVien = danhSachNhanVien.find(
+      (nv) => nv.maNhanVien === maNhanVien
+    );
     if (!nhanVien) return null;
 
-    const phongBan = danhSachPhongBan.find(pb => pb.maPhongBan === nhanVien.maPhongBan);
+    const phongBan = danhSachPhongBan.find(
+      (pb) => pb.maPhongBan === nhanVien.maPhongBan
+    );
     if (!phongBan) return null;
 
-    const caLam = danhSachCaLam.find(ca => ca.maCa === phongBan.maCa);
+    const caLam = danhSachCaLam.find((ca) => ca.maCa === phongBan.maCa);
     if (!caLam) return null;
 
-    const jsDay = dayjs(ngayChamCong).day(); // 0 (Chủ nhật) – 6
-    const ngayChuan = jsDay === 0 ? 1 : jsDay + 1;
+    const jsDay = dayjs(ngayChamCong).day(); // 0 (Chủ nhật) – 6 (Thứ 7)
 
+    // Sửa logic: dayjs 0-6 → hệ thống 1-7
+    const ngayChuan = jsDay + 1; // 0→1, 1→2, 2→3, ..., 6→7
     const caTrongTuan = danhSachCaLamTrongTuan.find(
-      item => item.maCa === caLam.maCa && item.ngayTrongTuan === ngayChuan
+      (item) => item.maCa === caLam.maCa && item.ngayTrongTuan === ngayChuan
     );
 
     if (!caTrongTuan) return null;
@@ -243,8 +258,9 @@ export default function GiaLapChamCong() {
 
     return (
       <div>
-        Thứ {caTrongTuan.ngayTrongTuan} <br />
-        ({formatGio(caTrongTuan.gioBatDau)} - {formatGio(caTrongTuan.gioKetThuc)})
+        {thuNgayTrongTuan[caTrongTuan.ngayTrongTuan - 1]} <br />(
+        {formatGio(caTrongTuan.gioBatDau)} - {formatGio(caTrongTuan.gioKetThuc)}
+        )
       </div>
     );
   };
@@ -256,28 +272,61 @@ export default function GiaLapChamCong() {
 
     const { nhanVien, caTrongTuan } = thongTin;
 
-    const lichSuUuTien = danhSachLichSuUuTien.find(lsut => lsut.maNhanVien === nhanVien.maNhanVien);
+    const lichSuUuTien = danhSachLichSuUuTien.find(
+      (lsut) => lsut.maNhanVien === nhanVien.maNhanVien
+    );
     if (!lichSuUuTien) return null;
 
-    const uuTien = danhSachDoiTuongUuTien.find(ut => ut.maUuTien === lichSuUuTien.maUuTien);
+    const uuTien = danhSachDoiTuongUuTien.find(
+      (ut) => ut.maUuTien === lichSuUuTien.maUuTien
+    );
     if (!uuTien) return null;
 
-    const gioBatDauCa = dayjs(`1970-01-01T${caTrongTuan.gioBatDau}`);
-    const gioKetThucCa = dayjs(`1970-01-01T${caTrongTuan.gioKetThuc}`);
+    // Parse thời gian ca làm việc - thử nhiều cách
+    let gioBatDauCa, gioKetThucCa;
 
-    const [h1, m1, s1] = uuTien.thoiGianBatDauCa.split(":").map(Number);
-    const [h2, m2, s2] = uuTien.thoiGianKetThucCa.split(":").map(Number);
+    // Cách 1: Nếu là string thời gian "HH:mm:ss"
+    if (typeof caTrongTuan.gioBatDau === "string") {
+      gioBatDauCa = dayjs(`2024-01-01 ${caTrongTuan.gioBatDau}`);
+      gioKetThucCa = dayjs(`2024-01-01 ${caTrongTuan.gioKetThuc}`);
+    } else {
+      // Cách 2: Nếu là timestamp hoặc Date object
+      gioBatDauCa = dayjs(caTrongTuan.gioBatDau);
+      gioKetThucCa = dayjs(caTrongTuan.gioKetThuc);
+    }
 
-    const phutUuTienBatDau = h1 * 60 + m1 + Math.floor(s1 / 60);
-    const phutUuTienKetThuc = h2 * 60 + m2 + Math.floor(s2 / 60);
+    // Kiểm tra nếu parse thành công
+    if (!gioBatDauCa.isValid() || !gioKetThucCa.isValid()) {
+      console.error("Lỗi parse thời gian ca làm việc");
+      return "Lỗi thời gian ca làm việc";
+    }
 
+    // Parse thời gian ưu tiên từ string "HH:mm:ss" thành phút
+    const parseTimeToMinutes = (timeStr) => {
+      const parts = timeStr.split(":");
+      const hours = parseInt(parts[0], 10);
+      const minutes = parseInt(parts[1], 10);
+      const seconds = parseInt(parts[2] || "0", 10);
+      return hours * 60 + minutes + Math.round(seconds / 60);
+    };
+
+    const phutUuTienBatDau = parseTimeToMinutes(uuTien.thoiGianBatDauCa);
+    const phutUuTienKetThuc = parseTimeToMinutes(uuTien.thoiGianKetThucCa);
+
+    // Tính toán thời gian ưu tiên
     const gioUuTienBatDau = gioBatDauCa.add(phutUuTienBatDau, "minute");
     const gioUuTienKetThuc = gioKetThucCa.subtract(phutUuTienKetThuc, "minute");
 
+    // Kiểm tra kết quả
+    if (!gioUuTienBatDau.isValid() || !gioUuTienKetThuc.isValid()) {
+      console.error("Lỗi tính toán thời gian ưu tiên");
+      return "Lỗi tính toán thời gian ưu tiên";
+    }
+
     return (
       <div>
-        {uuTien.tenUuTien} <br />
-        ({gioUuTienBatDau.format("HH:mm")} - {gioUuTienKetThuc.format("HH:mm")})
+        {uuTien.tenUuTien} <br />({gioUuTienBatDau.format("HH:mm")} -{" "}
+        {gioUuTienKetThuc.format("HH:mm")})
       </div>
     );
   };
@@ -285,31 +334,35 @@ export default function GiaLapChamCong() {
   //Hàm xử lý lấy thời gian tăng ca (vào/ra)
   const getTimeTangCa = (maNhanVien, ngayChamCong) => {
     const thongTin = getThongTinCaTrongNgay(maNhanVien, ngayChamCong);
-    if(!thongTin) return "Không tìm thấy nhân viên";
+    if (!thongTin) return "Không tìm thấy nhân viên";
 
-    const {phongBan} = thongTin;
+    const { phongBan } = thongTin;
 
-    const chamCong = danhSachChamCongChiTiet.find(cc =>
-      cc.maNhanVien === maNhanVien &&
-      dayjs(cc.ngayChamCong).isSame(dayjs(ngayChamCong), 'day')
+    const chamCong = danhSachChamCongChiTiet.find(
+      (cc) =>
+        cc.maNhanVien === maNhanVien &&
+        dayjs(cc.ngayChamCong).isSame(dayjs(ngayChamCong), "day")
     );
     if (!chamCong) return "Không có dữ liệu chấm công";
 
-    const tangCa = danhSachTangCa.find(tc =>
-      tc.maPhongBan === phongBan.maPhongBan &&
-      dayjs(tc.ngayChamCongTangCa).isSame(dayjs(ngayChamCong), 'day')
+    const tangCa = danhSachTangCa.find(
+      (tc) =>
+        tc.maPhongBan === phongBan.maPhongBan &&
+        dayjs(tc.ngayChamCongTangCa).isSame(dayjs(ngayChamCong), "day")
     );
-    if (!tangCa) return "Không có tăng ca";
+    if (!tangCa) return "-";
 
-    return `(${formatGio(tangCa.gioTangCaBatDau)} - ${formatGio(tangCa.gioTangCaKetThuc)})`;
-  }
+    return `(${formatGio(tangCa.gioTangCaBatDau)} - ${formatGio(
+      tangCa.gioTangCaKetThuc
+    )})`;
+  };
 
   const isDataReady = [
     danhSachNhanVien,
     danhSachPhongBan,
     danhSachCaLam,
-    danhSachCaLamTrongTuan
-  ].every(ds => Array.isArray(ds) && ds.length > 0);
+    danhSachCaLamTrongTuan,
+  ].every((ds) => Array.isArray(ds) && ds.length > 0);
 
   const columns = useMemo(
     () => [
@@ -359,16 +412,19 @@ export default function GiaLapChamCong() {
         key: "caLamViec",
         render: (_, record) => {
           if (!isDataReady) return "Đang tải...";
-          const ca = getCaLamViecTrongTuan(record.maNhanVien, record.ngayChamCong);
+          const ca = getCaLamViecTrongTuan(
+            record.maNhanVien,
+            record.ngayChamCong
+          );
           return ca || "Không có";
-        }
+        },
       },
       {
         title: "Ưu tiên",
         render(_, record) {
-          const uutien = getUuTien(record.maNhanVien);
+          const uutien = getUuTien(record.maNhanVien, record.ngayChamCong);
           return uutien || "-";
-        }
+        },
       },
       {
         title: "Giờ vào",
@@ -385,10 +441,10 @@ export default function GiaLapChamCong() {
       {
         title: "Giờ tăng ca",
         width: 120,
-        render(_, record){
+        render(_, record) {
           const tc = getTimeTangCa(record.maNhanVien, record.ngayChamCong);
           return tc || "Không tìm thấy";
-        }
+        },
       },
       {
         title: "Tổng giờ",
@@ -414,8 +470,8 @@ export default function GiaLapChamCong() {
             status === "Chưa hoàn tất" || status === "Tăng ca"
               ? "error"
               : status === "Tăng ca hoàn tất" || status === "Hoàn tất"
-                ? "success"
-                : "warning";
+              ? "success"
+              : "warning";
           return (
             <Tag color={color}>
               {isMobile ? status.slice(0, 8) + "..." : status}
@@ -442,8 +498,17 @@ export default function GiaLapChamCong() {
         onFilter: (value, record) => record.trangThai === value,
       },
     ],
-    [formatTime, isMobile, danhSachPhongBan, danhSachNhanVien, danhSachCaLamTrongTuan, 
-      danhSachCaLam, danhSachLichSuUuTien, danhSachDoiTuongUuTien, danhSachTangCa]
+    [
+      formatTime,
+      isMobile,
+      danhSachPhongBan,
+      danhSachNhanVien,
+      danhSachCaLamTrongTuan,
+      danhSachCaLam,
+      danhSachLichSuUuTien,
+      danhSachDoiTuongUuTien,
+      danhSachTangCa,
+    ]
   );
 
   const mobileColumns = useMemo(
@@ -492,17 +557,24 @@ export default function GiaLapChamCong() {
             </div>
             {/* Giờ tăng ca */}
             <div style={{ marginTop: 8 }}>
-              <div style={{ fontSize: "13px", fontWeight: 500, marginBottom: 4 }}>
+              <div
+                style={{ fontSize: "13px", fontWeight: 500, marginBottom: 4 }}
+              >
                 Giờ tăng ca
               </div>
               {getTimeTangCa(record.maNhanVien, record.ngayChamCong) ? (
                 <Space size={[12, 8]} wrap>
                   <span style={{ fontSize: "13px" }}>
-                    <strong>Khoảng thời gian:</strong> {formatTime(getTimeTangCa(record.maNhanVien, record.ngayChamCong))}
+                    <strong>Khoảng thời gian:</strong>{" "}
+                    {formatTime(
+                      getTimeTangCa(record.maNhanVien, record.ngayChamCong)
+                    )}
                   </span>
                 </Space>
               ) : (
-                <div style={{ fontSize: "13px", color: "#999" }}>Không có tăng ca</div>
+                <div style={{ fontSize: "13px", color: "#999" }}>
+                  Không có tăng ca
+                </div>
               )}
             </div>
 
@@ -510,13 +582,15 @@ export default function GiaLapChamCong() {
             <div style={{ marginTop: 10 }}>
               <Tag
                 color={
-                  record.trangThai === "Chưa hoàn tất" || record.trangThai === "Tăng ca"
+                  record.trangThai === "Chưa hoàn tất" ||
+                  record.trangThai === "Tăng ca"
                     ? "error"
-                    : record.trangThai === "Tăng ca hoàn tất" || record.trangThai === "Hoàn tất"
-                      ? "success"
-                      : record.trangThai === "Không tăng ca"
-                        ? "cyan"
-                        : "warning"
+                    : record.trangThai === "Tăng ca hoàn tất" ||
+                      record.trangThai === "Hoàn tất"
+                    ? "success"
+                    : record.trangThai === "Không tăng ca"
+                    ? "cyan"
+                    : "warning"
                 }
                 style={{ fontSize: "12px" }}
               >
@@ -537,8 +611,17 @@ export default function GiaLapChamCong() {
         onFilter: (value, record) => record.trangThai === value,
       },
     ],
-    [formatTime, isMobile, danhSachPhongBan, danhSachNhanVien, danhSachCaLamTrongTuan, 
-      danhSachCaLam, danhSachLichSuUuTien, danhSachDoiTuongUuTien, danhSachTangCa ]
+    [
+      formatTime,
+      isMobile,
+      danhSachPhongBan,
+      danhSachNhanVien,
+      danhSachCaLamTrongTuan,
+      danhSachCaLam,
+      danhSachLichSuUuTien,
+      danhSachDoiTuongUuTien,
+      danhSachTangCa,
+    ]
   );
 
   const statistics = useMemo(() => {
@@ -547,15 +630,15 @@ export default function GiaLapChamCong() {
     const nhanVienTheoPhongBan =
       selectedPhongBan && selectedPhongBan.phongBanValue
         ? danhSachNhanVien.filter(
-          (nv) => nv.tenPhongBan === selectedPhongBan.phongBanValue
-        )
+            (nv) => nv.tenPhongBan === selectedPhongBan.phongBanValue
+          )
         : danhSachNhanVien;
 
     const chamCongTheoPhongBan =
       selectedPhongBan && selectedPhongBan.phongBanValue
         ? danhSachChamCongChiTiet.filter(
-          (cc) => cc.tenPhongBan === selectedPhongBan.phongBanValue
-        )
+            (cc) => cc.tenPhongBan === selectedPhongBan.phongBanValue
+          )
         : danhSachChamCongChiTiet;
 
     const totalRecords = chamCongTheoPhongBan.filter(
@@ -657,7 +740,7 @@ export default function GiaLapChamCong() {
       dayjs(dateRange[0]).isSame(today, "day") &&
       dayjs(dateRange[1]).isSame(today, "day")
     ) {
-      apiNotification.warning({message: "Bạn đang trong ngày hôm nay rồi!!"});
+      apiNotification.warning({ message: "Bạn đang trong ngày hôm nay rồi!!" });
       return;
     }
 
@@ -1065,7 +1148,11 @@ export default function GiaLapChamCong() {
                   showTotal: (total, range) =>
                     `${range[0]}-${range[1]} của ${total} bản ghi`,
                 }}
-                scroll={{x: 'max-content', y: "calc(100vh - 300px)", sticky: true }}
+                scroll={{
+                  x: "max-content",
+                  y: "calc(100vh - 300px)",
+                  sticky: true,
+                }}
                 onChange={(pagination, filters) => {
                   const pb = filters.tenPhongBan?.[0];
                   setSelectedPhongBan({

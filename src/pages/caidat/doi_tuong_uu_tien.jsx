@@ -72,6 +72,20 @@ export default function DoiTuongUuTienComponent() {
     updateLichSuUuTien,
     deleteLichSuUuTien,
   } = useLichSuUuTien();
+  const formatDate = (dateString, outputFormat = "DD/MM/YYYY") => {
+    if (!dateString) return "";
+
+    const formats = ["YYYY-MM-DD", "DD/MM/YYYY", "MM/DD/YYYY", "YYYY/MM/DD"];
+
+    for (const format of formats) {
+      const parsed = dayjs(dateString, format, true);
+      if (parsed.isValid()) {
+        return parsed.format(outputFormat);
+      }
+    }
+
+    return "";
+  };
   const dataSourceLichSuUuTien = danhSachLichSuUuTien.map((lsut) => {
     const dataNhanVienFind = danhSachNhanVien.find(
       (nv) => nv.maNhanVien === lsut.maNhanVien
@@ -178,9 +192,6 @@ export default function DoiTuongUuTienComponent() {
       thoiGianHieuLucBatDau: values.thoiGianHieuLucBatDau
         ? dayjs(values.thoiGianHieuLucBatDau).format("YYYY-MM-DD")
         : null,
-      thoiGianHieuLucKetThuc: values.thoiGianHieuLucKetThuc
-        ? dayjs(values.thoiGianHieuLucKetThuc).format("YYYY-MM-DD")
-        : null,
     };
 
     try {
@@ -280,7 +291,9 @@ export default function DoiTuongUuTienComponent() {
   const handleDeleteMultiple = async () => {
     try {
       await Promise.all(selectedKeys.map((key) => handleDelete(key)));
-      api.success({ message: `Xóa ${selectedKeys.length} mục đã chọn thành công!` });
+      api.success({
+        message: `Xóa ${selectedKeys.length} mục đã chọn thành công!`,
+      });
       setSelectedKeys([]);
     } catch (error) {
       api.error({
@@ -320,7 +333,9 @@ export default function DoiTuongUuTienComponent() {
           return Promise.resolve(); // If record not found, resolve immediately
         })
       );
-      api.success({ message: `Xóa ${selectedHistoryKeys.length} mục lịch sử đã chọn thành công!` });
+      api.success({
+        message: `Xóa ${selectedHistoryKeys.length} mục lịch sử đã chọn thành công!`,
+      });
       setSelectedHistoryKeys([]);
     } catch (error) {
       api.error({
@@ -418,7 +433,6 @@ export default function DoiTuongUuTienComponent() {
       dataIndex: "tenPhongBan",
       key: "tenPhongBan",
       width: 150,
-      //sorter: (a, b) => a.thoiGianHieuLuc - b.thoiGianHieuLuc, // Consider if string sorting is desired
     },
     {
       title: "Thao tác",
@@ -488,14 +502,14 @@ export default function DoiTuongUuTienComponent() {
       dataIndex: "thoiGianHieuLucBatDau",
       key: "thoiGianHieuLucBatDau",
       width: 120,
-      render: (date) => (date ? dayjs(date).format("DD/MM/YYYY") : "N/A"),
+      render: (date) => formatDate(date, "DD/MM/YYYY"),
     },
     {
       title: "Ngày kết thúc",
       dataIndex: "thoiGianHieuLucKetThuc",
       key: "thoiGianHieuLucKetThuc",
       width: 120,
-      render: (date) => (date ? dayjs(date).format("DD/MM/YYYY") : "N/A"),
+      render: (date) => formatDate(date, "DD/MM/YYYY"),
     },
     {
       title: "Phòng ban",
@@ -694,11 +708,7 @@ export default function DoiTuongUuTienComponent() {
                         },
                       }}
                     >
-                      <Button
-                        type="primary"
-                        danger
-                        icon={<DeleteOutlined />}
-                      >
+                      <Button type="primary" danger icon={<DeleteOutlined />}>
                         Xóa {selectedHistoryKeys.length} mục đã chọn
                       </Button>
                     </Popconfirm>
@@ -913,17 +923,18 @@ export default function DoiTuongUuTienComponent() {
               </Col>
               <Col xs={24} sm={12}>
                 <Form.Item
-                  label="Thời gian vào ca"
+                  label="Thời gian vào muộn"
                   name="thoiGianBatDauCa"
                   rules={[
                     {
                       required: true,
-                      message: "Vui lòng nhập thời gian vào ca",
+                      message:
+                        "Vui lòng nhập thời gian đối tượng được vào muộn",
                     },
                   ]}
                 >
                   <TimePicker
-                    placeholder="Chọn thời gian vào ca"
+                    placeholder="Chọn thời gian vào ca muộn"
                     format={"HH:mm:ss"}
                     style={{ width: "100%" }}
                   />
@@ -931,17 +942,17 @@ export default function DoiTuongUuTienComponent() {
               </Col>
               <Col xs={24} sm={12}>
                 <Form.Item
-                  label="Thời gian ra ca"
+                  label="Thời gian ra sớm"
                   name="thoiGianKetThucCa"
                   rules={[
                     {
                       required: true,
-                      message: "Vui lòng nhập thời gian ra ca",
+                      message: "Vui lòng nhập thời gian ra ca sớm",
                     },
                   ]}
                 >
                   <TimePicker
-                    placeholder="Chọn thời gian ra ca"
+                    placeholder="Chọn thời gian ra ca sớm"
                     format={"HH:mm:ss"}
                     style={{ width: "100%" }}
                   />

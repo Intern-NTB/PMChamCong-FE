@@ -71,7 +71,9 @@ export default function CaLamComponent() {
 
       // Add warning if no results found
       if (filtered.length === 0) {
-        apiNotification.warning("Không tìm thấy ca làm nào khớp với tìm kiếm của bạn.");
+        apiNotification.warning({
+          message: "Không tìm thấy ca làm nào khớp với tìm kiếm của bạn.",
+        });
       }
     }
   }, [searchText, danhSachCaLam, apiNotification]); // Added apiNotification to dependencies
@@ -100,7 +102,9 @@ export default function CaLamComponent() {
       try {
         const result = await getAllCaLamTrongTuanByPhongBan(maCa);
         if (!result || result.length === 0) {
-            apiNotification.warning("Không có chi tiết ca làm trong tuần cho ca này.");
+          // apiNotification.warning(
+          //   "Không có chi tiết ca làm trong tuần cho ca này."
+          // );
         }
       } catch (error) {
         console.error("Lỗi khi tải chi tiết ca làm:", error);
@@ -414,7 +418,11 @@ export default function CaLamComponent() {
             scroll={{ x: 800, y: tableScrollY }}
             size="middle"
             // Add warning if no data is available
-            locale={{ emptyText: loadingCaLam ? "Đang tải dữ liệu..." : "Không có dữ liệu ca làm nào." }}
+            locale={{
+              emptyText: loadingCaLam
+                ? "Đang tải dữ liệu..."
+                : "Không có dữ liệu ca làm nào.",
+            }}
           />
 
           <Row justify="end" style={{ marginTop: "16px" }}>

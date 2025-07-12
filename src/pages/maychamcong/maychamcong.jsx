@@ -23,7 +23,7 @@ import {
   ClockCircleOutlined,
   WarningOutlined,
   ReloadOutlined,
-  SearchOutlined, 
+  SearchOutlined,
 } from "@ant-design/icons";
 import "./maychamcong.css";
 import { useMayChamCong } from "../../component/hooks/useMayChamCong";
@@ -56,7 +56,7 @@ const MayChamCong = () => {
   ] = useState(false);
   const [isDeleteTingModalVanTay, setIsDeleteTingModalVanTay] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [showEmployeeModal, setShowEmployeeModal] = useState(false); 
+  const [showEmployeeModal, setShowEmployeeModal] = useState(false);
   const [isVisibleModalDeleteEmployee, setIsVisibleModalDeleteEmployee] =
     useState(false);
   const [isVisibleModalDeleteVanTay, setIsVisibleModalDeleteVanTay] =
@@ -64,7 +64,7 @@ const MayChamCong = () => {
   const [isVisibleModalUploadVanTay, setIsVisibleModalUploadVanTay] =
     useState(false);
   const [selectedDbEmployees, setSelectedDbEmployees] = useState([]);
-  const [searchDbEmployeeText, setSearchDbEmployeeText] = useState(""); 
+  const [searchDbEmployeeText, setSearchDbEmployeeText] = useState("");
 
   const {
     danhSachNhanVienMayChamCong,
@@ -82,7 +82,7 @@ const MayChamCong = () => {
     danhSachNhanVien,
     danhSachVanTayNhanVien,
     getAllFingerprintsOfNhanVien,
-  } = useNhanVien();
+  } = useNhanVien(true);
 
   const dataSourceNhanVien = danhSachNhanVien.map((nv) => {
     return {
@@ -121,12 +121,19 @@ const MayChamCong = () => {
       return dataSourceNhanVien;
     }
 
-    const processedSearchText = removeAccents(searchDbEmployeeText).toLowerCase();
+    const processedSearchText =
+      removeAccents(searchDbEmployeeText).toLowerCase();
 
     return dataSourceNhanVien.filter((record) => {
-      const maNhanVienString = removeAccents(String(record.maNhanVien || "")).toLowerCase();
-      const hoTenString = removeAccents(String(record.hoTen || "")).toLowerCase();
-      const trangThaiString = removeAccents(String(record.trangThai || "")).toLowerCase();
+      const maNhanVienString = removeAccents(
+        String(record.maNhanVien || "")
+      ).toLowerCase();
+      const hoTenString = removeAccents(
+        String(record.hoTen || "")
+      ).toLowerCase();
+      const trangThaiString = removeAccents(
+        String(record.trangThai || "")
+      ).toLowerCase();
 
       return (
         maNhanVienString.includes(processedSearchText) ||
@@ -222,10 +229,10 @@ const MayChamCong = () => {
   };
 
   const handleUploadEmployees = async () => {
-    await handleUpload(selectedDbEmployees); 
+    await handleUpload(selectedDbEmployees);
     setShowEmployeeModal(false);
     setSelectedDbEmployees([]);
-    setSearchDbEmployeeText(""); 
+    setSearchDbEmployeeText("");
     await handleReloadNhanVienMayChamCong();
   };
 
@@ -261,12 +268,15 @@ const MayChamCong = () => {
   };
 
   const handleDownloadAttendance = async () => {
-    setLogs((prev) => [...prev, "Chức năng tải dữ liệu chấm công đang được phát triển."]);
+    setLogs((prev) => [
+      ...prev,
+      "Chức năng tải dữ liệu chấm công đang được phát triển.",
+    ]);
   };
 
   const handleDownloadFingerprints = async () => {
     try {
-      setIsSyncing(true); 
+      setIsSyncing(true);
       setLogs((prev) => [
         ...prev,
         "Đang đồng bộ dữ liệu vân tay từ máy chấm công về DB hệ thống",
@@ -276,10 +286,10 @@ const MayChamCong = () => {
 
       await getAllFingerprintsOfNhanVien();
       setLogs((prev) => [...prev, "Đồng bộ dữ liệu vân tay hoàn tất"]);
-      setIsSyncing(false); 
+      setIsSyncing(false);
     } catch (error) {
       setLogs((prev) => [...prev, `Lỗi khi đồng bộ dữ liệu vân tay: ${error}`]);
-      setIsSyncing(false); 
+      setIsSyncing(false);
     }
   };
 
@@ -310,7 +320,7 @@ const MayChamCong = () => {
     );
 
     await Promise.allSettled(deletePromises);
-    await getAllNhanVienMayChamCong(); 
+    await getAllNhanVienMayChamCong();
     setIsVisibleModalDeleteEmployee(false);
     setIsDeleteTingModalNhanVienMayChamCong(false);
   };
@@ -438,7 +448,7 @@ const MayChamCong = () => {
               icon={<UploadOutlined />}
               onClick={() => {
                 setShowEmployeeModal(true);
-                setSearchDbEmployeeText(""); 
+                setSearchDbEmployeeText("");
               }}
               disabled={!isFunctionEnabled}
               className="button"
@@ -495,7 +505,9 @@ const MayChamCong = () => {
               <Text type="secondary">Chưa có thao tác nào.</Text>
             ) : (
               logs.map((log, index) => (
-                <p key={index} className="logEntry"> {/* Added key prop */}
+                <p key={index} className="logEntry">
+                  {" "}
+                  {/* Added key prop */}
                   <ClockCircleOutlined className="logIcon" />
                   {log}
                 </p>
@@ -538,23 +550,23 @@ const MayChamCong = () => {
           open={showEmployeeModal}
           onCancel={() => {
             setShowEmployeeModal(false);
-            setSearchDbEmployeeText(""); 
-            setSelectedDbEmployees([]); 
+            setSearchDbEmployeeText("");
+            setSelectedDbEmployees([]);
           }}
           footer={[
             <Button
-              key="back" 
+              key="back"
               onClick={() => {
                 setShowEmployeeModal(false);
-                setSearchDbEmployeeText(""); 
-                setSelectedDbEmployees([]); 
+                setSearchDbEmployeeText("");
+                setSelectedDbEmployees([]);
               }}
               className="button"
             >
               Hủy
             </Button>,
             <Button
-              key="submit" 
+              key="submit"
               type="primary"
               onClick={handleUploadEmployees}
               disabled={selectedDbEmployees.length === 0}
@@ -571,7 +583,13 @@ const MayChamCong = () => {
                 Nhân viên trong hệ thống (DB)
               </Title>
               {/* Search bar for DB employees */}
-              <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'flex-start' }}>
+              <div
+                style={{
+                  marginBottom: 12,
+                  display: "flex",
+                  justifyContent: "flex-start",
+                }}
+              >
                 <Input
                   placeholder="Tìm kiếm trong DB..."
                   prefix={<SearchOutlined />}

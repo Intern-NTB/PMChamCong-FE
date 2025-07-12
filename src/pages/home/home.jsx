@@ -77,7 +77,7 @@ export default function Home() {
   ];
 
   return (
-    <div className="container">
+    <div >
       {/* Banner */}
       <div className="banner">
         <img

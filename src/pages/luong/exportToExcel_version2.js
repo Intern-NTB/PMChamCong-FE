@@ -475,11 +475,11 @@ export const exportToExcel = async (
         {
           key: "danhSachLichSuThuong",
           width: 50,
-          header: "(10)\nChi Tiết Thưởng",
+          header: "(10)\nChi Tiết Lương Thưởng",
         },
         { key: "tienThuong", width: 15, header: "(11)\nTổng Tiền Thưởng" },
-        { key: "danhSachLichSuTru", width: 50, header: "(12)\nChi Tiết Phạt" },
-        { key: "tienTru", width: 15, header: "(13)\nTổng Tiền Phạt" },
+        { key: "danhSachLichSuTru", width: 50, header: "(12)\nChi Tiết Lương Trừ" },
+        { key: "tienTru", width: 15, header: "(13)\nTổng Lương Trừ" },
 
         // === CÁC CÔNG THỨC TÍNH (cập nhật số thứ tự) ===
         { key: "luongGio", width: 12, header: "(14)\nLương Giờ\n(1)/(3)/8" },
@@ -986,15 +986,15 @@ export const exportIndividualToExcel = async (
           {
             key: "danhSachLichSuThuong",
             width: 50,
-            header: "(10)\nChi Tiết Thưởng",
+            header: "(10)\nChi Tiết Lương Thưởng",
           },
           { key: "tienThuong", width: 15, header: "(11)\nTổng Tiền Thưởng" },
           {
             key: "danhSachLichSuTru",
             width: 50,
-            header: "(12)\nChi Tiết Phạt",
+            header: "(12)\nChi Tiết Lương Trừ",
           },
-          { key: "tienTru", width: 15, header: "(13)\nTổng Tiền Phạt" },
+          { key: "tienTru", width: 15, header: "(13)\nTổng Lương Trừ" },
 
           // === CÁC CÔNG THỨC TÍNH (cập nhật số thứ tự) ===
           { key: "luongGio", width: 12, header: "(14)\nLương Giờ\n(1)/(3)/8" },
