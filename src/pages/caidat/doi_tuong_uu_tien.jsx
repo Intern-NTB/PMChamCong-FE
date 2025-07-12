@@ -362,11 +362,7 @@ export default function DoiTuongUuTienComponent() {
     setPhongBanNhanVien(nhanVien?.maPhongBan || null);
     historyForm.setFieldsValue({ maNhanVien: value });
   };
-  const filteredDoiTuongUuTien = useMemo(() => {
-    return danhSachDoiTuongUuTien.filter(
-      (item) => item.maPhongBan === phongBanNhanVien
-    );
-  }, [danhSachDoiTuongUuTien, phongBanNhanVien]);
+
 
   useEffect(() => {
     if (editingHistoryId && historyForm.getFieldValue("maNhanVien")) {
@@ -428,12 +424,7 @@ export default function DoiTuongUuTienComponent() {
       width: 150,
       sorter: (a, b) => a.thoiGianHieuLuc - b.thoiGianHieuLuc,
     },
-    {
-      title: "Phòng ban",
-      dataIndex: "tenPhongBan",
-      key: "tenPhongBan",
-      width: 150,
-    },
+
     {
       title: "Thao tác",
       key: "action",
@@ -510,13 +501,6 @@ export default function DoiTuongUuTienComponent() {
       key: "thoiGianHieuLucKetThuc",
       width: 120,
       render: (date) => formatDate(date, "DD/MM/YYYY"),
-    },
-    {
-      title: "Phòng ban",
-      dataIndex: "phongBan",
-      key: "phongBan",
-      width: 150,
-      //sorter: (a, b) => a.thoiGianHieuLuc - b.thoiGianHieuLuc, // Consider if string sorting is desired
     },
     {
       title: "Thao tác",
@@ -879,27 +863,6 @@ export default function DoiTuongUuTienComponent() {
               </Col>
               <Col xs={24} sm={12}>
                 <Form.Item
-                  label="Phòng ban"
-                  name="maPhongBan"
-                  rules={[
-                    {
-                      required: true,
-                      message: "Vui lòng chọn phòng ban",
-                    },
-                  ]}
-                >
-                  <Select
-                    placeholder="Chọn phòng ban"
-                    loading={loading}
-                    options={datasourcePhongBan.map((item) => ({
-                      value: item.maPhongBans,
-                      label: item.tenPhongBans,
-                    }))}
-                  />
-                </Form.Item>
-              </Col>
-              <Col xs={24} sm={12}>
-                <Form.Item
                   label={
                     <Space>
                       <span>Thời gian hiệu lực (Ngày)</span>
@@ -1049,7 +1012,7 @@ export default function DoiTuongUuTienComponent() {
                   ]}
                 >
                   <Select
-                    disabled={editingHistoryId ? false : false} // This seems to be intentionally not disabled during edit.
+                    disabled={editingHistoryId ? false : false} 
                     placeholder="Chọn đối tượng ưu tiên"
                     showSearch
                     optionFilterProp="children"
@@ -1060,10 +1023,10 @@ export default function DoiTuongUuTienComponent() {
                         .includes(input.toLowerCase())
                     }
                   >
-                    {filteredDoiTuongUuTien.map((item) => (
+                    {danhSachDoiTuongUuTien.map((item) => (
                       <Select.Option key={item.maUuTien} value={item.maUuTien}>
                         {item.tenUuTien}
-                      </Select.Option>
+                      </Select.Option>  
                     ))}
                   </Select>
                 </Form.Item>
