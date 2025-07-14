@@ -130,8 +130,12 @@ axiosInstance.interceptors.response.use(
       console.log(" API Response:", response.status, response.config.url);
     }
 
-    // Hiển thị notification success nếu được yêu cầu
-    if (response.config.showNotification) {
+    // Chỉ hiện notification nếu KHÔNG phải GET và được yêu cầu
+    if (
+      response.config.showNotification &&
+      response.config.method &&
+      response.config.method.toLowerCase() !== 'get'
+    ) {
       const message = response.data?.message || 'Thành công';
       showNotificationByStatus(response.status, message);
     }
@@ -151,8 +155,13 @@ axiosInstance.interceptors.response.use(
       }
     }
 
-    // Tự động hiển thị notification cho error (trừ khi bị tắt)
-    if (error.response && !error.config?.hideNotification) {
+    // Chỉ hiện notification cho lỗi nếu KHÔNG phải GET và không bị tắt
+    if (
+      error.response &&
+      !error.config?.hideNotification &&
+      error.config?.method &&
+      error.config.method.toLowerCase() !== 'get'
+    ) {
       const message = error.response.data?.message || error.response.data?.error;
       const description = error.response.data?.description || error.response.data?.details;
       showNotificationByStatus(error.response.status, message, description);
