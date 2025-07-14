@@ -6,7 +6,6 @@ import {
     Input,
     Space,
     Modal,
-    message,
     Button as AntButton,
     Card,
     Checkbox,
@@ -29,7 +28,7 @@ import {
 import { usePhongBan } from '../../component/hooks/usePhongBan';
 import { useCaLam } from '../../component/hooks/useCaLam';
 import { ReloadContext } from '../../context/reloadContext';
-import { useAppNotification } from '../../component/ui/notification';
+
 
 const { Text, Title } = Typography;
 const { Search } = Input;
@@ -48,7 +47,7 @@ export default function PhongBanComponent () {
     const [statusFilter, setStatusFilter] = useState('all');
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(8);
-    const apiNotification = useAppNotification();
+
 
     const {
         danhSachPhongBan,
@@ -120,23 +119,6 @@ export default function PhongBanComponent () {
 
     // Handle form submission
     const onFinish = useCallback(async (values) => {
-        const newDepartmentName = values.tenPhongBan.toLowerCase().trim();
-
-        // Check for duplicate name
-        const isDuplicate = danhSachPhongBan?.some(pb =>
-            pb.tenPhongBan.toLowerCase().trim() === newDepartmentName &&
-            (editingId ? pb.maPhongBan !== editingId : true) // Exclude current item if editing
-        );
-
-        if (isDuplicate) {
-            apiNotification.warning({
-                message: 'Cảnh báo',
-                description: `Tên phòng ban "${values.tenPhongBan}" đã tồn tại. Vui lòng nhập tên khác.`,
-                duration: 3
-            });
-            return; // Stop the submission
-        }
-
         try {
             if (editingId) {
                 const updatedData = {
@@ -144,26 +126,14 @@ export default function PhongBanComponent () {
                     ...values
                 };
                 await updatePhongBan(updatedData);
-                apiNotification.success({
-                    message: 'Thành công',
-                    description: 'Cập nhật phòng ban thành công!'
-                });
             } else {
                 await createPhongBan(values);
-                apiNotification.success({
-                    message: 'Thành công',
-                    description: 'Thêm phòng ban thành công!'
-                });
             }
             handleCancel();
         } catch (error) {
             console.error('Error:', error);
-            apiNotification.error({
-                message: 'Lỗi',
-                description: 'Có lỗi xảy ra, vui lòng thử lại!'
-            });
         }
-    }, [editingId, updatePhongBan, createPhongBan, danhSachPhongBan, apiNotification]); // Add danhSachPhongBan and apiNotification to dependencies
+    }, [editingId, updatePhongBan, createPhongBan]); // Remove danhSachPhongBan and apiNotification dependencies
 
     const handleAdd = useCallback(() => {
         setEditingId(null);
@@ -189,15 +159,11 @@ export default function PhongBanComponent () {
 
     const handleBulkDelete = useCallback(() => {
         if (selectedRowKeys.length === 0) {
-            apiNotification.warning({
-                message: 'Cảnh báo',
-                description: 'Vui lòng chọn ít nhất một phòng ban để xóa!'
-            });
             return;
         }
         // Implement bulk delete logic here
         console.log('Bulk delete:', selectedRowKeys);
-    }, [selectedRowKeys, apiNotification]); // Add apiNotification to dependencies
+    }, [selectedRowKeys]); // Remove apiNotification dependency
 
     const handleCancel = () => {
         setIsModalVisible(false);
@@ -231,21 +197,13 @@ export default function PhongBanComponent () {
         try {
             if (isModalConfirmVisible.data) {
                 await deletePhongBan(isModalConfirmVisible.data.maPhongBan);
-                apiNotification.success({
-                    message: 'Thành công',
-                    description: 'Xóa phòng ban thành công!'
-                });
             }
         } catch (error) {
             console.error('Error deleting:', error);
-            apiNotification.error({
-                message: 'Lỗi',
-                description: 'Có lỗi xảy ra khi xóa!'
-            });
         } finally {
             setIsModalConfirmVisible({ visible: false, data: null });
         }
-    }, [isModalConfirmVisible.data, deletePhongBan, apiNotification]); // Add apiNotification to dependencies
+    }, [isModalConfirmVisible.data, deletePhongBan]); // Remove apiNotification dependency
 
     // Render department card
     const renderPhongBanCard = useCallback((item) => (

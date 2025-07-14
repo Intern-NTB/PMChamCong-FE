@@ -6,41 +6,47 @@ export const getAllLoaiTienTruServices = async () => {
     const res = await axiosInstance.get("/loaitientru");
     return res.data;
   } catch (error) {
-    console.log("AXIOS Lỗi khi lấy loại tiền trừ:", error);
-    return null;
+    console.error("Lỗi khi lấy danh sách loại tiền trừ:", error);
+    throw error; // Throw error để axios interceptor bắt được
   }
 };
 
 // Tạo loại tiền trừ
 export const createLoaiTienTruServices = async (duLieuLoaiTienTru) => {
   try {
-    const res = await axiosInstance.post("/loaitientru", duLieuLoaiTienTru);
-    return res.data;
+    await axiosInstance.post("/loaitientru", duLieuLoaiTienTru, {
+      showNotification: true, // Hiển thị success notification
+    });
   } catch (error) {
-    console.log("AXIOS Lỗi khi tạo loại tiền trừ:", error);
-    throw error;
+    console.error("Lỗi khi tạo loại tiền trừ:", error);
+    throw error; // Throw error để axios interceptor bắt được
   }
 };
 
 // Cập nhật loại tiền trừ
 export const updateLoaiTienTruServices = async (duLieuLoaiTienTru) => {
   try {
-    console.log('req',duLieuLoaiTienTru)
-    const res = await axiosInstance.put(`/loaitientru/${duLieuLoaiTienTru.maLoaiTienTru}`, duLieuLoaiTienTru);
-    return res.data;
+    await axiosInstance.put(
+      `/loaitientru/${duLieuLoaiTienTru.maLoaiTienTru}`,
+      duLieuLoaiTienTru,
+      {
+        showNotification: true, // Hiển thị success notification
+      }
+    );
   } catch (error) {
-    console.log("AXIOS Lỗi khi cập nhật loại tiền trừ:", error);
-    throw error;
+    console.error("Lỗi khi cập nhật loại tiền trừ:", error);
+    throw error; // Throw error để axios interceptor bắt được
   }
 };
 
 // Xoá loại tiền trừ
 export const deleteLoaiTienTruServices = async (maLoaiTienTru) => {
   try {
-    const res = await axiosInstance.delete(`/loaitientru/${maLoaiTienTru}`);
-    return res.data;
+    await axiosInstance.delete(`/loaitientru/${maLoaiTienTru}`, {
+      showNotification: true, // Hiển thị success notification
+    });
   } catch (error) {
-    console.log("AXIOS Lỗi khi xoá loại tiền trừ:", error);
-    throw error;
+    console.error("Lỗi khi xóa loại tiền trừ:", error);
+    throw error; // Throw error để axios interceptor bắt được
   }
 };

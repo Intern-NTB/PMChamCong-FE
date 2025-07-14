@@ -7,7 +7,9 @@ export const getAllTaiKhoanServices = async () => {
 
 export const createTaiKhoanServices = async (newUser) => {
   try {
-    const response = await axiosInstance.post('/taikhoan', newUser);
+    const response = await axiosInstance.post('/taikhoan', newUser, {
+      showNotification: true
+    });
     return response.data;
   } catch (error) {
     return error;
@@ -16,7 +18,9 @@ export const createTaiKhoanServices = async (newUser) => {
 
 export const deleteTaiKhoanServices = async (maNhanVien) => {
   try {
-    await axiosInstance.delete(`/taikhoan/${maNhanVien}`)
+    await axiosInstance.delete(`/taikhoan/${maNhanVien}`, {
+      showNotification: true
+    })
   } catch (error) {
     console.error(`Lỗi Axios Tài Khoản : ${error}`)
   }
@@ -25,8 +29,10 @@ export const deleteTaiKhoanServices = async (maNhanVien) => {
 export const updateTaiKhoanServices = async (dulieuTaiKhoan) => {
     try {
         const { maNhanVien, ...resDuLieuTaiKhoan } = dulieuTaiKhoan
-        await axiosInstance.put(`/taikhoan/${maNhanVien}`, resDuLieuTaiKhoan)
-    } catch {
+        await axiosInstance.put(`/taikhoan/${maNhanVien}`, resDuLieuTaiKhoan, {
+            showNotification: true
+        })
+    } catch (error) {
         console.log(`Lỗi, không tìm thấy dữ liệu: ${error}`)
     }
 }

@@ -13,7 +13,9 @@ export const getAllLoaiPhuCapServices = async () => {
 //Tạo loại phụ cấp mới
 export const createLoaiPhuCapServices = async (duLieuLoaiPhuCap) => {
     try{
-        const res = await axiosInstance.post('/phucap', duLieuLoaiPhuCap);
+        const res = await axiosInstance.post('/phucap', duLieuLoaiPhuCap, {
+            showNotification: true
+        });
         return res.data
     } catch (error){
         console.log(`AXIOS lỗi khi tạo loại phụ cấp`, error);
@@ -22,7 +24,9 @@ export const createLoaiPhuCapServices = async (duLieuLoaiPhuCap) => {
 
 export const updateLoaiPhuCapServices = async (duLieuLoaiPhuCap) => {
     try{
-        const res = await axiosInstance.put(`/phucap/${duLieuLoaiPhuCap.maPhuCap}`, duLieuLoaiPhuCap);
+        const res = await axiosInstance.put(`/phucap/${duLieuLoaiPhuCap.maPhuCap}`, duLieuLoaiPhuCap, {
+            showNotification: true
+        });
         return res.data;
     } catch (error) {
         console.log(`AXIOS Lỗi khi cập nhật loại tiền thưởng`, error);
@@ -31,7 +35,9 @@ export const updateLoaiPhuCapServices = async (duLieuLoaiPhuCap) => {
 
 export const deleteLoaiPhuCapServices = async (maPhuCap, maVaiTro) => {
     try{
-        const res = await axiosInstance.delete(`/phucap/${maPhuCap}/${maVaiTro}`);
+        const res = await axiosInstance.delete(`/phucap/${maPhuCap}/${maVaiTro}`, {
+            showNotification: true
+        });
         return res.data;
     } catch (error) {
         console.log(`AXIOS Lỗi khi xóa loại tiền thưởng`, error);

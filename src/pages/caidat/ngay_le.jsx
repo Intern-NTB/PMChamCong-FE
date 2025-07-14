@@ -25,17 +25,15 @@ import {
   DeleteOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
-import { useAppNotification } from "../../component/ui/notification";
-const { Text, Title } = Typography;
-const { Search } = Input;
-const { Option } = Select;
-const { RangePicker } = DatePicker;
-
 // ===== CONTEXT =====
 import { ReloadContext } from "../../context/reloadContext";
 
 // === Hook ===
 import { useNgayLe } from "../../component/hooks/useNgayLe";
+
+const { Title, Text } = Typography;
+const { RangePicker } = DatePicker;
+const { Search } = Input;
 
 export default function NgayLeComponent() {
   const [form] = Form.useForm();
@@ -49,7 +47,6 @@ export default function NgayLeComponent() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(8);
-  const apiNotification = useAppNotification();
 
   const {
     danhSachNgayLe,
@@ -111,10 +108,6 @@ export default function NgayLeComponent() {
           updatedDate: new Date().toISOString().split("T")[0],
         };
         await updateNgayLe(updatedItem);
-        apiNotification.success({
-          message: "Thành công!",
-          description: "Cập nhật ngày lễ thành công!",
-        });
       } else {
         const newItem = {
           maNgayLe: Date.now(),
@@ -123,20 +116,10 @@ export default function NgayLeComponent() {
           createdDate: new Date().toISOString().split("T")[0],
         };
         await createNgayLe(newItem);
-        apiNotification.success({
-          message: "Thành công!",
-          description: "Thêm ngày lễ thành công!",
-        });
       }
       handleCancel();
     } catch (error) {
       console.error("Error saving holiday:", error);
-      apiNotification.error({
-        message: "Lỗi!",
-        description: `Có lỗi xảy ra khi ${
-          editingId ? "cập nhật" : "thêm mới"
-        } ngày lễ. Vui lòng thử lại.`,
-      });
     }
   };
 
@@ -161,39 +144,30 @@ export default function NgayLeComponent() {
     [form]
   );
 
-  const handleDelete = useCallback((data) => {
-    setIsModalConfirmVisible({
-      visible: true,
-      data: data,
-    });
-  }, []);
+  const handleDelete = useCallback(
+    (data) => {
+      setIsModalConfirmVisible({
+        visible: true,
+        data: data,
+      });
+    },
+    []
+  );
 
   const handleBulkDelete = async () => {
     if (selectedRowKeys.length === 0) {
-      apiNotification.warning({
-        message: "Cảnh báo",
-        description: "Vui lòng chọn ít nhất một ngày lễ để xóa!",
-      });
+      // Không cần notification warning nữa - người dùng sẽ thấy button disabled
       return;
     }
     try {
-      // Assuming deleteNgayLe can handle multiple IDs or you'd loop through them
-      // For simplicity, let's assume it deletes one by one, or you'd have a bulk delete API.
-      // If `deleteNgayLe` only deletes one, you'd need a loop here.
       for (const id of selectedRowKeys) {
         await deleteNgayLe(id);
       }
       setSelectedRowKeys([]); // Clear selection after successful bulk delete
-      apiNotification.success({
-        message: "Thành công!",
-        description: `Đã xóa ${selectedRowKeys.length} ngày lễ đã chọn!`,
-      });
+      // Success notification sẽ tự động hiển thị qua axios interceptor
     } catch (error) {
       console.error("Error bulk deleting:", error);
-      apiNotification.error({
-        message: "Lỗi!",
-        description: "Có lỗi xảy ra khi xóa các ngày lễ đã chọn. Vui lòng thử lại.",
-      });
+      // Error notification sẽ tự động hiển thị qua axios interceptor
     } finally {
       setIsModalConfirmVisible({ visible: false, data: null });
     }
@@ -204,17 +178,9 @@ export default function NgayLeComponent() {
     try {
       if (isModalConfirmVisible.data) {
         await deleteNgayLe(isModalConfirmVisible.data.maNgayLe);
-        apiNotification.success({
-          message: "Thành công!",
-          description: "Xóa ngày lễ thành công!",
-        });
       }
     } catch (error) {
       console.error("Error deleting:", error);
-      apiNotification.error({
-        message: "Lỗi!",
-        description: "Có lỗi xảy ra khi xóa ngày lễ. Vui lòng thử lại.",
-      });
     } finally {
       setIsModalConfirmVisible({ visible: false, data: null });
     }
@@ -697,3 +663,4 @@ export default function NgayLeComponent() {
     </div>
   );
 }
+

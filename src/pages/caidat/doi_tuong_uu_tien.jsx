@@ -19,7 +19,6 @@ import {
   Tabs,
   DatePicker,
   TimePicker,
-  message,
 } from "antd";
 import {
   PlusOutlined,
@@ -32,12 +31,12 @@ import {
   CalendarOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
-import { useAppNotification } from "../../component/ui/notification";
 import { useDoiTuongUuTien } from "../../component/hooks/useDoiTuongUuTien";
 import { useLichSuUuTien } from "../../component/hooks/useLichSuUuTien";
 import { useNhanVien } from "../../component/hooks/useNhanVien";
 import { useWatch } from "antd/es/form/Form";
 import { usePhongBan } from "../../component/hooks/usePhongBan";
+
 const { Title } = Typography;
 const { Search, TextArea } = Input;
 const { TabPane } = Tabs;
@@ -63,7 +62,6 @@ export default function DoiTuongUuTienComponent() {
   const thoiGianHieuLuc = useWatch("thoiGianHieuLuc", form); // theo dõi giá trị
   const soThang = thoiGianHieuLuc ? (thoiGianHieuLuc / 30).toFixed(1) : null;
 
-  const api = useAppNotification();
   const { danhSachNhanVien, updateNhanVien } = useNhanVien();
   const { danhSachPhongBan, loading } = usePhongBan();
   const {
@@ -163,7 +161,6 @@ export default function DoiTuongUuTienComponent() {
           phongBan: values.phongBan,
         };
         await updateDoiTuongUuTien(formatedValues);
-        api.success({ message: "Cập nhật đối tượng ưu tiên thành công!" });
       } else {
         const formatedValues = {
           ...values,
@@ -173,16 +170,10 @@ export default function DoiTuongUuTienComponent() {
           phongBan: values.phongBan,
         };
         await createDoiTuongUuTien(formatedValues);
-        api.success({ message: "Thêm đối tượng ưu tiên thành công!" });
       }
       handleCancel();
     } catch (error) {
-      api.error({
-        message: editingId
-          ? "Cập nhật đối tượng ưu tiên thất bại"
-          : "Thêm đối tượng ưu tiên thất bại",
-        description: error?.response?.data?.message || error.message,
-      });
+      console.error("Lỗi khi lưu đối tượng ưu tiên:", error);
     }
   };
 
@@ -201,26 +192,12 @@ export default function DoiTuongUuTienComponent() {
           formattedValues.maNhanVien,
           formattedValues
         );
-        api.success({
-          message: "Thành công",
-          description: "Cập nhật lịch sử ưu tiên thành công!",
-        });
       } else {
         await createLichSuDoiTuongUuTien(formattedValues);
-
-        api.success({
-          message: "Thành công",
-          description: "Thêm mới lịch sử ưu tiên thành công!",
-        });
       }
       handleHistoryCancel();
     } catch (error) {
-      api.error({
-        message: editingHistoryId
-          ? "Lỗi khi cập nhật ưu tiên cho nhân viên"
-          : "Lỗi khi thêm ưu tiên cho nhân viên",
-        description: error?.response?.data?.message || error.message,
-      });
+      console.error("Lỗi khi xử lý lịch sử ưu tiên:", error);
     }
   };
 
@@ -279,69 +256,44 @@ export default function DoiTuongUuTienComponent() {
   const handleDelete = async (maUuTien) => {
     try {
       await deleteDoiTuongUuTien(maUuTien);
-      api.success({ message: `Xóa đối tượng ưu tiên ${maUuTien} thành công!` });
     } catch (error) {
-      api.error({
-        message: `Đã xảy ra lỗi khi xóa đối tượng ưu tiên có mã ${maUuTien}`,
-        description: error?.response?.data?.message || error.message,
-      });
+      console.error("Lỗi khi xóa đối tượng ưu tiên:", error);
     }
   };
 
   const handleDeleteMultiple = async () => {
     try {
-      await Promise.all(selectedKeys.map((key) => handleDelete(key)));
-      api.success({
-        message: `Xóa ${selectedKeys.length} mục đã chọn thành công!`,
-      });
+      await Promise.all(selectedKeys.map((key) => deleteDoiTuongUuTien(key)));
       setSelectedKeys([]);
     } catch (error) {
-      api.error({
-        message: "Xóa các đối tượng ưu tiên đã chọn thất bại",
-        description: error?.response?.data?.message || error.message,
-      });
+      console.error("Lỗi khi xóa nhiều đối tượng ưu tiên:", error);
     }
   };
 
   const handleDeleteHistory = async (maNhanVien, maUuTien) => {
     try {
       await deleteLichSuUuTien(maNhanVien, maUuTien);
-      api.success({ message: "Xóa lịch sử ưu tiên thành công!" });
     } catch (error) {
-      api.error({
-        message: "Đã xảy ra lỗi khi xóa lịch sử ưu tiên",
-        description: error?.response?.data?.message || error.message,
-      });
+      console.error("Lỗi khi xóa lịch sử ưu tiên:", error);
     }
   };
 
   const handleDeleteMultipleHistory = async () => {
     try {
-      // Assuming selectedHistoryKeys stores objects with maNhanVien and maUuTien
       await Promise.all(
         selectedHistoryKeys.map((key) => {
-          // You might need to parse the key if it's a concatenated string like 'maNhanVien-maUuTien'
-          // For now, assuming your selectedHistoryKeys are actual objects if rowKey is complex.
-          // If rowKey creates a simple string, you'll need to split it.
-          // Example: const [maNhanVien, maUuTien] = key.split('-');
           const record = dataSourceLichSuUuTien.find(
             (item) => `${item.maNhanVien}-${item.maUuTien}` === key
           );
           if (record) {
-            return handleDeleteHistory(record.maNhanVien, record.maUuTien);
+            return deleteLichSuUuTien(record.maNhanVien, record.maUuTien);
           }
-          return Promise.resolve(); // If record not found, resolve immediately
+          return Promise.resolve();
         })
       );
-      api.success({
-        message: `Xóa ${selectedHistoryKeys.length} mục lịch sử đã chọn thành công!`,
-      });
       setSelectedHistoryKeys([]);
     } catch (error) {
-      api.error({
-        message: "Xóa các mục lịch sử ưu tiên đã chọn thất bại",
-        description: error?.response?.data?.message || error.message,
-      });
+      console.error("Lỗi khi xóa nhiều lịch sử ưu tiên:", error);
     }
   };
 

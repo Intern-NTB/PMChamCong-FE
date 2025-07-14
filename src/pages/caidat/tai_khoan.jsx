@@ -27,7 +27,6 @@ import {
 } from "@ant-design/icons";
 import { useTaiKhoan } from "../../component/hooks/useTaiKhoan";
 import { useNhanVien } from "../../component/hooks/useNhanVien";
-import { useAppNotification } from "../../component/ui/notification";
 import { Button as AntButton } from "antd";
 const { Title, Text } = Typography;
 const { Search } = Input;
@@ -39,13 +38,12 @@ export default function TaiKhoanComponent() {
     createTaiKhoan,
     deleteTaikhoan,
     updateTaiKhoan,
-  } = useTaiKhoan();
+  } = useTaiKhoan(true);
   const { danhSachNhanVien, loading } = useNhanVien();
   const [editingId, setEditingId] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [visiblePasswords, setVisiblePasswords] = useState({});
   const [form] = Form.useForm();
-  const apiNotification = useAppNotification();
 
   const handleCancel = () => {
     setIsModalVisible(false);
@@ -75,16 +73,8 @@ export default function TaiKhoanComponent() {
   const handleDelete = async (maNhanVien) => {
     try {
       await deleteTaikhoan(maNhanVien);
-      apiNotification.success({
-        message: "Thành công!",
-        description: "Xóa tài khoản thành công.",
-      });
     } catch (error) {
       console.error("Lỗi khi xóa tài khoản:", error);
-      apiNotification.error({
-        message: "Thất bại!",
-        description: "Không thể xóa tài khoản. Vui lòng thử lại.",
-      });
     }
   };
 
@@ -125,34 +115,15 @@ export default function TaiKhoanComponent() {
             ...values,
           };
           await updateTaiKhoan(updatedData); 
-          apiNotification.success({
-            message: "Thành công!",
-            description: "Cập nhật tài khoản thành công.",
-          });
         } else {
           await createTaiKhoan(values);
-          apiNotification.success({
-            message: "Thành công!",
-            description: "Thêm tài khoản thành công.",
-          });
         }
         handleCancel();
       } catch (error) {
         console.error("Lỗi khi gửi form tài khoản:", error);
-        if (editingId) {
-          apiNotification.error({
-            message: "Cập nhật thất bại!",
-            description: "Không thể cập nhật tài khoản. Vui lòng thử lại.",
-          });
-        } else {
-          apiNotification.error({
-            message: "Thêm mới thất bại!",
-            description: "Không thể thêm tài khoản. Vui lòng thử lại.",
-          });
-        }
       }
     },
-    [apiNotification, createTaiKhoan, editingId, handleCancel, updateTaiKhoan]
+    [createTaiKhoan, editingId, handleCancel, updateTaiKhoan]
   );
 
   const columns = [

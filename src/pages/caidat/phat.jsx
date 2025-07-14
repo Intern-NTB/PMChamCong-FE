@@ -17,7 +17,6 @@ import {
   Tabs,
   Space,
   Popconfirm,
-  message,
   Row,
   Col,
   Typography,
@@ -43,7 +42,6 @@ import {
 import { useLoaiTienTru } from "../../component/hooks/useLoaiTienTru";
 import { useLichSuTru } from "../../component/hooks/useLichSuTienTru";
 import { useNhanVien } from "../../component/hooks/useNhanVien";
-import { useAppNotification } from "../../component/ui/notification";
 
 // ==== CONTEXT ====
 import { ReloadContext } from "../../context/reloadContext";
@@ -78,7 +76,6 @@ export default function TruComponent() {
   } = useLichSuTru();
   const { danhSachNhanVien } = useNhanVien();
   // state
-  const api = useAppNotification();
   const { setReload } = useContext(ReloadContext);
   const [donViTru, setDonViTru] = useState("VND");
   const [loaiPhatChuaApDung, setLoaiPhatChuaApDung] = useState([]);
@@ -265,17 +262,18 @@ export default function TruComponent() {
       okText: "Xóa",
       okType: "danger",
       cancelText: "Hủy",
-      onOk() {
-        // Gọi API xóa nhiều loại phạt
-        selectedLoaiTruKeys.forEach(async (maLoaiTienTru) => {
-          try {
-            await deleteLoaiTienTru(maLoaiTienTru);
-          } catch (error) {
-            console.error("Error deleting:", error);
-          }
-        });
-        setSelectedLoaiTruKeys([]);
-        message.success(`Đã xóa ${selectedLoaiTruKeys.length} loại phạt!`);
+      async onOk() {
+        try {
+          // Gọi API xóa nhiều loại phạt
+          await Promise.all(
+            selectedLoaiTruKeys.map(maLoaiTienTru => deleteLoaiTienTru(maLoaiTienTru))
+          );
+          setSelectedLoaiTruKeys([]);
+          // Success notification sẽ tự động hiển thị qua axios interceptor
+        } catch (error) {
+          console.error("Lỗi khi xóa nhiều loại phạt:", error);
+          // Error notification sẽ tự động hiển thị qua axios interceptor
+        }
       },
     });
   };
@@ -301,9 +299,10 @@ export default function TruComponent() {
   const handleDeleteLichSuTru = async (maNhanVien, maLoaiTienTru) => {
     try {
       await deleteLichSuTru(maNhanVien, maLoaiTienTru);
-      api.success({ message: "Xoá thành công" });
-    } catch {
-      api.error({ message: "Xoá thất bại" });
+      // Success notification sẽ tự động hiển thị qua axios interceptor
+    } catch (error) {
+      console.error("Lỗi khi xóa lịch sử trừ:", error);
+      // Error notification sẽ tự động hiển thị qua axios interceptor
     }
   };
 
@@ -323,28 +322,25 @@ export default function TruComponent() {
     form.setFieldsValue(record);
   };
 
-  const handleDeleteLoaiTru = (maLoaiTienTru) => {
+  const handleDeleteLoaiTru = async (maLoaiTienTru) => {
     const isBeingUsed = dataSourceDanhSachLichSuTru.some(
       (item) => item.maLoaiTienTru === maLoaiTienTru
     );
 
     if (isBeingUsed) {
-      api.error({
-        message: "Không thể xóa!",
-        description: "Loại tiền trừ này đang được áp dụng.",
-      });
+      // Hiển thị warning với notification system - có thể dùng helper function
+      console.warn("Loại tiền trừ này đang được áp dụng");
       return;
     }
 
-    // Nếu không bị dùng thì tiếp tục xóa
-    deleteLoaiTienTru(maLoaiTienTru)
-      .then(() => {
-        getAllLoaiTienTru();
-        api.success({ message: "Xóa thành công!" });
-      })
-      .catch(() => {
-        api.error({ message: "Xóa thất bại!" });
-      });
+    try {
+      await deleteLoaiTienTru(maLoaiTienTru);
+      // Success notification sẽ tự động hiển thị qua axios interceptor
+      getAllLoaiTienTru();
+    } catch (error) {
+      console.error("Lỗi khi xóa loại tiền trừ:", error);
+      // Error notification sẽ tự động hiển thị qua axios interceptor
+    }
   };
 
   const handleSubmit = async () => {
@@ -360,10 +356,10 @@ export default function TruComponent() {
 
         if (editingItem) {
           await updateLichSuTru(values);
-          api.success({ message: "Cập nhật lịch sử trừ thành công!" });
+          // Success notification sẽ tự động hiển thị qua axios interceptor
         } else {
           await createLichSuTru(formattedValues);
-          api.success({ message: "Thêm lịch sử trừ thành công!" });
+          // Success notification sẽ tự động hiển thị qua axios interceptor
         }
       } else {
         if (editingItem) {
@@ -371,26 +367,19 @@ export default function TruComponent() {
             ...values,
             maLoaiTienTru: editingItem.maLoaiTienTru,
           };
-          try {
-            await updateLoaiTienTru(updateValues);
-            api.success({ message: "Cập nhật thành công!" });
-          } catch {
-            api.error({ message: "Cập nhật không thành công!" });
-          }
+          await updateLoaiTienTru(updateValues);
+          // Success notification sẽ tự động hiển thị qua axios interceptor
         } else {
-          try {
-            await createLoaiTienTru(values);
-            api.success({ message: "Thêm thành công!" });
-          } catch {
-            api.error({ message: "Thêm Không thành công!" });
-          }
+          await createLoaiTienTru(values);
+          // Success notification sẽ tự động hiển thị qua axios interceptor
         }
       }
 
       setIsModalVisible(false);
       form.resetFields();
     } catch (error) {
-      console.log("Validation failed:", error);
+      console.error("Validation failed:", error);
+      // Error notification sẽ tự động hiển thị qua axios interceptor
     }
   };
 

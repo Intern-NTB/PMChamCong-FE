@@ -36,7 +36,9 @@ export const getPhongBanById = async (maPhongBan) => {
  */
 export const createPhongBanServices = async (phongBanData) => {
     try {
-        const response = await axiosInstance.post('/phongban', phongBanData);
+        const response = await axiosInstance.post('/phongban', phongBanData, {
+            showNotification: true // Hiển thị success notification
+        });
         return response.data;
     } catch (error) {
         console.error('Lỗi khi tạo mới phòng ban:', error);
@@ -52,10 +54,12 @@ export const createPhongBanServices = async (phongBanData) => {
  */
 export const updatePhongBanServices = async (phongBanData) => {
     try {
-        const response = await axiosInstance.put(`/phongban/${phongBanData.maPhongBan}`, phongBanData);
+        const response = await axiosInstance.put(`/phongban/${phongBanData.maPhongBan}`, phongBanData, {
+            showNotification: true // Hiển thị success notification
+        });
         return response.data;
     } catch (error) {
-        console.error(`Lỗi khi cập nhật phòng ban với mã ${maPhongBan}:`, error);
+        console.error(`Lỗi khi cập nhật phòng ban với mã ${phongBanData.maPhongBan}:`, error);
         throw error;
     }
 };
@@ -67,7 +71,9 @@ export const updatePhongBanServices = async (phongBanData) => {
  */
 export const deletePhongBanServices = async (maPhongBan) => {
     try {
-        await axiosInstance.delete(`/phongban/${maPhongBan}`);
+        await axiosInstance.delete(`/phongban/${maPhongBan}`, {
+            showNotification: true // Hiển thị success notification
+        });
     } catch (error) {
         console.error(`Lỗi khi xóa phòng ban với mã ${maPhongBan}:`, error);
         throw error;

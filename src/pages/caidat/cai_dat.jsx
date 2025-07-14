@@ -25,7 +25,7 @@ export default function CaiDat() {
     { key: "doi-tuong-uu-tien", label: "Đối tượng ưu tiên" },
     { key: "phu-cap", label: "Phụ Cấp" },
     { key: "vai-tro", label: "Vai trò" },
-    { key: "nghi-le", label: "Nghỉ lễ" },
+    { key: "nghi-le", label: "Ngày lễ" },
     { key: "thuong", label: "Thưởng" },
     { key: "phat", label: "Phạt" },
     { key: "tai-khoan", label: "Tài khoản" },

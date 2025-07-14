@@ -1,36 +1,44 @@
 import axiosInstance from "../config/axiosInstance";
 
 export const getAllNgayLeServices = async () => {
-    try{
-        const res = await axiosInstance.get('/ngayle')
-        return res.data
-    } catch {
-        console.log('Lỗi, không lấy được dữ liệu ngày lễ')
-    }
-}
+  try {
+    const res = await axiosInstance.get("/ngayle");
+    return res.data;
+  } catch (error) {
+    console.error("Lỗi khi lấy dữ liệu ngày lễ:", error);
+    throw error; // Throw error để axios interceptor bắt được
+  }
+};
 
 export const createNgayLeServices = async (duLieuNgayLe) => {
-    try{
-        await axiosInstance.post('/ngayle', duLieuNgayLe)
-    } catch  {
-        console.log('Lỗi, không lấy được dữ liệu')
-    }
-}
-
-export const deleteNgayLeServices = async (maNgayLe) => {
-    try{
-        await axiosInstance.delete(`/ngayle/${maNgayLe}`)
-    } catch  {
-        console.log('Lỗi, không lấy được dữ liệu')
-    }
-}
+  try {
+    await axiosInstance.post("/ngayle", duLieuNgayLe, {
+      showNotification: true, // Hiển thị success notification
+    });
+  } catch (error) {
+    console.error("Lỗi khi tạo ngày lễ:", error);
+    throw error; // Throw error để axios interceptor bắt được
+  }
+};
 
 export const updateNgayLeServices = async (duLieuNgayLe) => {
-    try {
-        const { maNgayLe, ...resDuLieuNgayLe } = duLieuNgayLe
-        await axiosInstance.put(`/ngayle/${maNgayLe}`, resDuLieuNgayLe)
+  try {
+    await axiosInstance.put(`/ngayle/${duLieuNgayLe.maNgayLe}`, duLieuNgayLe, {
+      showNotification: true, // Hiển thị success notification
+    });
+  } catch (error) {
+    console.error("Lỗi khi cập nhật ngày lễ:", error);
+    throw error; // Throw error để axios interceptor bắt được
+  }
+};
 
-    } catch {
-        console.log('Lỗi, không tìm thấy dữ liệu')
-    }
-}
+export const deleteNgayLeServices = async (maNgayLe) => {
+  try {
+    await axiosInstance.delete(`/ngayle/${maNgayLe}`, {
+      showNotification: true, // Hiển thị success notification
+    });
+  } catch (error) {
+    console.error("Lỗi khi xóa ngày lễ:", error);
+    throw error; // Throw error để axios interceptor bắt được
+  }
+};

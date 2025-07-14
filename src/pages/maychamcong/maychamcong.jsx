@@ -29,6 +29,7 @@ import "./maychamcong.css";
 import { useMayChamCong } from "../../component/hooks/useMayChamCong";
 import { useForm } from "antd/es/form/Form";
 import { useNhanVien } from "../../component/hooks/useNhanVien";
+import { useVanTay } from "../../component/hooks/useVanTay";
 import { ModalDeleteEmployee } from "./modleHandleDeleteNhanVien";
 import { ModalDeleteFingerprints } from "./modleHandleDeleteVanTay";
 import { ModalUploadFingerPrintsToMayChamCong } from "./modleUploadFingerprintsToMayChamCong";
@@ -78,11 +79,11 @@ const MayChamCong = () => {
     syncFingerprintsToDB,
     uploadFingerprintsToMayChamCong,
   } = useMayChamCong();
+  const { danhSachNhanVien } = useNhanVien();
   const {
-    danhSachNhanVien,
     danhSachVanTayNhanVien,
     getAllFingerprintsOfNhanVien,
-  } = useNhanVien(true);
+  } = useVanTay();
 
   const dataSourceNhanVien = danhSachNhanVien.map((nv) => {
     return {

@@ -14,7 +14,9 @@ export const getAllLichSuPhuCapServices = async () => {
 // Tạo mới một bản ghi lịch sử phụ cấp
 export const createLichSuPhuCapServices = async (maNhanVien, maPhuCap) => {
     try {
-        const res = await axiosInstance.post(`/themphucap/${maNhanVien}/${maPhuCap}`);
+        const res = await axiosInstance.post(`/themphucap/${maNhanVien}/${maPhuCap}`, {
+            showNotification: true
+        });
         return res.data;
     } catch (error) {
         console.log("AXIOS Lỗi khi tạo lịch sử phụ cấp:", error);
@@ -25,7 +27,9 @@ export const createLichSuPhuCapServices = async (maNhanVien, maPhuCap) => {
 //  Xoá một bản ghi lịch sử phụ cấp
 export const deleteLichSuPhuCapServices = async (maNhanVien, maPhuCap) => {
     try {
-        const res = await axiosInstance.delete(`/themphucap/${maNhanVien}/${maPhuCap}`);
+        const res = await axiosInstance.delete(`/themphucap/${maNhanVien}/${maPhuCap}`, {
+            showNotification: true
+        });
         return res.data;
     } catch (error) {
         console.log("AXIOS Lỗi khi xoá lịch sử phụ cấp:", error);
@@ -36,7 +40,9 @@ export const deleteLichSuPhuCapServices = async (maNhanVien, maPhuCap) => {
 //Xóa tất cả ứng với 1 nhân viên
 export const deleteRowLichSuPhuCapServices = async (maNhanVien) => {
     try{
-        const res = await axiosInstance.delete(`themphucap/all/${maNhanVien}`);
+        const res = await axiosInstance.delete(`themphucap/all/${maNhanVien}`, {
+            showNotification: true
+        });
         return res.data;
     } catch (error) {
         console.log("AXIOS có lỗi xảy ra khi xóa hàng này");

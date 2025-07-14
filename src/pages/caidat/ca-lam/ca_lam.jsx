@@ -26,7 +26,6 @@ import {
 } from "@ant-design/icons";
 import { useCaLam } from "../../../component/hooks/useCaLam";
 import { useCaLamTrongTuan } from "../../../component/hooks/useCaLamTrongTuan";
-import { useAppNotification } from "../../../component/ui/notification";
 import ModalChiTietCaLam from "./modal_chitiet_calam";
 
 const { Title, Text } = Typography;
@@ -42,7 +41,6 @@ export default function CaLamComponent() {
   const [selectedShiftForDetail, setSelectedShiftForDetail] = useState(null);
   const [shiftDetailsByDay, setShiftDetailsByDay] = useState([]);
   const [loadingDetails, setLoadingDetails] = useState(false);
-  const apiNotification = useAppNotification();
 
   // Sử dụng hook useCaLam cho quản lý ca làm cơ bản
   const { danhSachCaLam, loadingCaLam, createCaLam, updateCaLam, deleteCaLam } =
@@ -68,15 +66,9 @@ export default function CaLamComponent() {
           dscl.maCa.toString().toLowerCase().includes(searchText.toLowerCase())
       );
       setFilteredList(filtered);
-
-      // Add warning if no results found
-      if (filtered.length === 0) {
-        apiNotification.warning({
-          message: "Không tìm thấy ca làm nào khớp với tìm kiếm của bạn.",
-        });
-      }
+      // Xóa warning notification - không cần thiết
     }
-  }, [searchText, danhSachCaLam, apiNotification]); // Added apiNotification to dependencies
+  }, [searchText, danhSachCaLam]);
 
   const handleSearchChange = (e) => {
     setSearchText(e.target.value);
@@ -100,23 +92,17 @@ export default function CaLamComponent() {
     async (maCa) => {
       setLoadingDetails(true);
       try {
-        const result = await getAllCaLamTrongTuanByPhongBan(maCa);
-        if (!result || result.length === 0) {
-          // apiNotification.warning(
-          // "Không có chi tiết ca làm trong tuần cho ca này."
-          // );
-        }
+        await getAllCaLamTrongTuanByPhongBan(maCa);
+// Xóa warning notification - không cần thiết
       } catch (error) {
         console.error("Lỗi khi tải chi tiết ca làm:", error);
-        apiNotification.error(
-          "Không thể tải chi tiết ca làm. Vui lòng thử lại."
-        );
+        // Error notification sẽ tự động hiển thị qua axios interceptor
         setShiftDetailsByDay([]);
       } finally {
         setLoadingDetails(false);
       }
     },
-    [apiNotification, getAllCaLamTrongTuanByPhongBan] // Added getAllCaLamTrongTuanByPhongBan to dependencies
+    [getAllCaLamTrongTuanByPhongBan]
   );
 
   useEffect(() => {
@@ -132,15 +118,11 @@ export default function CaLamComponent() {
   const handleSaveDailyShiftDetails = async (maCa, updatedDetails) => {
     try {
       await updateCaLamTrongTuan(maCa, updatedDetails);
-      apiNotification.success("Cập nhật chi tiết ca làm thành công!");
-      // Refresh lại dữ liệu sau khi save
+      // Success notification sẽ tự động hiển thị qua axios interceptor
       await fetchAndSetShiftDetails(maCa);
     } catch (error) {
       console.error("Lỗi khi lưu chi tiết ca làm:", error);
-      apiNotification.error(
-        "Lưu chi tiết ca làm thất bại: " +
-          (error.response?.data?.message || error.message)
-      );
+      // Error notification sẽ tự động hiển thị qua axios interceptor
       throw error;
     }
   };
@@ -156,22 +138,19 @@ export default function CaLamComponent() {
           tenCa: values.tenCa,
         };
         await updateCaLam(currentRecord.maCa, shiftData);
-        apiNotification.success("Cập nhật ca làm thành công!");
+        // Success notification sẽ tự động hiển thị qua axios interceptor
       } else {
         // Create new shift
         shiftData = {
           tenCa: values.tenCa,
         };
         await createCaLam(shiftData);
-        apiNotification.success("Thêm ca làm thành công!");
+        // Success notification sẽ tự động hiển thị qua axios interceptor
       }
       handleCancel();
     } catch (err) {
       console.error("Error saving shift:", err);
-      apiNotification.error(
-        "Đã xảy ra lỗi khi lưu ca làm: " +
-          (err.response?.data?.message || err.message)
-      );
+      // Error notification sẽ tự động hiển thị qua axios interceptor
     }
   };
 
@@ -196,13 +175,10 @@ export default function CaLamComponent() {
     try {
       console.log("DEBUG CALAM : MÃ CA: ", maCa);
       await deleteCaLam(maCa);
-      apiNotification.success("Xóa ca làm thành công!");
+      // Success notification sẽ tự động hiển thị qua axios interceptor
     } catch (err) {
       console.error("Error deleting shift:", err);
-      apiNotification.error(
-        "Đã xảy ra lỗi khi xóa ca làm: " +
-          (err.response?.data?.message || err.message)
-      );
+      // Error notification sẽ tự động hiển thị qua axios interceptor
     }
   };
 
@@ -505,3 +481,4 @@ export default function CaLamComponent() {
     </div>
   );
 }
+
