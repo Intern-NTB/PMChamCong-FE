@@ -545,9 +545,6 @@ export default function Luong() {
           };
           await createLuongById(valuesFormated);
         }
-        apiNotification.success({
-          message: "Tính lương cho nhân viên đã chọn thành công!",
-        });
       } else {
         // Tính lương cho tất cả nhân viên
         const valuesFormated = {
@@ -555,16 +552,9 @@ export default function Luong() {
           thang: Number(dayjs(values.thangNam).format("MM")),
         };
         await createLuong(valuesFormated);
-        apiNotification.success({
-          message: "Tính lương cho tất cả nhân viên thành công!",
-        });
       }
     } catch (error) {
       console.error("Lỗi khi tính lương:", error);
-      apiNotification.error({
-        message: "Tính lương thất bại!",
-        description: error.message || "Đã có lỗi xảy ra trong quá trình tính lương.",
-      });
     } finally {
       setIsTinhLuongModalVisible(false);
       tinhLuongForm.resetFields();

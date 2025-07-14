@@ -26,8 +26,8 @@ const showNotificationByStatus = (status, message, description) => {
       // Success - sử dụng message từ BE hoặc mặc định
       notificationApi.success({
         ...config,
-        message: message || 'Thành công',
-        description: description || 'Thao tác đã được thực hiện thành công',
+        message: 'Thành công',
+        description: 'Thao tác đã được thực hiện thành công',
       });
     } else if (status === 400) {
       notificationApi.error({

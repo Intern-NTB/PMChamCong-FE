@@ -34,8 +34,7 @@ export const getNhanVienById = async (maNhanVien) => {
 export const createNhanVienServices = async (nhanVienData) => {
   try {
     console.log("Data sending to API for create:", nhanVienData); 
-
-    const response = await axiosInstance.post("/nhanvien", nhanVienData);
+    const response = await axiosInstance.post("/nhanvien", nhanVienData, { showNotification: true });
     return response.data;
   } catch (error) {
     console.error("Lỗi khi tạo nhân viên mới:", error);
@@ -54,7 +53,8 @@ export const updateNhanVienService = async (maNhanVien, updateData) => {
     console.log(`Data sending to API for update ${maNhanVien}:`, updateData); 
     const response = await axiosInstance.put(
       `/nhanvien/${maNhanVien}`,
-      updateData
+      updateData,
+      { showNotification: true }
     );
     return response.data;
   } catch (error) {
@@ -70,7 +70,7 @@ export const updateNhanVienService = async (maNhanVien, updateData) => {
  */
 export const deleteNhanVienServices = async (maNhanVien) => {
   try {
-    await axiosInstance.delete(`/nhanvien/${maNhanVien}`);
+    await axiosInstance.delete(`/nhanvien/${maNhanVien}`, { showNotification: true });
     return true;
   } catch (error) {
     console.error(`Lỗi khi xóa nhân viên với ID ${maNhanVien}:`, error);
@@ -150,7 +150,7 @@ export const updateEmailNhanVienByMaNhanVienServices = async (maNhanVien, email)
     const data = {
       email: email,
     };
-    await axiosInstance.patch(`/nhanvien/${maNhanVien}`, data);
+    await axiosInstance.patch(`/nhanvien/${maNhanVien}`, data, { showNotification: true });
     console.log(`Đã cập nhật email cho nhân viên ID ${maNhanVien} thành công.`);
   } catch (error) {
     console.error(`Lỗi khi cập nhật email cho nhân viên ID ${maNhanVien}:`, error);

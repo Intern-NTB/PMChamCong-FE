@@ -585,34 +585,19 @@ export default function NghiPhep() {
       if (editingRecord) {
         try {
           await updateNghiPhep(editingRecord, dataToSave);
-          api.success({
-            message: "Cập nhật nghỉ phép thành công",
-          });
           setIsModalVisible(false);
           await getAllNgayPhep();
         } catch (error) {
           console.error("Update error:", error);
-          api.error({
-            message: "Cập nhật nghỉ phép không thành công",
-            description: error.message || "Có lỗi xảy ra khi cập nhật",
-          });
         }
       } else {
         // Tạo mới
         try {
           await createNghiPhep(dataToSave);
-          api.success({
-            message: "Thành công",
-            description: "Đã thêm thành công đơn nghỉ phép",
-          });
           setIsModalVisible(false);
           await getAllNgayPhep();
         } catch (error) {
           console.error("Create error:", error);
-          api.error({
-            message: "Có lỗi xảy ra",
-            description: error.message || "Đã xảy ra lỗi khi tạo mới",
-          });
         }
       }
     } catch (errorInfo) {
@@ -639,16 +624,9 @@ export default function NghiPhep() {
   const handleDelete = async (maNghiPhep) => {
     try {
       await deleteNghiPhep(maNghiPhep);
-      api.success({
-        message: "Xoá dữ liệu thành công",
-        description: "Đã xoá đơn nghỉ phép",
-      });
       await getAllNgayPhep();
     } catch {
-      api.error({
-        message: "Xoá dữ liệu không thành công",
-        description: "Xoá thất bại",
-      });
+      // Do nothing, error is handled by service layer
     }
   };
 
