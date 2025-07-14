@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import {
-  getAllFingerprintsOfNhanVienServices,
   getAllNhanVienChiTietServices,
   createNhanVienServices,
   deleteNhanVienServices,
@@ -13,7 +12,6 @@ import { useCallback } from "react";
 
 export const useNhanVien = (isGetAllNhanvien = true) => {
   const [danhSachNhanVien, setDanhSachNhanVien] = useState([]);
-  const [danhSachVanTayNhanVien, setDanhSachVanTayNhanVien] = useState([]);
   const [thongTinNhanVien, setThongTinNhanVien] = useState(null);
   const [loading, setLoading] = useState(false);
   const [statusCreateNhanVien, setStatusCreateNhanVien] = useState(false);
@@ -97,19 +95,7 @@ export const useNhanVien = (isGetAllNhanvien = true) => {
     }
   };
 
-  const getAllFingerprintsOfNhanVien = async () => {
-    setLoading(true);
-    try {
-      const res = await getAllFingerprintsOfNhanVienServices();
-      setDanhSachVanTayNhanVien(res.data);
-      return res.data;
-    } catch {
-      setDanhSachVanTayNhanVien([]);
-      return [];
-    } finally {
-      setLoading(false);
-    }
-  };
+
 
   const reloadData = async () => {
     setLoading(true);
@@ -124,19 +110,16 @@ export const useNhanVien = (isGetAllNhanvien = true) => {
 
   useEffect(() => {
     if (isGetAllNhanvien) {
-      const initData = async () => {
-        await fetchNhanVien();
-        await getAllFingerprintsOfNhanVien();
-      };
-      initData();
+      fetchNhanVien();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+
+
   return {
     statusUpdateEmailNhanVien,
     thongTinNhanVien,
-    danhSachVanTayNhanVien,
     danhSachNhanVien,
     loading,
     statusCreateNhanVien,
@@ -147,7 +130,6 @@ export const useNhanVien = (isGetAllNhanvien = true) => {
     deleteNhanVien,
     updateNhanVien,
     reloadData,
-    getAllFingerprintsOfNhanVien,
     fetchNhanVienByCCCD,
     updateEmailNhanVien,
   };

@@ -7,7 +7,7 @@ import { notification, Input } from 'antd'
 
 const Login = () => {
   const navigate = useNavigate()
-  const { loadingDangNhap, login } = useTaiKhoan()
+  const { loadingDangNhap, login } = useTaiKhoan(false)
 
   const [tenDangNhap, setTenDangNhap] = useState('')
   const [matKhau, setPassword] = useState('')

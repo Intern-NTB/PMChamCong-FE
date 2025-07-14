@@ -33,7 +33,7 @@ import {
 import { useNhanVien } from "../../component/hooks/useNhanVien";
 import { useVaiTro } from "../../component/hooks/useVaiTro";
 import { useQuyenHan } from "../../component/hooks/useQuyenHan";
-import { useAppNotification } from "../../component/ui/notification";
+
 
 const { Text, Title } = Typography;
 const { Search } = Input;
@@ -66,7 +66,7 @@ export default function VaiTroComponent() {
   const [searchText, setSearchText] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(12);
-  const apiNotification = useAppNotification();
+
   const previousValuesRef = useRef({});
 
   // Lấy dữ liệu từ API
@@ -210,10 +210,7 @@ export default function VaiTroComponent() {
           await goQuyenKhoiVaiTro(editingId, quyenCanXoa);
         }
 
-        apiNotification.success({
-          message: "Cập nhật thành công!",
-          description: "Vai trò đã được cập nhật thành công.",
-        });
+        // Success notification handled by axios interceptor
       } else {
         // Create a new role
         const newVaiTro = await createVaiTro(tenVaiTro);
@@ -221,26 +218,13 @@ export default function VaiTroComponent() {
         if (newVaiTro?.maVaiTro && danhSachQuyenDuocChon.length > 0) {
           await ganQuyenChoVaiTro(newVaiTro.maVaiTro, danhSachQuyenDuocChon);
         }
-        apiNotification.success({
-          message: "Thêm mới thành công!",
-          description: "Vai trò mới đã được thêm thành công.",
-        });
+        // Success notification handled by axios interceptor
       }
       handleCancel();
       getAllVaiTro(); // Refresh the list after successful operation
     } catch (error) {
       console.error("Lỗi khi gửi form vai trò:", error);
-      if (editingId) {
-        apiNotification.error({
-          message: "Cập nhật thất bại!",
-          description: "Không thể cập nhật vai trò. Vui lòng thử lại.",
-        });
-      } else {
-        apiNotification.error({
-          message: "Thêm mới thất bại!",
-          description: "Không thể thêm vai trò. Vui lòng thử lại.",
-        });
-      }
+      // Error notification handled by axios interceptor
     }
   };
 
@@ -286,13 +270,10 @@ export default function VaiTroComponent() {
         setIsModalVisible(true);
       } catch (error) {
         console.error("Lỗi khi tải quyền theo vai trò:", error);
-        apiNotification.error({
-          message: "Lỗi!",
-          description: "Không thể tải chi tiết vai trò. Vui lòng thử lại.",
-        });
+        // Error notification handled by axios interceptor
       }
     },
-    [form, getQuyenTheoVaiTro, permissionsOptions, apiNotification]
+    [form, getQuyenTheoVaiTro, permissionsOptions]
   );
   //////
   const handleDelete = useCallback((data) => {
@@ -305,10 +286,7 @@ export default function VaiTroComponent() {
   const handleDeleteVaiTro = async () => {
     try {
       await deleteVaiTro(isModalConfirmVisible.data.maVaiTro);
-      apiNotification.success({
-        message: "Xóa thành công!",
-        description: "Vai trò đã được xóa thành công.",
-      });
+      // Success notification handled by axios interceptor
       setIsModalConfirmVisible({
         visible: false,
         data: [],
@@ -316,10 +294,7 @@ export default function VaiTroComponent() {
       getAllVaiTro(); // Refresh the list after successful deletion
     } catch (error) {
       console.error("Lỗi khi xóa vai trò:", error);
-      apiNotification.error({
-        message: "Xóa thất bại!",
-        description: "Không thể xóa vai trò này. Vui lòng thử lại.",
-      });
+      // Error notification handled by axios interceptor
     }
   };
 
@@ -346,17 +321,11 @@ export default function VaiTroComponent() {
             await deleteVaiTro(id);
           }
           setSelectedRowKeys([]); // Clear selected keys
-          apiNotification.success({
-            message: "Xóa thành công!",
-            description: `Đã xóa ${selectedRowKeys.length} vai trò đã chọn thành công.`,
-          });
+          // Success notification handled by axios interceptor
           getAllVaiTro(); // Refresh the list after successful bulk deletion
         } catch (error) {
           console.error("Lỗi khi xóa nhiều vai trò:", error);
-          apiNotification.error({
-            message: "Xóa thất bại!",
-            description: "Có lỗi xảy ra khi xóa các vai trò đã chọn. Vui lòng thử lại.",
-          });
+          // Error notification handled by axios interceptor
         }
       },
       onCancel: () => {

@@ -6,34 +6,44 @@ export const getAllLichSuUuTienServices = async () => {
         return res.data
     } catch (error) {
         console.log(error)
+        throw error
     }
 };
 
 export const createLichSuUuTienServices = async (duLieuUuTien) => {
     try {
-        const res = await axiosInstance.post('/lichsuuutien', duLieuUuTien)
+        const res = await axiosInstance.post('/lichsuuutien', duLieuUuTien, {
+            showNotification: true // Hiển thị success notification
+        })
         return res.data
     } catch (error) {
         console.log(error)
+        throw error
     }
 };
 
 
 export const updateLichSuUuTienServices = async (maNhanVien,maUuTien,duLieuCapNhat) => {
     try {
-        const res = await axiosInstance.put(`/lichsuuutien/${maNhanVien}/${maUuTien}`,duLieuCapNhat)
+        const res = await axiosInstance.put(`/lichsuuutien/${maNhanVien}/${maUuTien}`,duLieuCapNhat, {
+            showNotification: true // Hiển thị success notification
+        })
         return res.data
     } catch (error) {
         console.log(error)
+        throw error
     }
 };
 
 
 export const deleteLichSuUuTienServices = async (maNhanVien,maUuTien) => {
     try {
-        const res = await axiosInstance.delete(`/lichsuuutien/${maNhanVien}/${maUuTien}`)
+        const res = await axiosInstance.delete(`/lichsuuutien/${maNhanVien}/${maUuTien}`, {
+            showNotification: true // Hiển thị success notification
+        })
         return res.data
     } catch (error) {
         console.log(error)
+        throw error
     }
 };

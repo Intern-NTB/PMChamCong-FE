@@ -1,10 +1,81 @@
 import axios from "axios";
+import { getNotificationApi } from "../config/utils/notification_instance";
 
 const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
   timeout: 5000,
   headers: { "Content-Type": "application/json" },
 });
+
+// Hàm hiển thị notification theo status code
+const showNotificationByStatus = (status, message, description) => {
+  const notificationApi = getNotificationApi();
+
+  if (!notificationApi) {
+    console.warn('Notification API chưa được khởi tạo');
+    return;
+  }
+
+  try {
+    const config = {
+      placement: 'topRight',
+      duration: 4,
+    };
+
+    if (status >= 200 && status < 300) {
+      // Success - sử dụng message từ BE hoặc mặc định
+      notificationApi.success({
+        ...config,
+        message: message || 'Thành công',
+        description: description || 'Thao tác đã được thực hiện thành công',
+      });
+    } else if (status === 400) {
+      notificationApi.error({
+        ...config,
+        message: 'Dữ liệu không hợp lệ',
+        description: 'Vui lòng kiểm tra lại thông tin đã nhập',
+      });
+    } else if (status === 401) {
+      notificationApi.error({
+        ...config,
+        message: 'Bạn không có quyền thực hiện',
+        description: 'Vui lòng đăng nhập lại hoặc liên hệ quản trị viên',
+      });
+    } else if (status === 403) {
+      notificationApi.warning({
+        ...config,
+        message: 'Truy cập bị từ chối',
+        description: 'Bạn không có quyền truy cập chức năng này',
+      });
+    } else if (status === 404) {
+      notificationApi.warning({
+        ...config,
+        message: 'Không tìm thấy dữ liệu',
+        description: 'Dữ liệu không tồn tại hoặc đã bị xóa',
+      });
+    } else if (status === 422) {
+      notificationApi.error({
+        ...config,
+        message: 'Dữ liệu không đúng định dạng',
+        description: 'Vui lòng kiểm tra lại các trường thông tin',
+      });
+    } else if (status >= 500) {
+      notificationApi.error({
+        ...config,
+        message: 'Lỗi hệ thống',
+        description: 'Có lỗi xảy ra từ phía máy chủ, vui lòng thử lại sau',
+      });
+    } else {
+      notificationApi.info({
+        ...config,
+        message: 'Thông báo',
+        description: description || 'Có thông báo mới',
+      });
+    }
+  } catch (error) {
+    console.error('Error showing notification:', error);
+  }
+};
 
 // Hàm kiểm tra token hết hạn
 const isTokenExpired = (token) => {
@@ -58,6 +129,13 @@ axiosInstance.interceptors.response.use(
     if (import.meta.env.NODE_ENV === "development") {
       console.log(" API Response:", response.status, response.config.url);
     }
+
+    // Hiển thị notification success nếu được yêu cầu
+    if (response.config.showNotification) {
+      const message = response.data?.message || 'Thành công';
+      showNotificationByStatus(response.status, message);
+    }
+
     return response;
   },
   (error) => {
@@ -69,7 +147,15 @@ axiosInstance.interceptors.response.use(
       if (token && isTokenExpired(token)) {
         console.log("Token is expired, handling logout...");
         handleTokenExpired();
+        return Promise.reject(error);
       }
+    }
+
+    // Tự động hiển thị notification cho error (trừ khi bị tắt)
+    if (error.response && !error.config?.hideNotification) {
+      const message = error.response.data?.message || error.response.data?.error;
+      const description = error.response.data?.description || error.response.data?.details;
+      showNotificationByStatus(error.response.status, message, description);
     }
 
     return Promise.reject(error);

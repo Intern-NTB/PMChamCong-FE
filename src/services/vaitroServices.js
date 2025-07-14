@@ -11,15 +11,15 @@ export const getAllVaiTroServices = async () => {
 };
 
 export const updateVaiTroServices = async (maVaiTro, tenVaiTro) => {
-  await axiosInstance.put(`/vaitro/${maVaiTro}`, { tenVaiTro });
+  await axiosInstance.put(`/vaitro/${maVaiTro}`, { tenVaiTro }, { showNotification: true });
 };
 
 export const createVaiTroServices = async (tenVaiTro) => {
-  await axiosInstance.post(`/vaitro`, { tenVaiTro });
+  await axiosInstance.post(`/vaitro`, { tenVaiTro }, { showNotification: true });
 };
 
 export const deleteVaiTroServices = async (maVaiTro) => {
-  await axiosInstance.delete(`/vaitro/${maVaiTro}`);
+  await axiosInstance.delete(`/vaitro/${maVaiTro}`, { showNotification: true });
 };
 
 export const getAllQuyenHanServices = async (maVaiTro) => {
@@ -28,9 +28,9 @@ export const getAllQuyenHanServices = async (maVaiTro) => {
 };
 
 export const assignPermissionToRole = async (maVaiTro, maQuyenHan) => {
-  await axiosInstance.post(`/vaitro/quyenhan/${maVaiTro}/${maQuyenHan}`);
+  await axiosInstance.post(`/vaitro/quyenhan/${maVaiTro}/${maQuyenHan}`, { showNotification: true });
 };
 
 export const removePermissionFromRole = async (maVaiTro, maQuyenHan) => {
-  await axiosInstance.delete(`/vaitro/quyenhan/${maVaiTro}/${maQuyenHan}`);
+  await axiosInstance.delete(`/vaitro/quyenhan/${maVaiTro}/${maQuyenHan}`, { showNotification: true });
 };

@@ -7,7 +7,7 @@ import {
   updateTaiKhoanServices,
 } from "../../services/taikhoanServices"; 
 
-export const useTaiKhoan = () => {
+export const useTaiKhoan = (shouldFetchAccounts = false) => {
   const [danhsachTaiKhoan, setDanhSachTaiKhoan] = useState([]);
   const [loadingDangNhap, setLoadingDangNhap] = useState(false);
   const [loadingTaiKhoan, setLoadingTaiKhoan] = useState(false);
@@ -114,8 +114,10 @@ export const useTaiKhoan = () => {
   };
 
   useEffect(() => {
-    getAllTaiKhoan();
-  }, []); 
+    if (shouldFetchAccounts) {
+      getAllTaiKhoan();
+    }
+  }, [shouldFetchAccounts]);
 
   return {
     loadingDangNhap,

@@ -18,7 +18,6 @@ import {
   Tabs,
   DatePicker,
   TimePicker,
-  message,
 } from "antd";
 import { SearchOutlined } from '@ant-design/icons';
 

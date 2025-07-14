@@ -45,7 +45,6 @@ import {
 import { useLoaiTienThuong } from "../../component/hooks/useLoaiTienThuong";
 import { useLichSuThuong } from "../../component/hooks/useLichSuTienThuong";
 import { useNhanVien } from "../../component/hooks/useNhanVien";
-import { useAppNotification } from "../../component/ui/notification";
 
 // ==== CONTEXT ====
 import { ReloadContext } from "../../context/reloadContext";
@@ -79,7 +78,6 @@ export default function ThuongComponent() {
   } = useLichSuThuong();
   const { danhSachNhanVien } = useNhanVien();
   // state
-  const apiNotification = useAppNotification();
   const { setReload } = useContext(ReloadContext);
   const [donVi, setDonVi] = useState("VND");
   const [loaiThuongChuaApDung, setLoaiThuongChuaApDung] = useState([]);
@@ -263,7 +261,6 @@ export default function ThuongComponent() {
           }
         });
         setSelectedLoaiThuongKeys([]);
-        apiNotification.success(`Đã xóa ${selectedLoaiThuongKeys.length} loại thưởng!`);
       },
     });
   };
@@ -290,9 +287,8 @@ export default function ThuongComponent() {
   const handleDeleteLichSuThuong = async (maNhanVien, maLoaiTienThuong) => {
     try {
       await deleteLichSuThuong(maNhanVien, maLoaiTienThuong);
-      apiNotification.success({ message: "Xoá thành công" });
     } catch (error) {
-      apiNotification.error({ message: "Xoá thất bại", descriptions: error });
+      console.error("Lỗi khi xóa:", error);
     }
   };
 
@@ -312,28 +308,23 @@ export default function ThuongComponent() {
     form.setFieldsValue(record);
   };
 
-  const handleDeleteLoaiThuong = (maLoaiTienThuong) => {
+  const handleDeleteLoaiThuong = async (maLoaiTienThuong) => {
     const isBeingUsed = dataSourceDanhSachLichSuThuong.some(
       (item) => item.maLoaiTienThuong === maLoaiTienThuong
     );
 
     if (isBeingUsed) {
-      apiNotification.error({
-        message: "Không thể xóa!",
-        description: "Loại tiền thưởng này đang được sử dụng.",
-      });
+      console.log("Không thể xóa! Loại tiền thưởng này đang được sử dụng.");
       return;
     }
 
     // Nếu không bị dùng, cho phép xóa
-    deleteLoaiTienThuong(maLoaiTienThuong)
-      .then(() => {
-        getAllLoaiTienThuong(); // cập nhật lại danh sách
-        apiNotification.success({ message: "Xóa thành công!" });
-      })
-      .catch(() => {
-        apiNotification.error({ message: "Xóa thất bại!" });
-      });
+    try {
+      await deleteLoaiTienThuong(maLoaiTienThuong);
+      getAllLoaiTienThuong(); // cập nhật lại danh sách
+    } catch (error) {
+      console.error("Lỗi khi xóa:", error);
+    }
   };
 
   const handleSubmit = async () => {
@@ -349,10 +340,8 @@ export default function ThuongComponent() {
 
         if (editingItem) {
           await updateLichSuThuong(formattedValues);
-          apiNotification.success({ message: "Cập nhật lịch sử thưởng thành công!" });
         } else {
           await createLichSuThuong(formattedValues);
-          apiNotification.success({ message: "Thêm lịch sử thưởng thành công!" });
         }
       } else {
         if (editingItem) {
@@ -362,22 +351,14 @@ export default function ThuongComponent() {
           };
           try {
             await updateLoaiTienThuong(updateValues);
-            apiNotification.success({ message: "Cập nhật thành công!" });
           } catch (error) {
-            apiNotification.error({
-              message: "Cập nhật không thành công!",
-              descriptions: error,
-            });
+            console.error("Lỗi khi cập nhật:", error);
           }
         } else {
           try {
             await createLoaiTienThuong(values);
-            apiNotification.success({ message: "Thêm thành công!" });
           } catch (error) {
-            apiNotification.error({
-              message: "Thêm Không thành công!",
-              descriptions: error,
-            });
+            console.error("Lỗi khi thêm:", error);
           }
         }
       }

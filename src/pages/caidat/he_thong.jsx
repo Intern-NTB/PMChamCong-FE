@@ -7,12 +7,9 @@ import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
 dayjs.extend(duration);
 
-import { useAppNotification } from "../../component/ui/notification";
-
 export default function HeThongComponent() {
 
     const [selectedTime, setSelectedTime] = useState(null);
-    const apiNotification = useAppNotification();
 
     const {
         danhSachHeThong,
@@ -47,17 +44,12 @@ export default function HeThongComponent() {
         };
 
         try {
+            // Chỉ cần thêm showNotification: true để hiện success
             await updateHeThong(dataToSend);
-            apiNotification.success({
-                message: "Thành công",
-                description: "Lưu cấu hình thành công!",
-            });
-        } catch (error) { 
-            apiNotification.error({
-                message: "Thất bại",
-                description: "Không thể lưu vào hệ thống! Vui lòng thử lại.", 
-            });
-            console.error("Failed to update system configuration:", error); 
+            // Notification sẽ tự động hiển thị!
+        } catch (error) {
+            // Error notification cũng tự động hiển thị!
+            console.error("Failed to update system configuration:", error);
         }
     };
 

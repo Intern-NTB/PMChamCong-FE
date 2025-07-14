@@ -43,7 +43,6 @@ import { useLichSuPhuCap } from "../../component/hooks/useLichSuPhuCap";
 import { useVaiTro } from "../../component/hooks/useVaiTro";
 import { useNhanVien } from "../../component/hooks/useNhanVien";
 
-import { useAppNotification } from "../../component/ui/notification";
 import { ReloadContext } from "../../context/reloadContext";
 
 export default function PhuCapComponent() {
@@ -75,7 +74,6 @@ export default function PhuCapComponent() {
     }, [maVaiTro, danhSachLoaiPhuCap]);
 
     // state
-    const apiNotification = useAppNotification();
     const { setReload } = useContext(ReloadContext);
 
     // Tính toán thống kê
@@ -151,10 +149,6 @@ export default function PhuCapComponent() {
         }));
     }, [dataSourceLichSuPhuCap]);
 
-    useEffect(() => {
-        getAllLoaiPhuCap();
-        getAllLichSuPhuCap();
-    }, [])
     useEffect(() => {
         setReload(() => getAllLoaiPhuCap);
     }, []);
@@ -251,18 +245,16 @@ export default function PhuCapComponent() {
                 if (modalType === "lichsu") {
                     const { maNhanVien, maPhuCap } = values;
 
-                    try {
-                        const listPhuCap = Array.isArray(maPhuCap) ? maPhuCap : [maPhuCap];
-                        // Thêm từng phụ cấp một cho nhân viên
-                        for (const phuCapId of listPhuCap) {
-                            await createLichSuPhuCap(maNhanVien, phuCapId);                                               
+                                            try {
+                            const listPhuCap = Array.isArray(maPhuCap) ? maPhuCap : [maPhuCap];
+                            // Thêm từng phụ cấp một cho nhân viên
+                            for (const phuCapId of listPhuCap) {
+                                await createLichSuPhuCap(maNhanVien, phuCapId);                                               
+                            }
+                            getAllLichSuPhuCap();
+                        } catch (err) {
+                            console.error("Lỗi khi submit form:", err);
                         }
-                        getAllLichSuPhuCap();
-                        apiNotification.success({ message: "Thêm thành công!" });
-                    } catch (err) {
-                        console.error("Lỗi khi submit form:", err);
-                        apiNotification.error({ message: "Thêm không thành công!" });
-                    }
                 } else {
                     if (editingId) {
                         const updateValues = {
@@ -271,22 +263,14 @@ export default function PhuCapComponent() {
                         };
                         try {
                             await updateLoaiPhuCap(updateValues);
-                            apiNotification.success({ message: "Cập nhật thành công!" });
                         } catch (error) {
-                            apiNotification.error({
-                                message: "Cập nhật không thành công!",
-                                descriptions: error,
-                            });
+                            console.error("Lỗi khi cập nhật:", error);
                         }
                     } else {
                         try {
                             await createLoaiPhuCap(values);
-                            apiNotification.success({ message: "Thêm thành công!" });
                         } catch (error) {
-                            apiNotification.error({
-                                message: "Thêm Không thành công!",
-                                descriptions: error,
-                            });
+                            console.error("Lỗi khi thêm:", error);
                         }
                     }
                 }
@@ -298,7 +282,7 @@ export default function PhuCapComponent() {
                 console.log("Validation failed:", error);
             }
         },
-        [apiNotification, createLoaiPhuCap, getAllLoaiPhuCap, getAllLichSuPhuCap, editingId]
+        [createLoaiPhuCap, getAllLoaiPhuCap, getAllLichSuPhuCap, editingId]
     );
 
     const handleAdd = () => {
@@ -320,9 +304,8 @@ export default function PhuCapComponent() {
         try {
             await deleteLoaiPhuCap(maPhuCap, maVaiTro);
             getAllLoaiPhuCap();
-            apiNotification.success({ message: "Xóa thành công!" });
         } catch (error) {
-            apiNotification.error({ message: "Xóa thất bại!" });
+            console.error("Lỗi khi xóa:", error);
         };
     }
 
@@ -345,9 +328,8 @@ export default function PhuCapComponent() {
         try {
             await deleteLichSuPhuCap(maNhanVien, maPhuCap);
             getAllLichSuPhuCap();
-            apiNotification.success({ message: "Xóa thành công!" });
         } catch (error) {
-            apiNotification.error({ message: "Xóa thất bại!" });
+            console.error("Lỗi khi xóa:", error);
         };
     }
 
@@ -355,9 +337,8 @@ export default function PhuCapComponent() {
         try {
             await deleteLichSuPhuCap(maNhanVien, maPhuCap);
             getAllLichSuPhuCap();
-            apiNotification.success({ message: "Xóa thành công!" });
         } catch (error) {
-            apiNotification.error({ message: "Xóa thất bại!" });
+            console.error("Lỗi khi xóa:", error);
         };
         setModalVisible(false);
     };
@@ -367,14 +348,15 @@ export default function PhuCapComponent() {
         try {
             await deleteRowLichSuPhuCap(maNhanVien);
             getAllLichSuPhuCap();
-            apiNotification.success({ message: "Xóa thành công!" });
         } catch (error) {
-            apiNotification.error({ message: "Xóa thất bại!" });
+            console.error("Lỗi khi xóa:", error);
         };
     }
 
     //xóa nhiều dòng
-    const handleDeleteMultipleLichSu = () => { apiNotification.error({ message: 'Có lỗi xảy ra', description: 'Chưa hổ trợ được tính năng này' }) };
+    const handleDeleteMultipleLichSu = () => { 
+        console.log('Chưa hỗ trợ được tính năng này');
+    };
     const handleDeleteMultipleLoaiPhuCap = () => {
         Modal.confirm({
             title: `Bạn có chắc chắn muốn xóa ${selectedLoaiPhuCapKeys.length} loại phụ cấp đã chọn?`,
@@ -391,7 +373,6 @@ export default function PhuCapComponent() {
                     }
                 });
                 setSelectedLoaiPhuCapKeys([]);
-                apiNotification.success(`Đã xóa ${selectedLoaiPhuCapKeys.length} loại phụ cấp!`);
             },
         });
     };
