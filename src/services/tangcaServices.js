@@ -14,7 +14,8 @@ export const updateTangCaServices = async (duLieuTangCa) => {
   try {
     const res = await axiosInstance.put(
       `/tangca/${duLieuTangCa.maPhongBan}`,
-      duLieuTangCa
+      duLieuTangCa,
+      { showNotification: true }
     );
     return res.data;
   } catch (error) {
@@ -27,7 +28,8 @@ export const deleteTangCaServices = async (ngayChamCong, maPhongBan) => {
   try {
     console.log(ngayChamCong, maPhongBan);
     const res = await axiosInstance.delete(
-      `/tangca/${maPhongBan}/${ngayChamCong}`
+      `/tangca/${maPhongBan}/${ngayChamCong}`,
+      { showNotification: true }
     );
     return res.data;
   } catch (error) {
@@ -38,7 +40,7 @@ export const deleteTangCaServices = async (ngayChamCong, maPhongBan) => {
 
 export const createTangCaServices = async (duLieuTangCa) => {
   try {
-    const res = await axiosInstance.post("/tangca", duLieuTangCa);
+    const res = await axiosInstance.post("/tangca", duLieuTangCa, { showNotification: true });
     return res.data;
   } catch (error) {
     console.error("AXIOS Lỗi lấy danh sách tăng ca:", error);

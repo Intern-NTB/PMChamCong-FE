@@ -9,7 +9,8 @@ export const checkConnectionMayChamCongServices = async (host, port) => {
     const res = await axiosInstance.post("/device/connect", configMayChamCong);
     return res.request?.status;
   } catch (error) {
-    console.log("AXIOS Lỗi khi kết nỗi đến máy chấm công: ", error);
+    // Không notify lỗi ở đây, chỉ propagate
+    throw error;
   }
 };
 
@@ -18,10 +19,7 @@ export const getAllNhanVienMayChamCongServices = async () => {
     const res = await axiosInstance.get("/device/employees");
     return res.data;
   } catch (error) {
-    console.log(
-      "AXIOS Lỗi khi lấy dữ liệu nhân viên trên máy chấm công: ",
-      error
-    );
+    throw error;
   }
 };
 
@@ -32,17 +30,17 @@ export const createNhanVienMayChamCongServices = async (
     nhanViens: [...dataNhanVienMayChamCong],
   };
   try {
-    await axiosInstance.post("/device/upload/employees", data);
+    await axiosInstance.post("/device/upload/employees", data, { showNotification: true });
   } catch (error) {
-    console.log("AXIOS Lỗi khi đăng ký nhân viên trên máy chấm công: ", error);
+    throw error;
   }
 };
 
 export const deleteNhanVienMayChamCongServices = async (maNhanVien) => {
   try {
-    await axiosInstance.delete(`/device/employee/${maNhanVien}`);
+    await axiosInstance.delete(`/device/employee/${maNhanVien}`, { showNotification: true });
   } catch (error) {
-    console.log("AXIOS Lỗi xoá nhân viên trên máy chấm công: ", error);
+    throw error;
   }
 };
 
@@ -52,10 +50,11 @@ export const deleteFingerprintDBAndMayChamCongServices = async (
 ) => {
   try {
     await axiosInstance.delete(
-      `/device/fingerprint/${maNhanVien}/${viTriNgonTay}`
+      `/device/fingerprint/${maNhanVien}/${viTriNgonTay}`,
+      { showNotification: true }
     );
   } catch (error) {
-    console.log("AXIOS Lỗi xoá vân tay: ", error);
+    throw error;
   }
 };
 
@@ -63,7 +62,7 @@ export const syncFingerprintsToDBServices = async () => {
   try {
     await axiosInstance.get(`/device/employee/fingerprints`);
   } catch (error) {
-    console.log("AXIOS Lỗi xoá vân tay: ", error);
+    throw error;
   }
 };
 
@@ -72,10 +71,8 @@ export const uploadFingerprintsToMayChamCongServices = async (nhanViens) => {
     const data = {
       nhanVienIds: nhanViens.map(nv => nv.maNhanVien),
     };
-
-    console.log(data);
-    await axiosInstance.post(`/device/upload/fingerprints`, data);
+    await axiosInstance.post(`/device/upload/fingerprints`, data, { showNotification: true });
   } catch (error) {
-    console.log("AXIOS Lỗi xoá vân tay: ", error);
+    throw error;
   }
 };
