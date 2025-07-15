@@ -16,7 +16,17 @@ export const useNgayPhep = (isAutoGetAll = true) => {
     setLoadingNgayPhep(true);
     try {
       const res = await getAllNgayPhepServices();
-      setDanhSachNgayPhep(res.data);
+      // Map lại dữ liệu trả về đúng format mới
+      const mappedData = (res.data || res).map((item) => ({
+        maNhanVien: item.maNhanVien,
+        nam: item.nam,
+        ngayBatDauLamViec: item.ngayBatDauLamViec,
+        soNgayPhepDuocCap: item.soNgayPhepDuocCap,
+        ngayPhepDaSuDung: item.ngayPhepDaSuDung,
+        soNgayPhepConLai: item.soNgayPhepConLai,
+        ngayCapNhat: item.ngayCapNhat,
+      }));
+      setDanhSachNgayPhep(mappedData);
     } catch (error) {
       setDanhSachNgayPhep([]);
       throw error;
@@ -37,10 +47,10 @@ export const useNgayPhep = (isAutoGetAll = true) => {
       setLoadingNgayPhep(false);
     }
   };
-  const tinhToanNgayPhepTatCa = async (nam, thang) => {
+  const tinhToanNgayPhepTatCa = async (nam) => {
     setLoadingNgayPhep(true);
     try {
-      await tinhToanNgayPhepTatCaServices(nam, thang);
+      await tinhToanNgayPhepTatCaServices(nam);
       setIsUpdatedNgayPhep(true);
     } catch (error) {
       setIsUpdatedNgayPhep(false);

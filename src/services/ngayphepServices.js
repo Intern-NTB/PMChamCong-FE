@@ -17,9 +17,9 @@ export const tinhToanNgayPhepServices = async (nam, thang) => {
   }
 };
 
-export const tinhToanNgayPhepTatCaServices = async (nam, thang) => {
+export const tinhToanNgayPhepTatCaServices = async (nam) => {
   try {
-    await axiosInstance.put(`/ngayphep/all/${nam}/${thang}`);
+    await axiosInstance.put(`/ngayphep/all/${nam}`);
   } catch {
     console.log("AXIOS! Lỗi xoá dữ liệu ngày phép");
   }

@@ -129,11 +129,12 @@ export default function NghiPhep() {
 
   // Hàm để tính số ngày phép còn lại
   useEffect(() => {
+    const year = selectedMonth ? dayjs(selectedMonth).year() : dayjs().year();
     const ngayPhep = danhSachNgayPhep.find(
-      (np) => np.maNhanVien === selectedNhanVien
+      (np) => np.maNhanVien === selectedNhanVien && np.nam === year
     );
-    setSoNgayPhepConLai(ngayPhep ? ngayPhep.ngayPhepConLai : 0);
-  }, [danhSachNgayPhep, selectedNhanVien]);
+    setSoNgayPhepConLai(ngayPhep ? ngayPhep.soNgayPhepConLai : 0);
+  }, [danhSachNgayPhep, selectedNhanVien, selectedMonth]);
 
   // Hàm tính số ngày nghỉ dựa trên ngày bắt đầu và kết thúc
   const calculateLeaveDays = (
@@ -850,10 +851,7 @@ export default function NghiPhep() {
               block
               onClick={async () => {
                 try {
-                  await tinhToanNgayPhepTatCa(
-                    dayjs(selectedMonth).year(),
-                    dayjs(selectedMonth).month() + 1
-                  );
+                  await tinhToanNgayPhepTatCa(dayjs(selectedMonth).year());
                   api.success({
                     message: "Cập nhật phép thành công cho nhân viên",
                   });
@@ -1100,9 +1098,9 @@ export default function NghiPhep() {
               }}
             >
               Có phép{" "}
-              {selectedNhanVien && (
+              {selectedNhanVien !== null && selectedNhanVien !== undefined && (
                 <Tag color="success">
-                  Số ngày phép còn lại trong năm: {soNgayPhepConLai}
+                  Số ngày phép còn lại trong năm: <b>{soNgayPhepConLai}</b>
                 </Tag>
               )}
             </Checkbox>
