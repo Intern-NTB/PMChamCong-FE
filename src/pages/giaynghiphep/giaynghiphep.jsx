@@ -314,7 +314,9 @@ export default function GiayNghiPhep() {
         ngayKetThucBanGhi1 = actualNgayBatDau
           .clone()
           .add(soNgayPhepConLai - 1, "day");
-        ngayBatDauBanGhi2 = actualNgayBatDau.clone().add(soNgayPhepConLai, "day");
+        ngayBatDauBanGhi2 = actualNgayBatDau
+          .clone()
+          .add(soNgayPhepConLai, "day");
       }
 
       // Ensure that ngayKetThucBanGhi1 does not exceed actualNgayKetThuc
@@ -437,8 +439,10 @@ export default function GiayNghiPhep() {
   }, [thongTinNhanVien, form]);
 
   const handleOk = async () => {
+    console.debug("==== START HANDLE OK ====");
     try {
       const values = await form.validateFields();
+      console.debug("Value: ", values);
 
       const maNhanVien = thongTinNhanVien?.maNhanVien;
 
@@ -450,22 +454,7 @@ export default function GiayNghiPhep() {
         return;
       }
       if (!thongTinNhanVien.email) {
-        Modal.confirm({
-          title: "Thiếu thông tin Email",
-          icon: <ExclamationCircleOutlined />,
-          content:
-            "Nhân viên chưa có thông tin Email. Bạn có muốn cập nhật Email ngay bây giờ không?",
-          okText: "Cập nhật Email",
-          cancelText: "Hủy",
-          onOk: () => setIsOpenModalUpdateEmail(true),
-          onCancel: () => {
-            api.warning({
-              message: "Cảnh báo",
-              description:
-                "Đơn nghỉ phép sẽ không được gửi thông báo qua Email nếu bạn không cập nhật Email.",
-            });
-          },
-        });
+        setIsOpenModalUpdateEmail(true);
         return;
       }
 
@@ -495,7 +484,10 @@ export default function GiayNghiPhep() {
 
       // Đảm bảo ngày bắt đầu không lớn hơn ngày kết thúc trước khi format
       if (
-        actualNgayBatDau.isAfter(actualNgayKetThuc, isPartialFromForm ? "minute" : "day")
+        actualNgayBatDau.isAfter(
+          actualNgayKetThuc,
+          isPartialFromForm ? "minute" : "day"
+        )
       ) {
         api.error({
           message: "Lỗi validation",
@@ -553,7 +545,10 @@ export default function GiayNghiPhep() {
           description:
             errorInfo.message || "Vui lòng kiểm tra lại các trường đã nhập.",
         });
-        if (errorInfo.message && errorInfo.message.includes("Khoảng thời gian nghỉ đã bị trùng")) {
+        if (
+          errorInfo.message &&
+          errorInfo.message.includes("Khoảng thời gian nghỉ đã bị trùng")
+        ) {
           form.setFields([
             { name: "ngayBatDau", errors: [errorInfo.message] },
             { name: "ngayKetThuc", errors: [errorInfo.message] },
@@ -569,54 +564,73 @@ export default function GiayNghiPhep() {
 
     const currentValues = form.getFieldsValue();
     if (!checked) {
-      if (currentValues.ngayBatDau && dayjs.isDayjs(currentValues.ngayBatDau)) {
-        form.setFieldsValue({ ngayBatDau: dayjs(currentValues.ngayBatDau).startOf("day") });
+      // Khi bỏ chọn "Nghỉ giữa ngày", đặt lại giờ về đầu/cuối ngày và xóa giá trị giờ
+      if (currentValues.ngayBatDau) {
+        form.setFieldsValue({
+          ngayBatDau: dayjs(currentValues.ngayBatDau).startOf("day"),
+        });
       }
-      if (currentValues.ngayKetThuc && dayjs.isDayjs(currentValues.ngayKetThuc)) {
-        form.setFieldsValue({ ngayKetThuc: dayjs(currentValues.ngayKetThuc).endOf("day") });
+      if (currentValues.ngayKetThuc) {
+        form.setFieldsValue({
+          ngayKetThuc: dayjs(currentValues.ngayKetThuc).endOf("day"),
+        });
       }
       form.setFieldsValue({ startTime: null, endTime: null }); // Clear time values
     } else {
-
-      if (!currentValues.ngayBatDau || !dayjs.isDayjs(currentValues.ngayBatDau)) {
+      // Khi chọn "Nghỉ giữa ngày", nếu chưa có giờ, đặt về giờ hiện tại hoặc mặc định
+      if (
+        currentValues.ngayBatDau &&
+        !dayjs(currentValues.ngayBatDau).isValid()
+      ) {
         form.setFieldsValue({ ngayBatDau: dayjs() });
       }
-      if (!currentValues.ngayKetThuc || !dayjs.isDayjs(currentValues.ngayKetThuc)) {
+      if (
+        currentValues.ngayKetThuc &&
+        !dayjs(currentValues.ngayKetThuc).isValid()
+      ) {
         form.setFieldsValue({ ngayKetThuc: dayjs() });
       }
 
       if (!currentValues.startTime) {
-        form.setFieldsValue({ startTime: dayjs().startOf('hour') });
+        form.setFieldsValue({ startTime: dayjs().startOf("hour") });
       }
       if (!currentValues.endTime) {
-        form.setFieldsValue({ endTime: dayjs().add(1, 'hour').startOf('hour') });
+        form.setFieldsValue({
+          endTime: dayjs().add(1, "hour").startOf("hour"),
+        });
       }
     }
     setTimeout(handleDateChange, 0);
   };
 
   const disabledPastDate = (current) => {
-    return current && current.isBefore(dayjs().startOf('day'));
+    return current && current.isBefore(dayjs().startOf("day"));
   };
 
   const disabledEndDate = (endValue) => {
-    const startValue = form.getFieldValue('ngayBatDau');
+    const startValue = form.getFieldValue("ngayBatDau");
     if (!endValue || !startValue) {
       return false;
     }
 
     if (isPartialDay) {
-        const startTime = form.getFieldValue('startTime');
-        const endTime = form.getFieldValue('endTime');
+      const startTime = form.getFieldValue("startTime");
+      const endTime = form.getFieldValue("endTime");
 
-        if (startValue.isSame(endValue, 'day') && startTime && endTime) {
-            const combinedStart = startValue.hour(startTime.hour()).minute(startTime.minute()).second(startTime.second());
-            const combinedEnd = endValue.hour(endTime.hour()).minute(endTime.minute()).second(endTime.second());
-            return combinedEnd.isBefore(combinedStart, 'minute'); 
-        }
-        return endValue.isBefore(startValue, 'day');
+      if (startValue.isSame(endValue, "day") && startTime && endTime) {
+        const combinedStart = startValue
+          .hour(startTime.hour())
+          .minute(startTime.minute())
+          .second(startTime.second());
+        const combinedEnd = endValue
+          .hour(endTime.hour())
+          .minute(endTime.minute())
+          .second(endTime.second());
+        return combinedEnd.isBefore(combinedStart);
+      }
+      return endValue.isBefore(startValue, "day");
     }
-    return endValue.isBefore(startValue.startOf('day'));
+    return endValue.isBefore(startValue.startOf("day"));
   };
 
   return (
@@ -702,13 +716,21 @@ export default function GiayNghiPhep() {
               onChange={(e) => {
                 const { value } = e.target;
                 const reg = /^-?\d*(\.\d*)?$/;
-                if ((!isNaN(value) && reg.test(value)) || value === '' || value === '-') {
+                if (
+                  (!isNaN(value) && reg.test(value)) ||
+                  value === "" ||
+                  value === "-"
+                ) {
                   form.setFieldsValue({ cccd: value });
                 }
               }}
               onBlur={() => {
-                const value = form.getFieldValue('cccd');
-                if (value && value.length === 12 && completedInputCCCD.data !== value) {
+                const value = form.getFieldValue("cccd");
+                if (
+                  value &&
+                  value.length === 12 &&
+                  completedInputCCCD.data !== value
+                ) {
                   setCompletedInputCCCD({ isCompleted: true, data: value });
                 }
               }}
@@ -763,13 +785,25 @@ export default function GiayNghiPhep() {
                   let actualEndDate = endDate;
 
                   if (isPartialDay && value && startTime) {
-                      actualStartDate = value.hour(startTime.hour()).minute(startTime.minute()).second(startTime.second());
+                    actualStartDate = value
+                      .hour(startTime.hour())
+                      .minute(startTime.minute())
+                      .second(startTime.second());
                   }
                   if (isPartialDay && endDate && endTime) {
-                      actualEndDate = endDate.hour(endTime.hour()).minute(endTime.minute()).second(endTime.second());
+                    actualEndDate = endDate
+                      .hour(endTime.hour())
+                      .minute(endTime.minute())
+                      .second(endTime.second());
                   }
 
-                  if (actualEndDate && actualStartDate.isAfter(actualEndDate, isPartialDay ? 'minute' : 'day')) {
+                  if (
+                    actualEndDate &&
+                    actualStartDate.isAfter(
+                      actualEndDate,
+                      isPartialDay ? "minute" : "day"
+                    )
+                  ) {
                     return Promise.reject(
                       new Error(
                         "Ngày bắt đầu phải nhỏ hơn hoặc bằng ngày kết thúc!"
@@ -777,8 +811,10 @@ export default function GiayNghiPhep() {
                     );
                   }
 
-                  if (value.isBefore(dayjs().startOf('day'))) {
-                    return Promise.reject(new Error("Không thể chọn ngày trong quá khứ!"));
+                  if (value.isBefore(dayjs().startOf("day"))) {
+                    return Promise.reject(
+                      new Error("Không thể chọn ngày trong quá khứ!")
+                    );
                   }
 
                   return Promise.resolve();
@@ -792,7 +828,7 @@ export default function GiayNghiPhep() {
               style={{ width: "100%" }}
               onChange={() => {
                 setTimeout(handleDateChange, 0);
-                form.validateFields(['ngayKetThuc', 'startTime', 'endTime']);
+                form.validateFields(["ngayKetThuc"]);
               }}
               disabledDate={disabledPastDate}
               inputReadOnly={true}
@@ -809,19 +845,29 @@ export default function GiayNghiPhep() {
                   message: "Vui lòng chọn giờ bắt đầu!",
                 },
                 {
-                    validator: (_, value) => {
-                        if (!value) return Promise.resolve();
+                  validator: (_, value) => {
+                    if (!value) return Promise.resolve();
 
-                        const startDate = form.getFieldValue("ngayBatDau");
-                        const endDate = form.getFieldValue("ngayKetThuc");
-                        const endTime = form.getFieldValue("endTime");
+                    const startDate = form.getFieldValue("ngayBatDau");
+                    const endDate = form.getFieldValue("ngayKetThuc");
+                    const endTime = form.getFieldValue("endTime");
 
-                        if (startDate && endDate && startDate.isSame(endDate, 'day') && endTime && value.isAfter(endTime)) {
-                            return Promise.reject(new Error("Giờ bắt đầu phải nhỏ hơn hoặc bằng giờ kết thúc trên cùng một ngày!"));
-                        }
-                        return Promise.resolve();
+                    if (
+                      startDate &&
+                      endDate &&
+                      startDate.isSame(endDate, "day") &&
+                      endTime &&
+                      value.isAfter(endTime)
+                    ) {
+                      return Promise.reject(
+                        new Error(
+                          "Giờ bắt đầu phải nhỏ hơn hoặc bằng giờ kết thúc trên cùng một ngày!"
+                        )
+                      );
                     }
-                }
+                    return Promise.resolve();
+                  },
+                },
               ]}
             >
               <TimePicker
@@ -829,7 +875,7 @@ export default function GiayNghiPhep() {
                 style={{ width: "100%" }}
                 onChange={() => {
                   setTimeout(handleDateChange, 0);
-                  form.validateFields(['endTime']);
+                  form.validateFields(["endTime"]);
                 }}
                 inputReadOnly={true}
               />
@@ -858,13 +904,25 @@ export default function GiayNghiPhep() {
                   let actualEndDate = value;
 
                   if (isPartialDay && startDate && startTime) {
-                      actualStartDate = startDate.hour(startTime.hour()).minute(startTime.minute()).second(startTime.second());
+                    actualStartDate = startDate
+                      .hour(startTime.hour())
+                      .minute(startTime.minute())
+                      .second(startTime.second());
                   }
                   if (isPartialDay && value && endTime) {
-                      actualEndDate = value.hour(endTime.hour()).minute(endTime.minute()).second(endTime.second());
+                    actualEndDate = value
+                      .hour(endTime.hour())
+                      .minute(endTime.minute())
+                      .second(endTime.second());
                   }
 
-                  if (actualStartDate && actualEndDate.isBefore(actualStartDate, isPartialDay ? 'minute' : 'day')) {
+                  if (
+                    actualStartDate &&
+                    actualEndDate.isBefore(
+                      actualStartDate,
+                      isPartialDay ? "minute" : "day"
+                    )
+                  ) {
                     return Promise.reject(
                       new Error(
                         "Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu!"
@@ -874,10 +932,17 @@ export default function GiayNghiPhep() {
 
                   const MAX_LEAVE_DAYS = 30; // Defined max leave days
                   if (actualStartDate && actualEndDate) {
-                    const daysDiff = calculateLeaveDays(actualStartDate, actualEndDate, isPartialDay, laySoGioLamViecTheoCa());
+                    const daysDiff = calculateLeaveDays(
+                      actualStartDate,
+                      actualEndDate,
+                      isPartialDay,
+                      laySoGioLamViecTheoCa()
+                    );
                     if (daysDiff > MAX_LEAVE_DAYS) {
                       return Promise.reject(
-                        new Error(`Khoảng thời gian nghỉ không được quá ${MAX_LEAVE_DAYS} ngày.`)
+                        new Error(
+                          `Khoảng thời gian nghỉ không được quá ${MAX_LEAVE_DAYS} ngày.`
+                        )
                       );
                     }
                   }
@@ -896,7 +961,7 @@ export default function GiayNghiPhep() {
               style={{ width: "100%" }}
               onChange={() => {
                 setTimeout(handleDateChange, 0);
-                form.validateFields(['ngayBatDau', 'startTime', 'endTime']);
+                form.validateFields(["ngayBatDau"]);
               }}
               disabledDate={disabledEndDate}
               inputReadOnly={true}
@@ -913,19 +978,29 @@ export default function GiayNghiPhep() {
                   message: "Vui lòng chọn giờ kết thúc!",
                 },
                 {
-                    validator: (_, value) => {
-                        if (!value) return Promise.resolve();
+                  validator: (_, value) => {
+                    if (!value) return Promise.resolve();
 
-                        const startDate = form.getFieldValue("ngayBatDau");
-                        const endDate = form.getFieldValue("ngayKetThuc");
-                        const startTime = form.getFieldValue("startTime");
+                    const startDate = form.getFieldValue("ngayBatDau");
+                    const endDate = form.getFieldValue("ngayKetThuc");
+                    const startTime = form.getFieldValue("startTime");
 
-                        if (startDate && endDate && startDate.isSame(endDate, 'day') && startTime && value.isBefore(startTime)) {
-                            return Promise.reject(new Error("Giờ kết thúc phải lớn hơn hoặc bằng giờ bắt đầu trên cùng một ngày!"));
-                        }
-                        return Promise.resolve();
+                    if (
+                      startDate &&
+                      endDate &&
+                      startDate.isSame(endDate, "day") &&
+                      startTime &&
+                      value.isBefore(startTime)
+                    ) {
+                      return Promise.reject(
+                        new Error(
+                          "Giờ kết thúc phải lớn hơn hoặc bằng giờ bắt đầu trên cùng một ngày!"
+                        )
+                      );
                     }
-                }
+                    return Promise.resolve();
+                  },
+                },
               ]}
             >
               <TimePicker
@@ -933,7 +1008,7 @@ export default function GiayNghiPhep() {
                 style={{ width: "100%" }}
                 onChange={() => {
                   setTimeout(handleDateChange, 0);
-                  form.validateFields(['startTime']);
+                  form.validateFields(["startTime"]);
                 }}
                 inputReadOnly={true}
               />
