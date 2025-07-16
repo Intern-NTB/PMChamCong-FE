@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useContext, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Table,
   Button,
@@ -31,7 +31,6 @@ export default function LichSuLuongComponent() {
     const [searchText, setSearchText] = useState('');
 
     const {
-        danhSachLuong,
         danhSachLichSuThayDoi,
         loading,
         historyChangeLuong

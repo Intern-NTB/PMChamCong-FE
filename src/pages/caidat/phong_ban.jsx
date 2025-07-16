@@ -44,7 +44,6 @@ export default function PhongBanComponent () {
     const [editingId, setEditingId] = useState(null);
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
-    const [statusFilter, setStatusFilter] = useState('all');
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(8);
 
@@ -52,7 +51,6 @@ export default function PhongBanComponent () {
     const {
         danhSachPhongBan,
         loadingPhongBan,
-        statusPhongBan,
         fetchPhongBan,
         updatePhongBan,
         createPhongBan,
@@ -175,11 +173,6 @@ export default function PhongBanComponent () {
     const handleSearchChange = useCallback((e) => {
         setSearchTerm(e.target.value);
         setCurrentPage(1); // Reset to first page when searching
-    }, []);
-
-    const handleStatusFilterChange = useCallback((value) => {
-        setStatusFilter(value);
-        setCurrentPage(1); // Reset to first page when changing filter
     }, []);
 
     const handlePageChange = useCallback((page, size) => {
