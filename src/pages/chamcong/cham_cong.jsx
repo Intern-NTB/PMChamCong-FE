@@ -10,7 +10,7 @@ import {
   Button,
   Table,
   DatePicker,
-  Select,
+  Select, 
   Row,
   Col,
   Statistic,
@@ -83,12 +83,13 @@ export default function GiaLapChamCong() {
     dayjs().startOf("day"),
     dayjs().endOf("day"),
   ]);
-  const [selectedMonth, setSelectedMonth] = useState(dayjs()); 
+  const [selectedMonth, setSelectedMonth] = useState(dayjs());
   const apiNotification = useAppNotification();
 
   const [isMobile, setIsMobile] = useState(false);
 
   const [searchText, setSearchText] = useState("");
+  // Keep selectedPhongBan state as it's used for the table filter and statistics
   const [selectedPhongBan, setSelectedPhongBan] = useState({
     selected: false,
     phongBanValue: null,
@@ -263,19 +264,19 @@ export default function GiaLapChamCong() {
   //Hàm xử lý lấy thời gian của ưu tiên.
   const getUuTien = (maNhanVien, ngayChamCong) => {
     const thongTin = getThongTinCaTrongNgay(maNhanVien, ngayChamCong);
-    if (!thongTin) return "Không có ca trong ngày";
+    if (!thongTin) return null; 
 
     const { nhanVien, caTrongTuan } = thongTin;
 
     const lichSuUuTien = danhSachLichSuUuTien.find(
       (lsut) => lsut.maNhanVien === nhanVien.maNhanVien
     );
-    if (!lichSuUuTien) return null;
+    if (!lichSuUuTien) return null; // Return null here
 
     const uuTien = danhSachDoiTuongUuTien.find(
       (ut) => ut.maUuTien === lichSuUuTien.maUuTien
     );
-    if (!uuTien) return null;
+    if (!uuTien) return null; // Return null here
 
     // Parse thời gian ca làm việc - thử nhiều cách
     let gioBatDauCa, gioKetThucCa;
@@ -293,7 +294,7 @@ export default function GiaLapChamCong() {
     // Kiểm tra nếu parse thành công
     if (!gioBatDauCa.isValid() || !gioKetThucCa.isValid()) {
       console.error("Lỗi parse thời gian ca làm việc");
-      return "Lỗi thời gian ca làm việc";
+      return null; // Return null here
     }
 
     // Parse thời gian ưu tiên từ string "HH:mm:ss" thành phút
@@ -315,7 +316,7 @@ export default function GiaLapChamCong() {
     // Kiểm tra kết quả
     if (!gioUuTienBatDau.isValid() || !gioUuTienKetThuc.isValid()) {
       console.error("Lỗi tính toán thời gian ưu tiên");
-      return "Lỗi tính toán thời gian ưu tiên";
+      return null; // Return null here
     }
 
     return (
@@ -328,7 +329,7 @@ export default function GiaLapChamCong() {
 
   const getTimeTangCa = (maNhanVien, ngayChamCong) => {
     const thongTin = getThongTinCaTrongNgay(maNhanVien, ngayChamCong);
-    if (!thongTin) return "Không tìm thấy nhân viên";
+    if (!thongTin) return null; 
 
     const { phongBan } = thongTin;
 
@@ -337,15 +338,14 @@ export default function GiaLapChamCong() {
         cc.maNhanVien === maNhanVien &&
         dayjs(cc.ngayChamCong).isSame(dayjs(ngayChamCong), "day")
     );
-    if (!chamCong) return "Không có dữ liệu chấm công";
+    if (!chamCong) return null; 
 
     const tangCa = danhSachTangCa.find(
       (tc) =>
         tc.maPhongBan === phongBan.maPhongBan &&
         dayjs(tc.ngayChamCongTangCa).isSame(dayjs(ngayChamCong), "day")
     );
-    if (!tangCa) return "-";
-
+    if (!tangCa) return null; 
     return `(${formatGio(tangCa.gioTangCaBatDau)} - ${formatGio(
       tangCa.gioTangCaKetThuc
     )})`;
@@ -429,7 +429,7 @@ export default function GiaLapChamCong() {
       }
 
       if (thoiGianRa.isBefore(thoiGianKetThucCa, "minute")) {
-        return "row-early-leave"; 
+        return "row-early-leave";
       }
 
       return "";
@@ -498,14 +498,15 @@ export default function GiaLapChamCong() {
             record.maNhanVien,
             record.ngayChamCong
           );
-          return ca || "Không có";
+          return ca || "-";
         },
       },
       {
         title: "Ưu tiên",
+        width: 120, 
         render(_, record) {
           const uutien = getUuTien(record.maNhanVien, record.ngayChamCong);
-          return uutien || "-";
+          return uutien || "-"; 
         },
       },
       {
@@ -522,10 +523,10 @@ export default function GiaLapChamCong() {
       },
       {
         title: "Giờ tăng ca",
-        width: 120,
+        width: 120, 
         render(_, record) {
           const tc = getTimeTangCa(record.maNhanVien, record.ngayChamCong);
-          return tc || "Không tìm thấy";
+          return tc || "-"; 
         },
       },
       {
@@ -590,7 +591,7 @@ export default function GiaLapChamCong() {
       danhSachLichSuUuTien,
       danhSachDoiTuongUuTien,
       danhSachTangCa,
-      isDataReady // Added isDataReady to memo dependencies
+      isDataReady 
     ]
   );
 
@@ -645,7 +646,7 @@ export default function GiaLapChamCong() {
               >
                 Giờ tăng ca
               </div>
-              {getTimeTangCa(record.maNhanVien, record.ngayChamCong) !== "-" ? (
+              {getTimeTangCa(record.maNhanVien, record.ngayChamCong) ? ( 
                 <Space size={[12, 8]} wrap>
                   <span style={{ fontSize: "13px" }}>
                     <strong>Khoảng thời gian:</strong>{" "}
@@ -782,7 +783,7 @@ export default function GiaLapChamCong() {
       workingNow,
       completedToday,
       vangMatCount,
-      overtimeHoursByDepartment, 
+      overtimeHoursByDepartment,
     };
   }, [
     selectedPhongBan,
@@ -790,15 +791,8 @@ export default function GiaLapChamCong() {
     danhSachNhanVien,
     danhSachChamCongChiTiet,
     danhSachTangCa,
-    danhSachPhongBan, 
+    danhSachPhongBan,
   ]);
-
-  const handlePhongBanChange = useCallback((value) => {
-    setSelectedPhongBan({
-      selected: true,
-      phongBanValue: value,
-    });
-  }, []);
 
   const handleDateRangeChange = useCallback((dates) => {
     setDateRange(dates);
@@ -870,19 +864,7 @@ export default function GiaLapChamCong() {
           <Card title="Chấm công" size="small" extra={<CalendarOutlined />}>
             <Space direction="vertical" style={{ width: "100%" }} size="middle">
               <Row gutter={[8, 8]}>
-                <Col span={24}> {/* Changed to 24 for full width on mobile */}
-                  <Select
-                    placeholder="Chọn phòng ban"
-                    style={{ width: "100%" }}
-                    onChange={handlePhongBanChange}
-                    getPopupContainer={() => document.body}
-                    options={danhSachPhongBan.map((pb) => ({
-                      value: pb.tenPhongBan,
-                      label: pb.tenPhongBan,
-                    }))}
-                    allowClear 
-                  />
-                </Col>
+                {/* Removed Select for department filter */}
               </Row>
 
               <Row gutter={[8, 8]}>
@@ -961,7 +943,6 @@ export default function GiaLapChamCong() {
               </Col>
             </Row>
           </Card>
-
           {alert.visible && (
             <MyAlert
               type={alert.type}
@@ -1027,7 +1008,7 @@ export default function GiaLapChamCong() {
               onChange={(pagination, filters) => {
                 const pb = filters.tenPhongBan && filters.tenPhongBan.length > 0 ? filters.tenPhongBan[0] : null;
                 setSelectedPhongBan({
-                  selected: !!pb, 
+                  selected: !!pb,
                   phongBanValue: pb,
                 });
               }}
@@ -1042,10 +1023,10 @@ export default function GiaLapChamCong() {
                 width: "100%",
                 height: "100%",
                 borderRadius: "12px",
-                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)", 
+                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
                 border: "1px solid #f0f0f0",
               }}
-              bodyStyle={{ padding: "24px" }} 
+              bodyStyle={{ padding: "24px" }}
               title={
                 <div
                   style={{
@@ -1240,18 +1221,7 @@ export default function GiaLapChamCong() {
                   style={{ width: "250px" }}
                   allowClear
                 />
-                 <Select // Added Department filter for desktop
-                    placeholder="Lọc theo phòng ban"
-                    style={{ width: "200px" }}
-                    onChange={handlePhongBanChange}
-                    getPopupContainer={() => document.body}
-                    options={danhSachPhongBan.map((pb) => ({
-                      value: pb.tenPhongBan,
-                      label: pb.tenPhongBan,
-                    }))}
-                    allowClear
-                    value={selectedPhongBan.phongBanValue}
-                  />
+                  {/* Removed Select for department filter */}
               </Space>
 
               <Table
