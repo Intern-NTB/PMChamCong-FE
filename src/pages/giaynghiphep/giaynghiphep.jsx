@@ -20,7 +20,7 @@ import dayjs from "dayjs";
 import { ModalEmail } from "./modalEmail";
 
 export default function GiayNghiPhep() {
-  const { danhSachNghiPhep, createNghiPhep } = useNghiPhep(false);
+  const { danhSachNghiPhep, getAllNghiPhep, createNghiPhep } = useNghiPhep();
   const {
     danhSachNhanVien,
     thongTinNhanVien,
@@ -404,9 +404,35 @@ export default function GiayNghiPhep() {
     }
   }, [thongTinNhanVien, form]);
 
+  useEffect(() => {
+    getAllNghiPhep();
+  }, []);
+
   const handleOk = async () => {
     try {
+      // Ép validate lại hai trường ngày trước khi submit
+      await form.validateFields(['ngayBatDau', 'ngayKetThuc']);
       const values = await form.validateFields();
+
+      // Kiểm tra trùng ngày nghỉ phép giống nghi_phep.jsx
+      const startDate = dayjs(values.ngayBatDau).startOf('day');
+      const endDate = dayjs(values.ngayKetThuc).startOf('day');
+      for (let d = startDate; d.isSameOrBefore(endDate); d = d.add(1, 'day')) {
+        const dStr = d.format('YYYY-MM-DD');
+        const trung = dataSourceNghiPhep.some((record) => {
+          if (record.maNhanVien !== thongTinNhanVien.maNhanVien) return false;
+          const rStart = dayjs(record.ngayBatDau, 'DD/MM/YYYY HH:mm:ss').startOf('day');
+          const rEnd = dayjs(record.ngayKetThuc, 'DD/MM/YYYY HH:mm:ss').startOf('day');
+          for (let r = rStart; r.isSameOrBefore(rEnd); r = r.add(1, 'day')) {
+            if (r.format('YYYY-MM-DD') === dStr) return true;
+          }
+          return false;
+        });
+        if (trung) {
+          api.error({ message: 'Bạn đã có đơn nghỉ vào ngày này rồi!' });
+          return;
+        }
+      }
 
       const maNhanVien = thongTinNhanVien?.maNhanVien;
 
@@ -588,6 +614,26 @@ export default function GiayNghiPhep() {
     return endValue.isBefore(startValue.startOf('day'));
   };
 
+  // Validator kiểm tra ngày đã nghỉ
+  const validateNgayKhongTrung = (field) => async (_, value) => {
+    if (!value || !thongTinNhanVien?.maNhanVien) return Promise.resolve();
+    const ngayDaNghi = [];
+    dataSourceNghiPhep.forEach((record) => {
+      if (record.maNhanVien === thongTinNhanVien.maNhanVien) {
+        const start = dayjs(record.ngayBatDau, 'DD/MM/YYYY HH:mm:ss').startOf('day');
+        const end = dayjs(record.ngayKetThuc, 'DD/MM/YYYY HH:mm:ss').startOf('day');
+        for (let d = start; d.isSameOrBefore(end); d = d.add(1, 'day')) {
+          ngayDaNghi.push(d.format('YYYY-MM-DD'));
+        }
+      }
+    });
+    const ngayChon = dayjs(value).format('YYYY-MM-DD');
+    if (ngayDaNghi.includes(ngayChon)) {
+      return Promise.reject(new Error('Bạn đã có đơn nghỉ vào ngày này rồi!'));
+    }
+    return Promise.resolve();
+  };
+
   return (
     <div className="login-container">
       <style>
@@ -713,31 +759,26 @@ export default function GiayNghiPhep() {
           <Form.Item
             name="ngayBatDau"
             label="Ngày bắt đầu"
+            dependencies={['ngayKetThuc', 'cccd']}
             rules={[
-              {
-                required: true,
-                message: "Vui lòng chọn ngày bắt đầu!",
-              },
+              { required: true, message: "Vui lòng chọn ngày bắt đầu!" },
+              { validator: validateNgayKhongTrung('ngayBatDau') },
               {
                 validator: (_, value) => {
                   if (!value) {
                     return Promise.resolve();
                   }
-
                   const endDate = form.getFieldValue("ngayKetThuc");
                   const startTime = form.getFieldValue("startTime");
                   const endTime = form.getFieldValue("endTime");
-
                   let actualStartDate = value;
                   let actualEndDate = endDate;
-
                   if (isPartialDay && value && startTime) {
                       actualStartDate = value.hour(startTime.hour()).minute(startTime.minute()).second(startTime.second());
                   }
                   if (isPartialDay && endDate && endTime) {
                       actualEndDate = endDate.hour(endTime.hour()).minute(endTime.minute()).second(endTime.second());
                   }
-
                   if (actualEndDate && actualStartDate.isAfter(actualEndDate, isPartialDay ? 'minute' : 'day')) {
                     return Promise.reject(
                       new Error(
@@ -745,12 +786,10 @@ export default function GiayNghiPhep() {
                       )
                     );
                   }
-
                   if (value.isBefore(dayjs().startOf('day'))) {
                     return Promise.reject(new Error("Không thể chọn ngày trong quá khứ!"));
                   }
-
-                  return Promise.resolve();
+                  return validateDateRangeUniqueDB();
                 },
               },
             ]}
@@ -808,31 +847,26 @@ export default function GiayNghiPhep() {
           <Form.Item
             name="ngayKetThuc"
             label="Ngày kết thúc"
+            dependencies={['ngayBatDau', 'cccd']}
             rules={[
-              {
-                required: true,
-                message: "Vui lòng chọn ngày kết thúc!",
-              },
+              { required: true, message: "Vui lòng chọn ngày kết thúc!" },
+              { validator: validateNgayKhongTrung('ngayKetThuc') },
               {
                 validator: (_, value) => {
                   if (!value) {
                     return Promise.resolve();
                   }
-
                   const startDate = form.getFieldValue("ngayBatDau");
                   const startTime = form.getFieldValue("startTime");
                   const endTime = form.getFieldValue("endTime");
-
                   let actualStartDate = startDate;
                   let actualEndDate = value;
-
                   if (isPartialDay && startDate && startTime) {
                       actualStartDate = startDate.hour(startTime.hour()).minute(startTime.minute()).second(startTime.second());
                   }
                   if (isPartialDay && value && endTime) {
                       actualEndDate = value.hour(endTime.hour()).minute(endTime.minute()).second(endTime.second());
                   }
-
                   if (actualStartDate && actualEndDate.isBefore(actualStartDate, isPartialDay ? 'minute' : 'day')) {
                     return Promise.reject(
                       new Error(
@@ -840,7 +874,6 @@ export default function GiayNghiPhep() {
                       )
                     );
                   }
-
                   const MAX_LEAVE_DAYS = 30;
                   if (actualStartDate && actualEndDate) {
                     const daysDiff = calculateLeaveDays(actualStartDate, actualEndDate, isPartialDay, laySoGioLamViecTheoCa());
@@ -850,12 +883,8 @@ export default function GiayNghiPhep() {
                       );
                     }
                   }
-
-                  return Promise.resolve();
+                  return validateDateRangeUniqueDB();
                 },
-              },
-              {
-                validator: validateDateRangeUniqueDB,
               },
             ]}
           >
