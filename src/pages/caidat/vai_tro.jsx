@@ -33,13 +33,14 @@ import {
 import { useNhanVien } from "../../component/hooks/useNhanVien";
 import { useVaiTro } from "../../component/hooks/useVaiTro";
 import { useQuyenHan } from "../../component/hooks/useQuyenHan";
-
+import { useAppNotification } from "../../component/ui/notification";
 
 const { Text, Title } = Typography;
 const { Search } = Input;
 const { TabPane } = Tabs;
 
 export default function VaiTroComponent() {
+  const apiNotification = useAppNotification();
   const {
     danhSachVaiTro,
     getAllVaiTro,
@@ -360,7 +361,9 @@ export default function VaiTroComponent() {
   };
 
   const renderVaiTroCard = (item) => (
-    <Col xs={24} sm={12} md={8} lg={6} key={item.maVaiTro}> {/* Use item.maVaiTro as key */}
+    <Col xs={24} sm={12} md={8} lg={6} key={item.maVaiTro}>
+      {" "}
+      {/* Use item.maVaiTro as key */}
       <Card
         hoverable
         style={{
@@ -571,7 +574,9 @@ export default function VaiTroComponent() {
               checked={
                 paginatedData.length > 0 &&
                 selectedRowKeys.length === paginatedData.length &&
-                paginatedData.every((item) => selectedRowKeys.includes(item.maVaiTro)) // Ensure all paginated items are selected
+                paginatedData.every((item) =>
+                  selectedRowKeys.includes(item.maVaiTro)
+                ) // Ensure all paginated items are selected
               }
               indeterminate={
                 selectedRowKeys.length > 0 &&

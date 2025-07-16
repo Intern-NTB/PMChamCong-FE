@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext, useCallback, useMemo } from "react";
+import React, {useState, useCallback, useMemo } from "react";
 import {
     Table,
     Button,
@@ -14,7 +14,6 @@ import {
     Space,
     Tag,
     Popconfirm,
-    message,
     Row,
     Divider,
     Col,
@@ -56,11 +55,8 @@ export default function PhuCapComponent() {
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedRecord, setSelectedRecord] = useState(null);
-    const [isHistoryModalVisible, setIsHistoryModalVisible] = useState(false);
     const [modalType, setModalType] = useState("");
     const [selectedVaiTro, setSelectedVaiTro] = useState(null);
-    const [filteredLoaiPhuCapList, setFilteredLoaiPhuCapList] = useState([]);
-    const [dataLoaiPhuCap, setDataLoaiPhuCap] = useState([]);
     const [form] = Form.useForm();
 
     //State chọn nhân viên để lấy vai trò rồi suy ra Phụ cấp
@@ -72,9 +68,6 @@ export default function PhuCapComponent() {
         if (!maVaiTro) return [];
         return danhSachLoaiPhuCap.filter(pc => pc.maVaiTro === maVaiTro);
     }, [maVaiTro, danhSachLoaiPhuCap]);
-
-    // state
-    const { setReload } = useContext(ReloadContext);
 
     // Tính toán thống kê
     const tongSoCacPhuCap = new Set(
@@ -123,35 +116,6 @@ export default function PhuCapComponent() {
             }
         })
     }, [danhSachLichSuPhuCap, danhSachNhanVien, danhSachLoaiPhuCap]);
-
-    const dataSourceGopLichSu = useMemo(() => {
-        const grouped = {};
-
-        dataSourceLichSuPhuCap.forEach((item) => {
-            const key = `${item.maNhanVien}-${item.hoTen}`;
-
-            if (!grouped[key]) {
-                grouped[key] = {
-                    ...item,
-                    tenPhuCap: [item.tenPhuCap],
-                    tongTienPhuCap: Number(item.soTienPhuCap.replace(/\D/g, "")), // bỏ "VNĐ", dấu phẩy
-                };
-            } else {
-                grouped[key].tenPhuCap.push(item.tenPhuCap);
-                grouped[key].tongTienPhuCap += Number(item.soTienPhuCap.replace(/\D/g, ""));
-            }
-        });
-
-        return Object.values(grouped).map((item) => ({
-            ...item,
-            tenPhuCap: item.tenPhuCap.join(", "),
-            soTienPhuCap: item.tongTienPhuCap.toLocaleString() + " VNĐ",
-        }));
-    }, [dataSourceLichSuPhuCap]);
-
-    useEffect(() => {
-        setReload(() => getAllLoaiPhuCap);
-    }, []);
 
     // State cho tìm kiếm
     const [searchTextLichSu, setSearchTextLichSu] = useState("");
@@ -323,15 +287,6 @@ export default function PhuCapComponent() {
         setIsModalVisible(true);
         form.resetFields();
     };
-
-    const handleDelleteLichSu = async (maNhanVien, maPhuCap) => {
-        try {
-            await deleteLichSuPhuCap(maNhanVien, maPhuCap);
-            getAllLichSuPhuCap();
-        } catch (error) {
-            console.error("Lỗi khi xóa:", error);
-        };
-    }
 
     const handleDeletePhuCap = async (maNhanVien, maPhuCap) => {
         try {
