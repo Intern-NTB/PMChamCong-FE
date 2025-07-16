@@ -14,6 +14,8 @@ import {
     MenuOutlined,
     LogoutOutlined,
     DesktopOutlined,
+    MenuFoldOutlined, 
+    MenuUnfoldOutlined, 
 } from "@ant-design/icons";
 import LogoIcon from "../../assets/images/LogoIcon.png";
 import "./mainLayout.css";
@@ -63,6 +65,7 @@ const MainLayout = () => {
     const [isMobile, setIsMobile] = useState(false);
     const [drawerVisible, setDrawerVisible] = useState(false);
     const [openKeys, setOpenKeys] = useState([]);
+    const [collapsed, setCollapsed] = useState(false); 
 
     const setReloadFn = useCallback((fn) => {
         reloadFnRef.current = fn;
@@ -71,8 +74,6 @@ const MainLayout = () => {
     const executeReload = useCallback(() => {
         reloadFnRef.current();
     }, []);
-
-    const [collapsed, setCollapsed] = useState(true);
 
     useEffect(() => {
         const checkScreenSize = () => {
@@ -90,22 +91,20 @@ const MainLayout = () => {
             currentPath.startsWith("/main-layout/nhanvien") ||
             currentPath.startsWith("/main-layout/nghiphep");
 
-        if (!collapsed && isInEmployeeSubmenu) {
+        if (isInEmployeeSubmenu && !collapsed) {
             setOpenKeys(["sub1"]);
-        } else if (collapsed) { 
-            setOpenKeys([]); 
+        } else {
+            setOpenKeys([]);
         }
-  
     }, [location.pathname, collapsed]); 
 
     const handleOpenChange = useCallback((keys) => {
-      
-        if (!collapsed || isMobile) { 
+        if (!collapsed || isMobile) {
             setOpenKeys(keys);
         } else {
-            setOpenKeys([]); 
+            setOpenKeys([]);
         }
-    }, [collapsed, isMobile]); 
+    }, [collapsed, isMobile]);
 
     const handleLogout = useCallback(() => {
         localStorage.removeItem("token");
@@ -198,13 +197,13 @@ const MainLayout = () => {
             <div
                 style={{
                     display: "flex",
-                    justifyContent: collapsed && !isMobile ? "center" : "flex-start", 
+                    justifyContent: collapsed && !isMobile ? "center" : "flex-start",
                     alignItems: "center",
-                    padding: isMobile ? "20px" : "16px", 
+                    padding: isMobile ? "20px" : "16px",
                     overflow: 'hidden',
                     transition: 'width 0.2s ease',
-                    width: collapsed && !isMobile ? '80px' : 'auto', 
-                    minHeight: '64px', 
+                    width: collapsed && !isMobile ? '80px' : 'auto',
+                    minHeight: '64px',
                     gap: collapsed && !isMobile ? '0px' : '10px'
                 }}
             >
@@ -215,10 +214,10 @@ const MainLayout = () => {
                 openKeys={openKeys}
                 onOpenChange={handleOpenChange}
                 theme="dark"
-                inlineCollapsed={collapsed && !isMobile} 
+                inlineCollapsed={collapsed && !isMobile}
                 onClick={({ key, keyPath }) => {
                     if (isMobile) {
-                        setDrawerVisible(false); 
+                        setDrawerVisible(false);
                     }
                 }}
                 style={{
@@ -251,14 +250,13 @@ const MainLayout = () => {
                         size="large"
                         style={{ fontSize: "18px" }}
                     />
-                    {/* Display the current page title in the mobile header */}
                     <h2 style={{ margin: 0, flex: 1, textAlign: "center" }}>{title}</h2>
                     <Button
                         icon={<ReloadOutlined />}
                         onClick={executeReload}
                         size="large"
                     />
-                    <Button 
+                    <Button
                         icon={<LogoutOutlined />}
                         onClick={handleLogout}
                         type="text"
@@ -268,15 +266,15 @@ const MainLayout = () => {
                 </Header>
 
                 <Drawer
-                    title={null} 
+                    title={null}
                     placement="left"
                     closable={false}
                     onClose={() => setDrawerVisible(false)}
                     open={drawerVisible}
-                    width="80vw" 
+                    width="80vw"
                     styles={{
                         body: {
-                            padding: 0, 
+                            padding: 0,
                             background: "#71A5E0",
                             height: "100vh",
                         },
@@ -346,16 +344,36 @@ const MainLayout = () => {
         <Layout style={{ height: "100dvh", minHeight: "100dvh" }}>
             <Sider
                 width={300}
-                style={{ background: "#71A5E0", height: "100vh" }}
+                style={{ background: "#71A5E0", height: "100vh", position: 'relative' }}
                 breakpoint="lg"
                 collapsedWidth="80"
                 collapsible
                 collapsed={collapsed}
-                onMouseEnter={() => setCollapsed(false)} 
-                onMouseLeave={() => setCollapsed(true)}  
-                trigger={null} 
+                trigger={null}
                 className={collapsed ? 'collapsed-sider' : ''}
             >
+                <Button
+                    type="text"
+                    onClick={() => setCollapsed(!collapsed)}
+                    style={{
+                        position: 'absolute',
+                        top: 0,
+                        right: 0,
+                        width: 'auto',
+                        height: '64px', 
+                        background: 'transparent',
+                        color: 'white',
+                        fontSize: '20px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: 'none',
+                        cursor: 'pointer',
+                        zIndex: 1,
+                        padding: '0 16px',
+                    }}
+                    icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+                />
                 {menuContent}
             </Sider>
 
@@ -373,6 +391,7 @@ const MainLayout = () => {
                     }}
                 >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  
                         <img
                             src={LogoIcon}
                             alt="Company Logo"
@@ -409,6 +428,7 @@ const MainLayout = () => {
                         background: "#fff",
                         minHeight: 0,
                         overflow: "auto",
+                        flex: 1,
                     }}
                 >
                     <ReloadContext.Provider value={contextValue}>
