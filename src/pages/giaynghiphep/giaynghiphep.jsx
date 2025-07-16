@@ -96,11 +96,10 @@ export default function GiayNghiPhep() {
   // Hàm để tính số ngày phép còn lại
   useEffect(() => {
     if (thongTinNhanVien?.maNhanVien) {
-      const year = dayjs().year();
       const ngayPhep = danhSachNgayPhep.find(
-        (np) => np.maNhanVien === thongTinNhanVien.maNhanVien && np.nam === year
+        (np) => np.maNhanVien === thongTinNhanVien.maNhanVien
       );
-      setSoNgayPhepConLai(ngayPhep ? ngayPhep.soNgayPhepConLai : 0);
+      setSoNgayPhepConLai(ngayPhep ? ngayPhep.ngayPhepConLai : 0);
       setNhanVienError(null);
     }
   }, [danhSachNgayPhep, thongTinNhanVien]);
@@ -756,7 +755,7 @@ export default function GiayNghiPhep() {
               Sử dụng phép{" "}
               {thongTinNhanVien?.maNhanVien && (
                 <Tag color={soNgayPhepConLai > 0 ? "success" : "error"}>
-                  Số ngày phép còn lại trong năm: <b>{soNgayPhepConLai}</b>
+                  Số ngày phép còn lại trong năm: {soNgayPhepConLai}
                 </Tag>
               )}
             </Checkbox>
