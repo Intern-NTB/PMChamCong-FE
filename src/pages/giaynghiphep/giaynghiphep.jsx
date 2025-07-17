@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Form,
   Input,
@@ -11,16 +11,16 @@ import {
   TimePicker,
 } from "antd";
 import { ExclamationCircleOutlined, WarningOutlined } from "@ant-design/icons";
-import { useNghiPhep } from "../../component/hooks/useNghiPhep";
-import { useNhanVien } from "../../component/hooks/useNhanVien";
-import { useNgayPhep } from "../../component/hooks/useNgayPhep";
-import { useAppNotification } from "../../component/ui/notification";
+import { useNghiPhep } from "../../component/hooks/useNghiPhep"; 
+import { useNhanVien } from "../../component/hooks/useNhanVien"; 
+import { useNgayPhep } from "../../component/hooks/useNgayPhep"; 
+import { useAppNotification } from "../../component/ui/notification"; 
 
 import dayjs from "dayjs";
-import isBetween from "dayjs/plugin/isBetween"; // Import the plugin
-import { ModalEmail } from "./modalEmail";
+import isBetween from "dayjs/plugin/isBetween";
+import { ModalEmail } from "./modalEmail"; 
 
-dayjs.extend(isBetween); // Extend dayjs with the isBetween plugin
+dayjs.extend(isBetween);
 
 export default function GiayNghiPhep() {
   const { danhSachNghiPhep, createNghiPhep } = useNghiPhep(false);
@@ -33,162 +33,149 @@ export default function GiayNghiPhep() {
   const { danhSachNgayPhep, getAllNgayPhep } = useNgayPhep();
 
   const api = useAppNotification();
-  const [isModalVisible, setIsModalVisible] = useState(true);
-  const [isPartialDay, setIsPartialDay] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(true); 
+  const [isPartialDay, setIsPartialDay] = useState(false); 
   const [form] = Form.useForm();
 
-  const [leaveWarning, setLeaveWarning] = useState("");
-  const [showSplitRecordModal, setShowSplitRecordModal] = useState(false);
-  const [soNgayPhepConLai, setSoNgayPhepConLai] = useState(0);
+  const [leaveWarning, setLeaveWarning] = useState(""); 
+  const [showSplitRecordModal, setShowSplitRecordModal] = useState(false); 
+  const [soNgayPhepConLai, setSoNgayPhepConLai] = useState(0); 
   const [completedInputCCCD, setCompletedInputCCCD] = useState({
     isCompleted: false,
     data: null,
-  });
-  const [isOpenModalUpdateEmail, setIsOpenModalUpdateEmail] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  }); 
+  const [isOpenModalUpdateEmail, setIsOpenModalUpdateEmail] = useState(false); 
+  const [isSubmitted, setIsSubmitted] = useState(false); 
 
-  // Thêm state để quản lý loading
-  const [isLoadingNhanVien, setIsLoadingNhanVien] = useState(false);
-  const [nhanVienError, setNhanVienError] = useState(null);
+  const [isLoadingNhanVien, setIsLoadingNhanVien] = useState(false); 
+  const [nhanVienError, setNhanVienError] = useState(null); 
 
-  // Tạo dataSourceNghiPhep để sử dụng trong các hàm khác
-  const dataSourceNghiPhep = danhSachNghiPhep.map((np) => {
-    const nhanVien = danhSachNhanVien.find(
-      (nv) => nv.maNhanVien === np.maNhanVien
-    );
-
-    return {
-      maNghiPhep: np.maNghiPhep,
-      ngayBatDau: np.ngayBatDau,
-      ngayKetThuc: np.ngayKetThuc,
-      liDo: np.liDo,
-      tinhLuong: np.tinhLuong,
-      tinhPhep: np.tinhPhep,
-      trangThaiPheDuyet: np.trangThaiPheDuyet,
-      maNhanVien: np.maNhanVien,
-      hoTen: nhanVien ? nhanVien.hoTen : "Không xác định",
-    };
-  });
-
-  // Sửa lại useEffect để xử lý loading và error
+  const dataSourceNghiPhep = React.useMemo(() => {
+    return danhSachNghiPhep.map((np) => {
+      const nhanVien = danhSachNhanVien.find(
+        (nv) => nv.maNhanVien === np.maNhanVien
+      );
+      return {
+        maNghiPhep: np.maNghiPhep,
+        ngayBatDau: np.ngayBatDau,
+        ngayKetThuc: np.ngayKetThuc,
+        liDo: np.liDo,
+        tinhLuong: np.tinhLuong,
+        tinhPhep: np.tinhPhep,
+        trangThaiPheDuyet: np.trangThaiPheDuyet,
+        maNhanVien: np.maNhanVien,
+        hoTen: nhanVien ? nhanVien.hoTen : "Không xác định",
+      };
+    });
+  }, [danhSachNghiPhep, danhSachNhanVien]);
   useEffect(() => {
-    if (completedInputCCCD.isCompleted) {
+    if (completedInputCCCD.isCompleted && completedInputCCCD.data) {
       const fetchData = async () => {
         setIsLoadingNhanVien(true);
-        setNhanVienError(null);
-
+        setNhanVienError(null); 
         try {
           await fetchNhanVienByCCCD(completedInputCCCD.data);
         } catch (error) {
-          setNhanVienError(
-            error.message || "Không tìm thấy nhân viên với CCCD này"
-          );
+          const errorMessage =
+            error.message || "Không tìm thấy nhân viên với CCCD này";
+          setNhanVienError(errorMessage);
           api.error({
             message: "Lỗi tìm kiếm nhân viên",
-            description:
-              error.message || "Không tìm thấy nhân viên với CCCD này",
+            description: errorMessage,
           });
+          form.setFieldsValue({ tenNhanVien: null }); 
         } finally {
           setIsLoadingNhanVien(false);
         }
       };
-
       fetchData();
     }
-  }, [completedInputCCCD, fetchNhanVienByCCCD, api]);
+  }, [completedInputCCCD, fetchNhanVienByCCCD, api, form]);
 
-  // Hàm để tính số ngày phép còn lại
   useEffect(() => {
     if (thongTinNhanVien?.maNhanVien) {
       const ngayPhep = danhSachNgayPhep.find(
         (np) => np.maNhanVien === thongTinNhanVien.maNhanVien
       );
       setSoNgayPhepConLai(ngayPhep ? ngayPhep.ngayPhepConLai : 0);
-      setNhanVienError(null);
+      setNhanVienError(null); 
+    } else {
+      setSoNgayPhepConLai(0); 
     }
   }, [danhSachNgayPhep, thongTinNhanVien]);
 
-  // Hàm tính số ngày nghỉ dựa trên ngày bắt đầu và kết thúc
-  const calculateLeaveDays = (
-    startDate,
-    endDate,
-    isPartial = false,
-    soGioLamViec = 8
-  ) => {
-    if (!startDate || !endDate) return 0;
+  useEffect(() => {
+    if (thongTinNhanVien?.maNhanVien) {
+      form.setFieldsValue({
+        tenNhanVien: thongTinNhanVien.hoTen,
+      });
+    } else {
+      form.setFieldsValue({
+        tenNhanVien: null,
+      });
+    }
+  }, [thongTinNhanVien, form]);
 
-    if (isPartial) {
+  const laySoGioLamViecTheoCa = useCallback(() => {
+    return 8; 
+  }, []);
+
+  const calculateLeaveDays = useCallback(
+    (startDate, endDate, isPartialMode = false, soGioLamViec = 8) => {
+      if (!startDate || !endDate) return 0;
+
       const start = dayjs(startDate);
       const end = dayjs(endDate);
 
-      // Nếu là cùng một ngày, tính theo giờ
-      if (start.isSame(end, "day")) {
-        const hoursOff = end.diff(start, "hour", true);
-        if (hoursOff <= 0) return 0; 
-        return hoursOff < soGioLamViec / 2 ? 0.5 : 1;
-      } else {
-       
-        const fullDays = end.startOf('day').diff(start.startOf('day'), 'day');
-        let totalDays = fullDays + 1; // Start and end day inclusive
-
-        // Adjust for partial days if they are not full days
-        const startOfDay = start.startOf('day');
-        const endOfDay = end.endOf('day');
-
-        if (!start.isSame(startOfDay, 'hour') || !start.isSame(startOfDay, 'minute') || !start.isSame(startOfDay, 'second')) {
-            // If start date has a specific time, it means it's not a full day from the start
-            // This logic might need refinement based on exact business rules for partial day multi-day leaves.
-            // For simplicity, we are still counting full days, and the "partiality" might be handled by the split record.
-            // Or if a full day off is only counted if the start is at startOf('day') and end at endOf('day').
-        }
-        
-        if (!end.isSame(endOfDay, 'hour') || !end.isSame(endOfDay, 'minute') || !end.isSame(endOfDay, 'second')) {
-            // If end date has a specific time, it means it's not a full day until the end
-        }
-
-        return totalDays; 
+      if (start.isAfter(end, isPartialMode ? "minute" : "day")) {
+        return 0;
       }
-    } else {
-      const start = dayjs(startDate).startOf("day");
-      const end = dayjs(endDate).startOf("day");
-      return end.diff(start, "day") + 1;
-    }
-  };
 
-  const laySoGioLamViecTheoCa = () => {
+      if (isPartialMode) {
+        if (start.isSame(end, "day")) {
+          const hoursOff = end.diff(start, "hour", true); 
+          if (hoursOff <= 0) return 0;
+          // Quy đổi ra 0.5 ngày hoặc 1 ngày tùy theo số giờ
+          return hoursOff < soGioLamViec / 2 ? 0.5 : 1;
+        } else {
+          const totalHours = end.diff(start, "hour", true);
+          return totalHours / soGioLamViec; 
+        }
+      } else {
+        return end.diff(start, "day") + 1; 
+      }
+    },
+    []
+  );
 
-    return 8; // Mặc định là 8 giờ nếu không tìm thấy
-  };
+  const checkLeaveBalance = useCallback(
+    (maNhanVien, leaveDays, isTinhPhep) => {
+      if (!isTinhPhep || !maNhanVien) return ""; 
 
-  // Hàm kiểm tra và cảnh báo về số ngày phép
-  const checkLeaveBalance = (maNhanVien, leaveDays, isTinhPhep) => {
-    if (!isTinhPhep || !maNhanVien) return "";
+      if (leaveDays > soNgayPhepConLai) {
+        return `Số ngày nghỉ có phép (${leaveDays}) vượt quá số ngày phép còn lại (${soNgayPhepConLai}). Bạn có muốn tách thành 2 bản ghi: ${soNgayPhepConLai} ngày có phép và ${
+          leaveDays - soNgayPhepConLai
+        } ngày không phép?`;
+      }
+      return "";
+    },
+    [soNgayPhepConLai]
+  );
 
-    if (leaveDays > soNgayPhepConLai) {
-      return `Số ngày nghỉ có phép (${leaveDays}) vượt quá số ngày phép còn lại (${soNgayPhepConLai}). Bạn có muốn tách thành 2 bản ghi: ${soNgayPhepConLai} ngày có phép và ${
-        leaveDays - soNgayPhepConLai
-      } ngày không phép?`;
-    }
-
-    return "";
-  };
-
-  // Xử lý khi thay đổi ngày trong form
-  const handleDateChange = async () => {
+  const handleDateChange = useCallback(async () => {
     const values = form.getFieldsValue();
-    const { ngayBatDau, ngayKetThuc, tinhPhep, startTime, endTime } = values;
+    const { ngayBatDau, ngayKetThuc, tinhPhep, startTime, endTime, nghiGiuaNgay } = values;
 
-    // Combine date and time if partial day is selected
     let actualNgayBatDau = ngayBatDau;
     let actualNgayKetThuc = ngayKetThuc;
 
-    if (isPartialDay && ngayBatDau && startTime) {
+    if (nghiGiuaNgay && ngayBatDau && startTime) {
       actualNgayBatDau = ngayBatDau
         .hour(startTime.hour())
         .minute(startTime.minute())
         .second(startTime.second());
     }
-    if (isPartialDay && ngayKetThuc && endTime) {
+    if (nghiGiuaNgay && ngayKetThuc && endTime) {
       actualNgayKetThuc = ngayKetThuc
         .hour(endTime.hour())
         .minute(endTime.minute())
@@ -202,39 +189,39 @@ export default function GiayNghiPhep() {
       const leaveDays = calculateLeaveDays(
         actualNgayBatDau,
         actualNgayKetThuc,
-        isPartialDay,
+        nghiGiuaNgay,
         soGioLamViec
       );
       if (tinhPhep) {
         const warning = checkLeaveBalance(maNhanVien, leaveDays, true);
         setLeaveWarning(warning);
       } else {
-        setLeaveWarning(""); // Xóa cảnh báo nếu không tính phép
+        setLeaveWarning("");
       }
     } else {
-      setLeaveWarning(""); // Xóa cảnh báo nếu chưa đủ thông tin
+      setLeaveWarning(""); 
     }
-  };
+  }, [form, thongTinNhanVien, laySoGioLamViecTheoCa, calculateLeaveDays, checkLeaveBalance]);
 
-  const validateDateRangeUniqueDB = async () => {
+  const validateDateRangeUniqueDB = useCallback(async () => {
     const startDate = form.getFieldValue("ngayBatDau");
     const endDate = form.getFieldValue("ngayKetThuc");
     const maNhanVien = thongTinNhanVien?.maNhanVien;
+    const nghiGiuaNgay = form.getFieldValue("nghiGiuaNgay");
 
-    // Add time if partial day
     const startTime = form.getFieldValue("startTime");
     const endTime = form.getFieldValue("endTime");
 
     let actualStartDate = startDate;
     let actualEndDate = endDate;
 
-    if (isPartialDay && startDate && startTime) {
+    if (nghiGiuaNgay && startDate && startTime) {
       actualStartDate = startDate
         .hour(startTime.hour())
         .minute(startTime.minute())
         .second(startTime.second());
     }
-    if (isPartialDay && endDate && endTime) {
+    if (nghiGiuaNgay && endDate && endTime) {
       actualEndDate = endDate
         .hour(endTime.hour())
         .minute(endTime.minute())
@@ -245,17 +232,23 @@ export default function GiayNghiPhep() {
       const start = dayjs(actualStartDate);
       const end = dayjs(actualEndDate);
 
+      const compareUnit = nghiGiuaNgay ? "minute" : "day";
+
       const isOverlapped = dataSourceNghiPhep.some((record) => {
+        if (record.maNhanVien !== maNhanVien ||
+            record.trangThaiPheDuyet === "Từ chối" ||
+            record.trangThaiPheDuyet === "Hủy") {
+            return false;
+        }
+
         const rStart = dayjs(record.ngayBatDau);
         const rEnd = dayjs(record.ngayKetThuc);
 
-        // Check if employee matches and periods overlap
         return (
-          record.maNhanVien === maNhanVien &&
-          (start.isBetween(rStart, rEnd, isPartialDay ? 'minute' : 'day', "[]") || // [] for inclusive
-            end.isBetween(rStart, rEnd, isPartialDay ? 'minute' : 'day', "[]") ||
-            rStart.isBetween(start, end, isPartialDay ? 'minute' : 'day', "[]") ||
-            rEnd.isBetween(start, end, isPartialDay ? 'minute' : 'day', "[]"))
+          start.isBetween(rStart, rEnd, compareUnit, "[]") ||
+          end.isBetween(rStart, rEnd, compareUnit, "[]") ||
+          rStart.isBetween(start, end, compareUnit, "[]") ||
+          rEnd.isBetween(start, end, compareUnit, "[]")
         );
       });
 
@@ -265,11 +258,8 @@ export default function GiayNghiPhep() {
         );
       }
     }
-
     return Promise.resolve();
-  };
-
-  // Hàm tạo 2 bản ghi khi tách phép
+  }, [form, thongTinNhanVien, dataSourceNghiPhep]);
   const handleSplitRecord = async () => {
     const values = form.getFieldsValue();
 
@@ -278,127 +268,96 @@ export default function GiayNghiPhep() {
       const ngayKetThuc = values.ngayKetThuc;
       const startTime = values.startTime;
       const endTime = values.endTime;
+      const nghiGiuaNgay = values.nghiGiuaNgay;
 
       let actualNgayBatDau = ngayBatDau;
       let actualNgayKetThuc = ngayKetThuc;
 
-      if (isPartialDay && ngayBatDau && startTime) {
+      if (nghiGiuaNgay && ngayBatDau && startTime) {
         actualNgayBatDau = ngayBatDau
           .hour(startTime.hour())
           .minute(startTime.minute())
           .second(startTime.second());
       }
-      if (isPartialDay && ngayKetThuc && endTime) {
+      if (nghiGiuaNgay && ngayKetThuc && endTime) {
         actualNgayKetThuc = ngayKetThuc
           .hour(endTime.hour())
           .minute(endTime.minute())
           .second(endTime.second());
       }
 
-      // Ngày kết thúc bản ghi có phép
-      let ngayKetThucBanGhi1;
-      // Ngày bắt đầu bản ghi không phép
-      let ngayBatDauBanGhi2;
+      let firstRecordEndDate, secondRecordStartDate;
+      const soGioLamViec = laySoGioLamViecTheoCa();
 
-      // Xử lý trường hợp nghỉ giữa ngày và cùng một ngày
-      if (isPartialDay && actualNgayBatDau.isSame(actualNgayKetThuc, "day")) {
-        api.error({
-          message: "Không thể tách bản ghi nghỉ giữa ngày",
-          description:
-            "Tính năng tách bản ghi cho nghỉ giữa ngày trong cùng một ngày hiện chưa được hỗ trợ hoặc cần logic cụ thể hơn.",
-        });
-        setShowSplitRecordModal(false);
-        return;
+      if (nghiGiuaNgay) {
+        const paidHoursRemaining = soNgayPhepConLai * soGioLamViec;
+        const totalRequestedLeaveHours = actualNgayKetThuc.diff(actualNgayBatDau, 'hour', true);
+
+        if (paidHoursRemaining >= totalRequestedLeaveHours) {
+          firstRecordEndDate = actualNgayKetThuc;
+          secondRecordStartDate = null; 
+        } else {
+          firstRecordEndDate = actualNgayBatDau.add(paidHoursRemaining, 'hour');
+          secondRecordStartDate = firstRecordEndDate.add(1, 'minute');
+        }
       } else {
-        // Trường hợp nghỉ cả ngày hoặc nghỉ giữa ngày kéo dài nhiều ngày
-        ngayKetThucBanGhi1 = actualNgayBatDau
-          .clone()
-          .add(soNgayPhepConLai - 1, "day");
-        ngayBatDauBanGhi2 = actualNgayBatDau
-          .clone()
-          .add(soNgayPhepConLai, "day");
+        firstRecordEndDate = actualNgayBatDau.clone().add(soNgayPhepConLai - 1, "day").endOf("day");
+        secondRecordStartDate = actualNgayBatDau.clone().add(soNgayPhepConLai, "day").startOf("day");
       }
 
-      // Ensure that ngayKetThucBanGhi1 does not exceed actualNgayKetThuc
-      if (ngayKetThucBanGhi1.isAfter(actualNgayKetThuc, 'day')) {
-          ngayKetThucBanGhi1 = actualNgayKetThuc;
+      if (secondRecordStartDate && secondRecordStartDate.isAfter(actualNgayKetThuc, nghiGiuaNgay ? 'minute' : 'day')) {
+          secondRecordStartDate = null; 
       }
-      if (ngayBatDauBanGhi2.isAfter(actualNgayKetThuc, 'day')) {
-          ngayBatDauBanGhi2 = actualNgayKetThuc.add(1, 'minute'); // Ensures it's after for non-overlap
-      }
-
 
       const firstRecord = {
-        ngayBatDau: isPartialDay
+        ngayBatDau: nghiGiuaNgay
           ? actualNgayBatDau.format("YYYY-MM-DD HH:mm:ss")
           : actualNgayBatDau.startOf("day").format("YYYY-MM-DD HH:mm:ss"),
-        ngayKetThuc: isPartialDay
-          ? ngayKetThucBanGhi1.format("YYYY-MM-DD HH:mm:ss")
-          : ngayKetThucBanGhi1.endOf("day").format("YYYY-MM-DD HH:mm:ss"),
-        tinhLuong: true,
+        ngayKetThuc: nghiGiuaNgay
+          ? firstRecordEndDate.format("YYYY-MM-DD HH:mm:ss")
+          : firstRecordEndDate.format("YYYY-MM-DD HH:mm:ss"),
+        tinhLuong: true, 
         tinhPhep: true,
-        liDo: values.liDo + " (Có phép)",
-        trangThaiPheDuyet: values.trangThaiPheDuyet || "Chờ duyệt",
+        liDo: values.liDo.trim() + " (Có phép)",
+        trangThaiPheDuyet: "Chờ duyệt", 
         maNhanVien: thongTinNhanVien.maNhanVien,
       };
 
-      const secondRecord = {
-        ngayBatDau: isPartialDay
-          ? ngayBatDauBanGhi2.format("YYYY-MM-DD HH:mm:ss")
-          : ngayBatDauBanGhi2.startOf("day").format("YYYY-MM-DD HH:mm:ss"),
-        ngayKetThuc: isPartialDay
+      const secondRecord = secondRecordStartDate ? {
+        ngayBatDau: nghiGiuaNgay
+          ? secondRecordStartDate.format("YYYY-MM-DD HH:mm:ss")
+          : secondRecordStartDate.format("YYYY-MM-DD HH:mm:ss"),
+        ngayKetThuc: nghiGiuaNgay
           ? actualNgayKetThuc.format("YYYY-MM-DD HH:mm:ss")
           : actualNgayKetThuc.endOf("day").format("YYYY-MM-DD HH:mm:ss"),
-        tinhLuong: false, // Không tính lương cho phần không phép
-        tinhPhep: false, // Không tính phép cho phần không phép
-        liDo: values.liDo + " (Không phép)",
-        trangThaiPheDuyet: values.trangThaiPheDuyet || "Chờ duyệt",
+        tinhLuong: false, 
+        tinhPhep: false,
+        liDo: values.liDo.trim() + " (Không phép)",
+        trangThaiPheDuyet: "Chờ duyệt", 
         maNhanVien: thongTinNhanVien.maNhanVien,
-      };
+      } : null;
 
-      // Ensure that ngay bat dau cua ban ghi thu 2 khong dung truoc ngay ket thuc cua ban ghi thu nhat
-      if (
-        dayjs(secondRecord.ngayBatDau).isBefore(
-          dayjs(firstRecord.ngayKetThuc),
-          isPartialDay ? "minute" : "day"
-        )
-      ) {
-        api.error({
-          message: "Lỗi logic tách bản ghi",
-          description:
-            "Ngày bắt đầu của bản ghi không phép đang trùng hoặc đứng trước ngày kết thúc của bản ghi có phép. Vui lòng kiểm tra lại logic tính ngày.",
-        });
-        return;
-      }
-
-      if (
-        dayjs(secondRecord.ngayBatDau).isAfter(
-          dayjs(actualNgayKetThuc),
-          isPartialDay ? "minute" : "day"
-        )
-      ) {
-        await createNghiPhep(firstRecord);
-        api.success({
-          message: "Thành công",
-          description: "Đã tạo đơn nghỉ phép có phép (đủ ngày phép)",
-        });
-      } else {
-        await createNghiPhep(firstRecord);
+      await createNghiPhep(firstRecord);
+      if (secondRecord) {
         await createNghiPhep(secondRecord);
         api.success({
           message: "Thành công",
           description: "Đã tạo 2 bản ghi nghỉ phép (có phép và không phép)",
         });
+      } else {
+        api.success({
+          message: "Thành công",
+          description: "Đã tạo đơn nghỉ phép có phép (đủ ngày phép)",
+        });
       }
 
-      await getAllNgayPhep(); // Cập nhật lại số ngày phép sau khi tạo đơn
-
+      await getAllNgayPhep(); 
       setIsModalVisible(false);
       setShowSplitRecordModal(false);
       setLeaveWarning("");
-      setIsPartialDay(false);
-      form.resetFields();
-      setIsSubmitted(true); // Hiển thị modal thông báo gửi đơn thành công
+      setIsPartialDay(false); 
+      form.resetFields(); 
+      setIsSubmitted(true); 
     } catch (error) {
       api.error({
         message: "Có lỗi xảy ra",
@@ -409,112 +368,76 @@ export default function GiayNghiPhep() {
 
   const handleUpdateEmail = async (email) => {
     try {
-      console.log(
-        "thongTinNhanVien.maNhanVien,email: ",
-        thongTinNhanVien.maNhanVien,
-        email
-      );
-      // Gọi API để cập nhật email
       await updateEmailNhanVien(thongTinNhanVien.maNhanVien, email);
       setIsOpenModalUpdateEmail(false);
-      // Gọi API để lấy lại thông tin nhân viên
-      await fetchNhanVienByCCCD(completedInputCCCD.data);
+      await fetchNhanVienByCCCD(completedInputCCCD.data); 
       api.success({ message: "Cập nhật email thành công" });
     } catch (error) {
-      api.error(error);
+      api.error({
+        message: "Lỗi cập nhật Email",
+        description: error.message || "Không thể cập nhật email.",
+      });
     }
   };
 
-  useEffect(() => {
-    if (thongTinNhanVien?.maNhanVien) {
-      // Set giá trị hoTen vào form thay vì maNhanVien
-      form.setFieldsValue({
-        tenNhanVien: thongTinNhanVien.hoTen, // Hiển thị tên nhân viên
-      });
-    } else {
-      form.setFieldsValue({
-        tenNhanVien: null, // Xóa tên nhân viên nếu không tìm thấy CCCD
-      });
-    }
-  }, [thongTinNhanVien, form]);
-
   const handleOk = async () => {
-    console.debug("==== START HANDLE OK ====");
     try {
-      const values = await form.validateFields();
-      console.debug("Value: ", values);
-
+      const values = await form.validateFields(); 
       const maNhanVien = thongTinNhanVien?.maNhanVien;
 
       if (!maNhanVien) {
         api.error({
           message: "Lỗi validation",
-          description: `Không có thông tin nhân viên với - CCCD : ${completedInputCCCD.data}. Vui lòng kiểm tra lại CCCD hoặc liên hệ quản lý để thêm thông tin nhân viên.`,
+          description: `Không có thông tin nhân viên với CCCD: ${completedInputCCCD.data}. Vui lòng kiểm tra lại CCCD hoặc liên hệ quản lý để thêm thông tin nhân viên.`,
         });
         return;
       }
       if (!thongTinNhanVien.email) {
+        api.warning({
+          message: "Cần cập nhật Email",
+          description: "Vui lòng cập nhật email của nhân viên để hoàn tất việc gửi đơn.",
+          duration: 5,
+        });
         setIsOpenModalUpdateEmail(true);
         return;
       }
 
-      if (leaveWarning) {
-        setShowSplitRecordModal(true);
+      const { ngayBatDau, ngayKetThuc, tinhPhep, startTime, endTime, nghiGiuaNgay } = values;
+      let actualNgayBatDau = ngayBatDau;
+      let actualNgayKetThuc = ngayKetThuc;
+
+      if (nghiGiuaNgay && ngayBatDau && startTime) {
+        actualNgayBatDau = ngayBatDau.hour(startTime.hour()).minute(startTime.minute()).second(startTime.second());
+      }
+      if (nghiGiuaNgay && ngayKetThuc && endTime) {
+        actualNgayKetThuc = ngayKetThuc.hour(endTime.hour()).minute(endTime.minute()).second(endTime.second());
+      }
+
+      const leaveDays = calculateLeaveDays(actualNgayBatDau, actualNgayKetThuc, nghiGiuaNgay, laySoGioLamViecTheoCa());
+      const currentLeaveWarning = checkLeaveBalance(maNhanVien, leaveDays, tinhPhep);
+
+      if (currentLeaveWarning) {
+        setLeaveWarning(currentLeaveWarning); 
+        setShowSplitRecordModal(true); 
         return;
       }
 
       let ngayBatDauFormatted, ngayKetThucFormatted;
-      const isPartialFromForm = values.nghiGiuaNgay; // Sử dụng giá trị từ form
-
-      let actualNgayBatDau = values.ngayBatDau;
-      let actualNgayKetThuc = values.ngayKetThuc;
-
-      if (isPartialFromForm && values.startTime) {
-        actualNgayBatDau = actualNgayBatDau
-          .hour(values.startTime.hour())
-          .minute(values.startTime.minute())
-          .second(values.startTime.second());
-      }
-      if (isPartialFromForm && values.endTime) {
-        actualNgayKetThuc = actualNgayKetThuc
-          .hour(values.endTime.hour())
-          .minute(values.endTime.minute())
-          .second(values.endTime.second());
-      }
-
-      // Đảm bảo ngày bắt đầu không lớn hơn ngày kết thúc trước khi format
-      if (
-        actualNgayBatDau.isAfter(
-          actualNgayKetThuc,
-          isPartialFromForm ? "minute" : "day"
-        )
-      ) {
-        api.error({
-          message: "Lỗi validation",
-          description: "Ngày bắt đầu không được sau ngày kết thúc!",
-        });
-        return;
-      }
-
-      if (isPartialFromForm) {
+      if (nghiGiuaNgay) {
         ngayBatDauFormatted = actualNgayBatDau.format("YYYY-MM-DD HH:mm:ss");
         ngayKetThucFormatted = actualNgayKetThuc.format("YYYY-MM-DD HH:mm:ss");
       } else {
-        ngayBatDauFormatted = actualNgayBatDau
-          .startOf("day")
-          .format("YYYY-MM-DD HH:mm:ss");
-        ngayKetThucFormatted = actualNgayKetThuc
-          .endOf("day")
-          .format("YYYY-MM-DD HH:mm:ss");
+        ngayBatDauFormatted = actualNgayBatDau.startOf("day").format("YYYY-MM-DD HH:mm:ss");
+        ngayKetThucFormatted = actualNgayKetThuc.endOf("day").format("YYYY-MM-DD HH:mm:ss");
       }
 
       const dataToSave = {
         ngayBatDau: ngayBatDauFormatted,
         ngayKetThuc: ngayKetThucFormatted,
-        tinhPhep: values.tinhPhep || false,
-        tinhLuong: values.tinhPhep, // Nếu tính phép thì tính lương, nếu không thì không
+        tinhPhep: values.tinhPhep || false, 
+        tinhLuong: values.tinhPhep,
         liDo: values.liDo.trim(),
-        trangThaiPheDuyet: values.trangThaiPheDuyet || "Chờ duyệt",
+        trangThaiPheDuyet: "Chờ duyệt", 
         maNhanVien: maNhanVien,
       };
 
@@ -523,14 +446,15 @@ export default function GiayNghiPhep() {
         message: "Thành công",
         description: "Đã gửi thành công đơn nghỉ phép",
       });
-      setIsSubmitted(true);
-      setIsModalVisible(false);
-      form.resetFields();
-      setCompletedInputCCCD({ isCompleted: false, data: null }); // Reset CCCD
-      setNhanVienError(null); // Reset lỗi nhân viên
-      setSoNgayPhepConLai(0); // Reset số ngày phép
-      setLeaveWarning(""); // Reset cảnh báo
-      setIsPartialDay(false); // Reset trạng thái nghỉ giữa ngày
+      setIsSubmitted(true); 
+      setIsModalVisible(false); 
+      form.resetFields(); 
+      setCompletedInputCCCD({ isCompleted: false, data: null }); 
+      setNhanVienError(null);
+      setSoNgayPhepConLai(0);
+      setLeaveWarning("");
+      setIsPartialDay(false); 
+      await getAllNgayPhep(); 
     } catch (errorInfo) {
       if (errorInfo.errorFields && errorInfo.errorFields.length > 0) {
         const firstError = errorInfo.errorFields[0];
@@ -539,32 +463,32 @@ export default function GiayNghiPhep() {
           description:
             firstError.errors[0] || "Vui lòng kiểm tra lại các trường đã nhập.",
         });
-      } else {
+      } else if (errorInfo.message) {
         api.error({
-          message: "Lỗi xác thực",
-          description:
-            errorInfo.message || "Vui lòng kiểm tra lại các trường đã nhập.",
+          message: "Lỗi xác thực", 
+          description: errorInfo.message,
         });
-        if (
-          errorInfo.message &&
-          errorInfo.message.includes("Khoảng thời gian nghỉ đã bị trùng")
-        ) {
+        if (errorInfo.message.includes("Khoảng thời gian nghỉ đã bị trùng")) {
           form.setFields([
             { name: "ngayBatDau", errors: [errorInfo.message] },
             { name: "ngayKetThuc", errors: [errorInfo.message] },
           ]);
         }
+      } else {
+        api.error({
+          message: "Có lỗi xảy ra",
+          description: "Không thể gửi đơn nghỉ phép. Vui lòng thử lại.",
+        });
       }
     }
   };
 
-  const handlePartialDayChange = (e) => {
+  const handlePartialDayChange = useCallback((e) => {
     const checked = e.target.checked;
-    setIsPartialDay(checked);
+    setIsPartialDay(checked); 
 
     const currentValues = form.getFieldsValue();
     if (!checked) {
-      // Khi bỏ chọn "Nghỉ giữa ngày", đặt lại giờ về đầu/cuối ngày và xóa giá trị giờ
       if (currentValues.ngayBatDau) {
         form.setFieldsValue({
           ngayBatDau: dayjs(currentValues.ngayBatDau).startOf("day"),
@@ -575,45 +499,41 @@ export default function GiayNghiPhep() {
           ngayKetThuc: dayjs(currentValues.ngayKetThuc).endOf("day"),
         });
       }
-      form.setFieldsValue({ startTime: null, endTime: null }); // Clear time values
+      form.setFieldsValue({ startTime: null, endTime: null });
     } else {
-      // Khi chọn "Nghỉ giữa ngày", nếu chưa có giờ, đặt về giờ hiện tại hoặc mặc định
-      if (
-        currentValues.ngayBatDau &&
-        !dayjs(currentValues.ngayBatDau).isValid()
-      ) {
+      if (!currentValues.ngayBatDau || !dayjs(currentValues.ngayBatDau).isValid()) {
         form.setFieldsValue({ ngayBatDau: dayjs() });
       }
-      if (
-        currentValues.ngayKetThuc &&
-        !dayjs(currentValues.ngayKetThuc).isValid()
-      ) {
+      if (!currentValues.ngayKetThuc || !dayjs(currentValues.ngayKetThuc).isValid()) {
         form.setFieldsValue({ ngayKetThuc: dayjs() });
       }
 
       if (!currentValues.startTime) {
-        form.setFieldsValue({ startTime: dayjs().startOf("hour") });
+        form.setFieldsValue({ startTime: dayjs().set('hour', 9).set('minute', 0).set('second', 0) }); 
       }
       if (!currentValues.endTime) {
         form.setFieldsValue({
-          endTime: dayjs().add(1, "hour").startOf("hour"),
+          endTime: dayjs().set('hour', 17).set('minute', 0).set('second', 0), 
         });
       }
     }
-    setTimeout(handleDateChange, 0);
-  };
+    form.validateFields(["ngayBatDau", "ngayKetThuc", "startTime", "endTime", "tinhPhep"])
+        .then(() => handleDateChange()) 
+        .catch(() => handleDateChange()); 
+  }, [form, handleDateChange]);
 
-  const disabledPastDate = (current) => {
+  const disabledPastDate = useCallback((current) => {
     return current && current.isBefore(dayjs().startOf("day"));
-  };
-
-  const disabledEndDate = (endValue) => {
+  }, []);
+  const disabledEndDate = useCallback((endValue) => {
     const startValue = form.getFieldValue("ngayBatDau");
     if (!endValue || !startValue) {
       return false;
     }
 
-    if (isPartialDay) {
+    const isPartialFromForm = form.getFieldValue("nghiGiuaNgay");
+
+    if (isPartialFromForm) {
       const startTime = form.getFieldValue("startTime");
       const endTime = form.getFieldValue("endTime");
 
@@ -626,53 +546,58 @@ export default function GiayNghiPhep() {
           .hour(endTime.hour())
           .minute(endTime.minute())
           .second(endTime.second());
-        return combinedEnd.isBefore(combinedStart);
+        return combinedEnd.isBefore(combinedStart); 
       }
       return endValue.isBefore(startValue, "day");
     }
     return endValue.isBefore(startValue.startOf("day"));
-  };
+  }, [form]);
 
   return (
     <div className="login-container">
+      {/* Inline style cho responsive, có thể tách ra file CSS riêng nếu cần */}
       <style>
         {`
-    @media screen and (max-width: 768px) {
-      .ant-input,
-      .ant-input-number-input,
-      .ant-select-selection-search-input,
-      .ant-picker-input > input {
-        font-size: 16px !important;
-        -webkit-appearance: none;
-        appearance: none;
-      }
-    }
-  `}
+          @media screen and (max-width: 768px) {
+            .ant-input,
+            .ant-input-number-input,
+            .ant-select-selection-search-input,
+            .ant-picker-input > input {
+              font-size: 16px !important;
+              -webkit-appearance: none;
+              appearance: none;
+            }
+          }
+        `}
       </style>
 
+      {/* Modal cập nhật Email */}
       <ModalEmail
         isOpen={isOpenModalUpdateEmail}
         updateEmailNhanVien={(email) => handleUpdateEmail(email)}
         onBack={() => setIsOpenModalUpdateEmail(false)}
       />
+
+      {/* Modal chính chứa form tạo đơn nghỉ phép */}
       <Modal
         title={"Tạo đơn xin nghỉ"}
         open={isModalVisible}
         onOk={handleOk}
         okText="Tạo đơn"
         width={600}
-        closable={false}
-        cancelButtonProps={{ style: { display: "none" } }}
+        closable={false} 
+        cancelButtonProps={{ style: { display: "none" } }} 
       >
         <Form
           form={form}
           layout="vertical"
           initialValues={{
-            tinhLuong: false,
-            tinhPhep: false,
-            nghiGiuaNgay: false,
+            tinhLuong: false, 
+            tinhPhep: false, 
+            nghiGiuaNgay: false, 
           }}
         >
+          {/* Trường Căn cước công dân */}
           <Form.Item
             name="cccd"
             label="Căn cước công dân"
@@ -698,7 +623,6 @@ export default function GiayNghiPhep() {
                       new Error("Căn cước công dân bắt buộc phải là 12 số")
                     );
                   }
-
                   if (
                     completedInputCCCD.data !== value ||
                     !completedInputCCCD.isCompleted
@@ -715,7 +639,7 @@ export default function GiayNghiPhep() {
               placeholder="Nhập căn cước công dân"
               onChange={(e) => {
                 const { value } = e.target;
-                const reg = /^-?\d*(\.\d*)?$/;
+                const reg = /^-?\d*(\.\d*)?$/; 
                 if (
                   (!isNaN(value) && reg.test(value)) ||
                   value === "" ||
@@ -724,7 +648,7 @@ export default function GiayNghiPhep() {
                   form.setFieldsValue({ cccd: value });
                 }
               }}
-              onBlur={() => {
+              onBlur={() => { 
                 const value = form.getFieldValue("cccd");
                 if (
                   value &&
@@ -737,6 +661,7 @@ export default function GiayNghiPhep() {
             />
           </Form.Item>
 
+          {/* Trường Tên nhân viên (chỉ đọc, hiển thị kết quả tìm kiếm) */}
           <Form.Item name="tenNhanVien" label="Tên nhân viên">
             <Spin spinning={isLoadingNhanVien}>
               <Input
@@ -749,7 +674,7 @@ export default function GiayNghiPhep() {
                     : thongTinNhanVien?.hoTen ||
                       "Nhập căn cước công dân để hiển thị tên"
                 }
-                status={nhanVienError ? "error" : ""}
+                status={nhanVienError ? "error" : ""} 
                 style={{
                   color: nhanVienError ? "#ff4d4f" : undefined,
                 }}
@@ -757,12 +682,14 @@ export default function GiayNghiPhep() {
             </Spin>
           </Form.Item>
 
+          {/* Checkbox "Nghỉ giữa ngày" */}
           <Form.Item name="nghiGiuaNgay" valuePropName="checked">
             <Checkbox onChange={handlePartialDayChange}>
               Nghỉ giữa ngày (cho phép chọn giờ cụ thể)
             </Checkbox>
           </Form.Item>
 
+          {/* Trường Ngày bắt đầu */}
           <Form.Item
             name="ngayBatDau"
             label="Ngày bắt đầu"
@@ -780,17 +707,18 @@ export default function GiayNghiPhep() {
                   const endDate = form.getFieldValue("ngayKetThuc");
                   const startTime = form.getFieldValue("startTime");
                   const endTime = form.getFieldValue("endTime");
+                  const nghiGiuaNgay = form.getFieldValue("nghiGiuaNgay");
 
                   let actualStartDate = value;
                   let actualEndDate = endDate;
 
-                  if (isPartialDay && value && startTime) {
+                  if (nghiGiuaNgay && value && startTime) {
                     actualStartDate = value
                       .hour(startTime.hour())
                       .minute(startTime.minute())
                       .second(startTime.second());
                   }
-                  if (isPartialDay && endDate && endTime) {
+                  if (nghiGiuaNgay && endDate && endTime) {
                     actualEndDate = endDate
                       .hour(endTime.hour())
                       .minute(endTime.minute())
@@ -801,7 +729,7 @@ export default function GiayNghiPhep() {
                     actualEndDate &&
                     actualStartDate.isAfter(
                       actualEndDate,
-                      isPartialDay ? "minute" : "day"
+                      nghiGiuaNgay ? "minute" : "day"
                     )
                   ) {
                     return Promise.reject(
@@ -827,14 +755,15 @@ export default function GiayNghiPhep() {
               format={"DD/MM/YYYY"}
               style={{ width: "100%" }}
               onChange={() => {
-                setTimeout(handleDateChange, 0);
-                form.validateFields(["ngayKetThuc"]);
+                handleDateChange(); 
+                form.validateFields(["ngayKetThuc", "startTime", "endTime", "tinhPhep"]); 
               }}
-              disabledDate={disabledPastDate}
+              disabledDate={disabledPastDate} 
               inputReadOnly={true}
             />
           </Form.Item>
 
+          {/* Trường Giờ bắt đầu (chỉ hiển thị khi là nghỉ giữa ngày) */}
           {isPartialDay && (
             <Form.Item
               name="startTime"
@@ -874,14 +803,15 @@ export default function GiayNghiPhep() {
                 format="HH:mm:ss"
                 style={{ width: "100%" }}
                 onChange={() => {
-                  setTimeout(handleDateChange, 0);
-                  form.validateFields(["endTime"]);
+                  handleDateChange(); 
+                  form.validateFields(["endTime", "ngayBatDau", "ngayKetThuc", "tinhPhep"]); 
                 }}
                 inputReadOnly={true}
               />
             </Form.Item>
           )}
 
+          {/* Trường Ngày kết thúc */}
           <Form.Item
             name="ngayKetThuc"
             label="Ngày kết thúc"
@@ -899,17 +829,18 @@ export default function GiayNghiPhep() {
                   const startDate = form.getFieldValue("ngayBatDau");
                   const startTime = form.getFieldValue("startTime");
                   const endTime = form.getFieldValue("endTime");
+                  const nghiGiuaNgay = form.getFieldValue("nghiGiuaNgay");
 
                   let actualStartDate = startDate;
                   let actualEndDate = value;
 
-                  if (isPartialDay && startDate && startTime) {
+                  if (nghiGiuaNgay && startDate && startTime) {
                     actualStartDate = startDate
                       .hour(startTime.hour())
                       .minute(startTime.minute())
                       .second(startTime.second());
                   }
-                  if (isPartialDay && value && endTime) {
+                  if (nghiGiuaNgay && value && endTime) {
                     actualEndDate = value
                       .hour(endTime.hour())
                       .minute(endTime.minute())
@@ -920,7 +851,7 @@ export default function GiayNghiPhep() {
                     actualStartDate &&
                     actualEndDate.isBefore(
                       actualStartDate,
-                      isPartialDay ? "minute" : "day"
+                      nghiGiuaNgay ? "minute" : "day"
                     )
                   ) {
                     return Promise.reject(
@@ -930,12 +861,12 @@ export default function GiayNghiPhep() {
                     );
                   }
 
-                  const MAX_LEAVE_DAYS = 30; // Defined max leave days
+                  const MAX_LEAVE_DAYS = 30;
                   if (actualStartDate && actualEndDate) {
                     const daysDiff = calculateLeaveDays(
                       actualStartDate,
                       actualEndDate,
-                      isPartialDay,
+                      nghiGiuaNgay,
                       laySoGioLamViecTheoCa()
                     );
                     if (daysDiff > MAX_LEAVE_DAYS) {
@@ -951,7 +882,7 @@ export default function GiayNghiPhep() {
                 },
               },
               {
-                validator: validateDateRangeUniqueDB,
+                validator: validateDateRangeUniqueDB, 
               },
             ]}
           >
@@ -960,14 +891,15 @@ export default function GiayNghiPhep() {
               format={"DD/MM/YYYY"}
               style={{ width: "100%" }}
               onChange={() => {
-                setTimeout(handleDateChange, 0);
-                form.validateFields(["ngayBatDau"]);
+                handleDateChange(); 
+                form.validateFields(["ngayBatDau", "startTime", "endTime", "tinhPhep"]); 
               }}
-              disabledDate={disabledEndDate}
+              disabledDate={disabledEndDate} 
               inputReadOnly={true}
             />
           </Form.Item>
 
+          {/* Trường Giờ kết thúc (chỉ hiển thị khi là nghỉ giữa ngày) */}
           {isPartialDay && (
             <Form.Item
               name="endTime"
@@ -1007,14 +939,15 @@ export default function GiayNghiPhep() {
                 format="HH:mm:ss"
                 style={{ width: "100%" }}
                 onChange={() => {
-                  setTimeout(handleDateChange, 0);
-                  form.validateFields(["startTime"]);
+                  handleDateChange(); 
+                  form.validateFields(["startTime", "ngayBatDau", "ngayKetThuc", "tinhPhep"]); 
                 }}
                 inputReadOnly={true}
               />
             </Form.Item>
           )}
 
+          {/* Cảnh báo về số ngày phép */}
           {leaveWarning && (
             <Alert
               message="Cảnh báo về số ngày phép"
@@ -1026,6 +959,7 @@ export default function GiayNghiPhep() {
             />
           )}
 
+          {/* Trường Lý do nghỉ */}
           <Form.Item
             name="liDo"
             label="Lý do nghỉ"
@@ -1037,10 +971,11 @@ export default function GiayNghiPhep() {
             <Input.TextArea rows={3} />
           </Form.Item>
 
+          {/* Checkbox "Sử dụng phép" và hiển thị số ngày phép còn lại */}
           <Form.Item name="tinhPhep" valuePropName="checked">
             <Checkbox
-              onChange={handleDateChange}
-              disabled={thongTinNhanVien?.maNhanVien && soNgayPhepConLai <= 0}
+              onChange={handleDateChange} 
+              disabled={thongTinNhanVien?.maNhanVien && soNgayPhepConLai <= 0} 
             >
               Sử dụng phép{" "}
               {thongTinNhanVien?.maNhanVien && (
@@ -1053,7 +988,7 @@ export default function GiayNghiPhep() {
         </Form>
       </Modal>
 
-      {/** Modal Thông báo khi tạo đơn thành công */}
+      {/* Modal Thông báo khi tạo đơn thành công */}
       <Modal
         open={isSubmitted}
         centered={true}
@@ -1070,17 +1005,16 @@ export default function GiayNghiPhep() {
         sau khi được phê duyệt
       </Modal>
 
+      {/* Modal Xác nhận tách bản ghi */}
       <Modal
         centered={true}
         title="Xác nhận tách bản ghi"
         open={showSplitRecordModal}
-        onOk={handleSplitRecord}
+        onOk={handleSplitRecord} 
         onCancel={() => {
-          form.setFieldsValue({ tinhPhep: false });
-          setIsPartialDay(false);
+          form.setFieldsValue({ tinhPhep: false }); 
           setShowSplitRecordModal(false);
-          setLeaveWarning("");
-     
+          setLeaveWarning(""); 
         }}
         okText="Tách thành 2 bản ghi"
         cancelText="Không tách"
