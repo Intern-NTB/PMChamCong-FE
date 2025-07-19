@@ -1049,8 +1049,23 @@ export default function ThuongComponent() {
                 </Form.Item>
 
                 <Form.Item
+                  name="donVi"
+                  label="Đơn vị"
+                  rules={[{ required: true, message: "Vui lòng chọn đơn vị!" }]}
+                >
+                  <Select
+                    placeholder="Chọn đơn vị"
+                    options={[
+                      { value: "VND", label: "VND" },
+                      { value: "%", label: "%" },
+                    ]}
+                    onChange={handleDonViChange}
+                  />
+                </Form.Item>
+
+                <Form.Item
                   name="soTienThuong"
-                  label={donVi === "%" ? "Phần trăm thưởng (%)" : "Số tiền thưởng (VND)"}
+                  label={donVi === "%" ? "Phần trăm thưởng" : "Số tiền thưởng"}
                   rules={[
                     {
                       required: true, message: donVi === "%"
@@ -1070,21 +1085,6 @@ export default function ThuongComponent() {
                     parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
                     min={0}
                     max={donVi === "%" ? 100 : undefined}
-                  />
-                </Form.Item>
-
-                <Form.Item
-                  name="donVi"
-                  label="Đơn vị"
-                  rules={[{ required: true, message: "Vui lòng chọn đơn vị!" }]}
-                >
-                  <Select
-                    placeholder="Chọn đơn vị"
-                    options={[
-                      { value: "VND", label: "VND" },
-                      { value: "%", label: "%" },
-                    ]}
-                    onChange={handleDonViChange}
                   />
                 </Form.Item>
               </>
