@@ -1052,7 +1052,7 @@ export default function TruComponent() {
 
                 <Form.Item
                   name="soTienTru"
-                  label={donViTru === "%" ? "Phần trăm trừ (%)" : "Số tiền trừ (VND)"}
+                  label={donViTru === "%" ? "Phần trăm trừ" : "Số tiền trừ"}
                   rules={[
                     { required: true, message: "Vui lòng nhập số tiền!" },
                   ]}

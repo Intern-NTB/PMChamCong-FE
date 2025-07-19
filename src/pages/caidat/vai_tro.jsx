@@ -778,6 +778,19 @@ export default function VaiTroComponent() {
                 rules={[
                   { required: true, message: "Vui lòng nhập tên vai trò!" },
                   { min: 2, message: "Tên vai trò phải có ít nhất 2 ký tự!" },
+                  ({ getFieldValue }) => ({
+                    validator(_, value) {
+                      if (!value) return Promise.resolve();
+                      const valueNormalized = value.trim().toLowerCase();
+                      const existed = danhSachVaiTro?.some(
+                        (vt) => vt.tenVaiTro.trim().toLowerCase() === valueNormalized && (!editingId || vt.maVaiTro !== editingId)
+                      );
+                      if (existed) {
+                        return Promise.reject(new Error("Tên vai trò đã tồn tại!"));
+                      }
+                      return Promise.resolve();
+                    },
+                  }),
                 ]}
               >
                 <Input
