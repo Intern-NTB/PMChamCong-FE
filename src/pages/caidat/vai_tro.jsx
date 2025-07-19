@@ -22,6 +22,7 @@ import {
   Badge,
   Tabs,
   Switch,
+  Collapse
 } from "antd";
 import {
   PlusOutlined,
@@ -78,10 +79,13 @@ export default function VaiTroComponent() {
           ? danhSachNhanVien.filter((nv) => nv.maVaiTro === vt.maVaiTro).length
           : 0;
 
+          const danhSachQuyen = danhSachQuyenTheoVaiTro?.[vt.maVaiTro] || [];
+
         return {
           maVaiTro: vt.maVaiTro,
           tenVaiTro: vt.tenVaiTro || "",
           tongNguoiDangDuocGan,
+          danhSachQuyen,
         };
       })
     : [];
@@ -114,8 +118,10 @@ export default function VaiTroComponent() {
     return filteredPermissions.reduce((acc, item) => {
       const [, actionFull] = item.MaQuyenHan.split(":");
       const actionType = actionFull?.split("_")[0] || "other";
-      if (!acc[actionType]) acc[actionType] = [];
-      acc[actionType].push(item);
+      const finalActionType = item.MaQuyenHan === "system:full_access" ? "is" : actionType;
+
+      if (!acc[finalActionType]) acc[finalActionType] = [];
+      acc[finalActionType].push(item);
       return acc;
     }, {});
   }, [filteredPermissions]);
@@ -132,6 +138,10 @@ export default function VaiTroComponent() {
     update: "♻️ Cập nhật yêu cầu",
     other: "⚙️ Quyền khác",
   };
+
+  const hasFullAccessRole = dataSource.some((item) =>
+    item.danhSachQuyen?.includes("system:full_access")
+  );
 
   useEffect(() => {
     if (editingRoleData) {
@@ -461,6 +471,7 @@ export default function VaiTroComponent() {
             onClick={() => handleEdit(item)}
             size="middle"
             title="Chỉnh sửa"
+            disabled={hasFullAccessRole}
           />
 
           <AntButton
@@ -470,6 +481,7 @@ export default function VaiTroComponent() {
             onClick={() => handleDelete(item)}
             size="middle"
             title="Xóa"
+            disabled={hasFullAccessRole}
           />
         </div>
       </Card>
@@ -806,31 +818,34 @@ export default function VaiTroComponent() {
                 if (!items || items.length === 0) return null;
 
                 return (
-                  <div key={actionKey}>
-                    <Divider orientation="left" size="large">
-                      {actionDisplayNames[actionKey] || `Nhóm: ${actionKey}`}
-                    </Divider>
+                  <Collapse key={actionKey} style={{ marginBottom: 16 }}>
+                    <Collapse.Panel
+                      header={actionDisplayNames[actionKey] || `Nhóm: ${actionKey}`}
+                      key={actionKey}
+                    >
+                      {items.map((item) => {
+                        if (item.MaQuyenHan === "system:is_admin") return null;
 
-                    {items.map((item) => (
-                      <Form.Item
-                        key={item.MaQuyenHan}
-                        name={item.MaQuyenHan}
-                        valuePropName="checked"
-                        initialValue={false}
-                        style={{ marginBottom: 20 }}
-                        label={
-                          <div>
-                            <strong>{item.TenQuyenHan}</strong>
-                            <div style={{ fontSize: 12, color: "#888" }}>
-                              {item.MoTa}
-                            </div>
-                          </div>
-                        }
-                      >
-                        <Switch checkedChildren="Bật" unCheckedChildren="Tắt" />
-                      </Form.Item>
-                    ))}
-                  </div>
+                        return (
+                          <Form.Item
+                            key={item.MaQuyenHan}
+                            name={item.MaQuyenHan}
+                            valuePropName="checked"
+                            initialValue={false}
+                            style={{ marginBottom: 20 }}
+                            label={
+                              <div>
+                                <strong>{item.TenQuyenHan}</strong>
+                                <div style={{ fontSize: 12, color: "#888" }}>{item.MoTa}</div>
+                              </div>
+                            }
+                          >
+                            <Switch checkedChildren="Bật" unCheckedChildren="Tắt" />
+                          </Form.Item>
+                        );
+                      })}
+                    </Collapse.Panel>
+                  </Collapse>
                 );
               })}
             </TabPane>
