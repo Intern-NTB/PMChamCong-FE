@@ -20,12 +20,12 @@ export default function CaiDat() {
   // map tab key to route path
   const tabItems = [
     { key: "he-thong", label: "Hệ thống" },
-    { key: "phong-ban", label: "Phòng ban" },
     { key: "ca-lam", label: "Ca làm" },
-    { key: "doi-tuong-uu-tien", label: "Đối tượng ưu tiên" },
-    { key: "phu-cap", label: "Phụ Cấp" },
+    { key: "phong-ban", label: "Phòng ban" },
     { key: "vai-tro", label: "Vai trò" },
+    { key: "doi-tuong-uu-tien", label: "Đối tượng ưu tiên" },
     { key: "nghi-le", label: "Ngày lễ" },
+    { key: "phu-cap", label: "Phụ Cấp" },
     { key: "thuong", label: "Thưởng" },
     { key: "phat", label: "Phạt" },
     { key: "tai-khoan", label: "Tài khoản" },

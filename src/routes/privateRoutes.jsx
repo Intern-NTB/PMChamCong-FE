@@ -24,67 +24,75 @@ export const privateRoutes = [
         path: '/main-layout',
         element: <MainLayout />,
         children: [
-            { index: true, element: <ChamCong /> },
-            { path: 'nhanvien', element: <NhanVien /> },
-            { path: 'chamcong', element: <ChamCong /> },
-            { path: 'maychamcong', element: <MayChamCong /> },
-            { path: 'nghiphep', element: <NghiPhep /> },
-            { path: 'luong', element: <Luong /> },
+            { index: true, element: <ChamCong />, requiredPermission: 'attendance:view_attendance' },
+            { path: 'nhanvien', element: <NhanVien />, requiredPermission: 'profile:view_employee' },
+            { path: 'chamcong', element: <ChamCong />, requiredPermission: 'attendance:view_attendance' },
+            { path: 'maychamcong', element: <MayChamCong />, requiredPermission: 'attendance:view_timekeeper' },
+            { path: 'nghiphep', element: <NghiPhep />, requiredPermission: 'profile:view_leave_request' },
+            { path: 'luong', element: <Luong />, requiredPermission: 'payroll:view_salary' },
             {
                 path: 'caidat',
                 element: <CaiDat />,
                 children: [
                     {
-                        index: true,
-                        element: <PhongBanComponent /> 
-                    },
-                    {
                         path: 'he-thong',
-                        element: <HeThongComponent />
+                        element: <HeThongComponent />,
+                        requiredPermission: 'system:view_system_settings'
                     },
                     {
                         path: 'phong-ban',
-                        element: <PhongBanComponent />
+                        element: <PhongBanComponent />,
+                        requiredPermission: 'system:view_department'
                     },
                     {
                         path: 'ca-lam',
-                        element: <CaLamComponent />
+                        element: <CaLamComponent />,
+                        requiredPermission: 'system:view_shift'
                     },
                     {
                         path: 'doi-tuong-uu-tien',
-                        element: <DoiTuongUuTienComponent />
+                        element: <DoiTuongUuTienComponent />,
+                        requiredPermission: 'system:view_priority'
                     },
                     {
                         path: 'vai-tro',
-                        element: <VaiTroComponent />
+                        element: <VaiTroComponent />,
+                        requiredPermission: 'system:view_role'
                     },
                     {
                         path: 'nghi-le',
-                        element: <NgayLeComponent />
+                        element: <NgayLeComponent />,
+                        requiredPermission: 'system:view_holiday'
                     },
                     {
                         path: 'thuong',
-                        element: <ThuongComponent />
+                        element: <ThuongComponent />,
+                        requiredPermission: 'system:view_bonus'
                     },
                     {
                         path: 'phat',
-                        element: <PhatComponent />
+                        element: <PhatComponent />,
+                        requiredPermission: 'system:view_punishment'
                     },
                     {
                         path: 'tai-khoan',
-                        element: <TaiKhoanComponent />
+                        element: <TaiKhoanComponent />,
+                        requiredPermission: 'system:view_account'
                     },
                     {
                         path: 'lich-su-phong-ban',
-                        element: <LichSuPhongBanComponent />
+                        element: <LichSuPhongBanComponent />,
+                        requiredPermission: 'system:view_department_history'
                     },
                     {
                         path: 'lich-su-luong',
-                        element: <LichSuLuongComponent />
+                        element: <LichSuLuongComponent />,
+                        requiredPermission: 'system:view_salary_history'
                     },
                     {
                         path: 'phu-cap',
-                        element: <PhuCapComponent />
+                        element: <PhuCapComponent />,
+                        requiredPermission: 'system:view_allowance'
                     }
                 ]
             },
