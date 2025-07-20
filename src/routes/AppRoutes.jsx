@@ -11,11 +11,13 @@ export default function AppRoutes() {
         <Route key={idx} path={path} element={element} />
       ))}
 
-      {privateRoutes.map(({ path, element, children }, idx) => (
+      {privateRoutes.map(({ path, element, children, requiredPermission }, idx) => (
         <Route
           key={idx}
           path={path}
-          element={<ProtectedRoute>{element}</ProtectedRoute>}
+          element={
+            <ProtectedRoute requiredPermission={requiredPermission}>{element}</ProtectedRoute>
+          }
         >
           {children && children.map((child, cIdx) => {
             if (child.children) {
@@ -23,14 +25,18 @@ export default function AppRoutes() {
                 <Route
                   key={cIdx}
                   path={child.path}
-                  element={child.element}
+                  element={
+                    <ProtectedRoute requiredPermission={child.requiredPermission}>{child.element}</ProtectedRoute>
+                  }
                 >
                   {child.children.map((nestedChild, nIdx) => (
                     <Route
                       key={nIdx}
                       index={nestedChild.index}
                       path={nestedChild.path}
-                      element={nestedChild.element}
+                      element={
+                        <ProtectedRoute requiredPermission={nestedChild.requiredPermission}>{nestedChild.element}</ProtectedRoute>
+                      }
                     />
                   ))}
                 </Route>
@@ -42,7 +48,9 @@ export default function AppRoutes() {
                 key={cIdx}
                 index={child.index}
                 path={child.path}
-                element={child.element}
+                element={
+                  <ProtectedRoute requiredPermission={child.requiredPermission}>{child.element}</ProtectedRoute>
+                }
               />
             );
           })}
