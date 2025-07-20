@@ -44,7 +44,7 @@ const Login = () => {
       console.log('Login result:', result)
 
       if (result && result.success) {
-        navigate('/main-layout/trangchu');
+        navigate('/main-layout/chamcong');
       } else {
         let errorMessage = 'Đăng nhập thất bại. Vui lòng thử lại.';
 

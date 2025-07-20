@@ -31,13 +31,11 @@ const MainLayout = () => {
 
   const pathToTitle = useMemo(
     () => ({
-      "/main-layout/trangchu": "Trang Chủ",
       "/main-layout/nhanvien": "Quản Lý Nhân Viên",
       "/main-layout/nghiphep": "Nghỉ Phép",
       "/main-layout/chamcong": "Chấm Công",
       "/main-layout/maychamcong": "Máy Chấm Công",
       "/main-layout/luong": "Lương",
-      "/main-layout/baocao": "Báo Cáo",
       "/main-layout/caidat": "Cài Đặt",
     }),
     []
@@ -118,9 +116,9 @@ const MainLayout = () => {
   const menuItems = useMemo(
     () => [
       {
-        key: "/main-layout/trangchu",
-        icon: <HomeOutlined />,
-        label: <Link to="/main-layout/trangchu">Trang Chủ</Link>,
+        key: "/main-layout/chamcong",
+        icon: <ScheduleOutlined />,
+        label: <Link to="/main-layout/chamcong">Chấm Công</Link>,
       },
       {
         key: "sub1",
@@ -140,11 +138,6 @@ const MainLayout = () => {
         ],
       },
       {
-        key: "/main-layout/chamcong",
-        icon: <ScheduleOutlined />,
-        label: <Link to="/main-layout/chamcong">Chấm Công</Link>,
-      },
-      {
         key: "/main-layout/maychamcong",
         icon: <DesktopOutlined />,
         label: <Link to="/main-layout/maychamcong">Máy Chấm Công</Link>,
@@ -153,11 +146,6 @@ const MainLayout = () => {
         key: "/main-layout/luong",
         icon: <DollarOutlined />,
         label: <Link to="/main-layout/luong">Lương</Link>,
-      },
-      {
-        key: "/main-layout/baocao",
-        icon: <BarChartOutlined />,
-        label: <Link to="/main-layout/baocao">Báo Cáo</Link>,
       },
       {
         key: "/main-layout/caidat",

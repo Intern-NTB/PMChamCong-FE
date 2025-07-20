@@ -27,6 +27,7 @@ import {
   Tooltip,
   Tag,
   Alert,
+  Grid 
 } from "antd";
 import { ModalQrCode } from "./modalQrCode";
 import {
@@ -61,6 +62,7 @@ import { ReloadContext } from "../../context/reloadContext";
 import { NghiPhepPermissions } from "../../config/utils/user_permission";
 
 const { RangePicker } = DatePicker;
+const { useBreakpoint } = Grid;
 
 // Hàm helper để parse ngày từ backend
 const parseDate = (dateString) => {
@@ -115,6 +117,10 @@ export default function NghiPhep() {
   const [showSplitRecordModal, setShowSplitRecordModal] = useState(false);
   const [soNgayPhepConLai, setSoNgayPhepConLai] = useState(0);
   const [isOpenModalQrCode, setIsOpenModalQrCode] = useState(false);
+
+  //Mobile
+  const screens = useBreakpoint();
+  const isMobile = !screens.sm; 
 
   // CONTEXT
   const { setReload } = useContext(ReloadContext);
@@ -800,20 +806,37 @@ export default function NghiPhep() {
             />
           </Col>
           <Col xs={24} sm={12} md={6}>
-            <RangePicker
-              value={dateRange}
-              onChange={(values) => {
-                // Nếu clear, values sẽ là null → set lại về [null, null] để tránh lỗi
-                if (!Array.isArray(values)) {
-                  setDateRange([null, null]);
-                } else {
-                  setDateRange(values);
-                }
-              }}
-              format="DD/MM/YYYY"
-              allowClear
-              placeholder={["Từ ngày", "Đến ngày"]}
-            />
+            {isMobile ? (
+              <div style={{ display: 'flex', gap: 8 }}>
+                <DatePicker
+                  style={{ width: '100%' }}
+                  placeholder="Từ ngày"
+                  value={dateRange?.[0]}
+                  onChange={(date) => setDateRange([date, dateRange?.[1] ?? null])}
+                />
+                <DatePicker
+                  style={{ width: '100%' }}
+                  placeholder="Đến ngày"
+                  value={dateRange?.[1]}
+                  onChange={(date) => setDateRange([dateRange?.[0] ?? null, date])}
+                />
+              </div>
+            ) : (
+              <RangePicker
+                style={{ width: '100%' }}
+                value={dateRange}
+                onChange={(values) => {
+                  if (!Array.isArray(values)) {
+                    setDateRange([null, null]);
+                  } else {
+                    setDateRange(values);
+                  }
+                }}
+                format="DD/MM/YYYY"
+                allowClear
+                placeholder={["Từ ngày", "Đến ngày"]}
+              />
+            )}
           </Col>
           <Col xs={24} sm={12} md={6}>
             <Button onClick={() => setIsOpenModalQrCode(true)}>Tạo QrCode đến trang nghỉ phép</Button>
@@ -1021,7 +1044,6 @@ export default function NghiPhep() {
                       )
                     );
                   }
-
                   return Promise.resolve();
                 },
               },
@@ -1042,6 +1064,7 @@ export default function NghiPhep() {
                   const endOfDay = dayjs(date).endOf("day");
                   form.setFieldsValue({ ngayKetThuc: endOfDay });
                 }
+                form.validateFields(["ngayKetThuc"]);
                 setTimeout(handleDateChange, 100);
               }}
             />
