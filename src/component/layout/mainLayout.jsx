@@ -150,7 +150,7 @@ const MainLayout = () => {
       {
         key: "/main-layout/caidat",
         icon: <SettingFilled />,
-        label: <Link to="/main-layout/caidat">Cài đặt</Link>,
+        label: <Link to="/main-layout/caidat/he-thong">Cài đặt</Link>,
       },
     ],
     []
@@ -396,9 +396,9 @@ const MainLayout = () => {
             <Button
               icon={<ReloadOutlined />}
               onClick={executeReload}
-              size="large"
+              size="middle"
             />
-            <span style={{ fontSize: 24 }}>
+            <span style={{ fontSize: 16 }}>
               Chào, <strong>{taiKhoan.tenVaiTro || "User"}</strong>
             </span>
             <Button
@@ -406,7 +406,7 @@ const MainLayout = () => {
               onClick={handleLogout}
               type="primary"
               danger
-              size="large"
+              size="middle"
             >
               Đăng xuất
             </Button>
