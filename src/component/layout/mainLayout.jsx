@@ -16,6 +16,7 @@ import {
   DesktopOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
+  TeamOutlined,
 } from "@ant-design/icons";
 import LogoIcon from "../../assets/images/LogoIcon.png";
 import "./mainLayout.css";
@@ -31,11 +32,13 @@ const MainLayout = () => {
 
   const pathToTitle = useMemo(
     () => ({
+      "/main-layout/trangchu": "Trang Chủ",
       "/main-layout/nhanvien": "Quản Lý Nhân Viên",
       "/main-layout/nghiphep": "Nghỉ Phép",
       "/main-layout/chamcong": "Chấm Công",
       "/main-layout/maychamcong": "Máy Chấm Công",
       "/main-layout/luong": "Lương",
+      "/main-layout/baocao": "Báo Cáo",
       "/main-layout/caidat": "Cài Đặt",
     }),
     []
@@ -92,7 +95,9 @@ const MainLayout = () => {
     if (isInEmployeeSubmenu && !collapsed) {
       setOpenKeys(["sub1"]);
     } else {
-      setOpenKeys([]);
+      if (!isInEmployeeSubmenu) {
+        setOpenKeys([]);
+      }
     }
   }, [location.pathname, collapsed]);
 
@@ -101,7 +106,11 @@ const MainLayout = () => {
       if (!collapsed || isMobile) {
         setOpenKeys(keys);
       } else {
-        setOpenKeys([]);
+        if (keys.length === 0) {
+          setOpenKeys([]);
+        } else {
+          setOpenKeys(keys);
+        }
       }
     },
     [collapsed, isMobile]
@@ -114,20 +123,46 @@ const MainLayout = () => {
   }, []);
 
   const menuItems = useMemo(
-    () => [
-      {
-        key: "/main-layout/chamcong",
-        icon: <ScheduleOutlined />,
-        label: <Link to="/main-layout/chamcong">Chấm Công</Link>,
-      },
-      {
-        key: "sub1",
-        icon: <UserOutlined />,
-        label: "Quản Lý Nhân Viên",
-        children: [
+    () => {
+      const baseItems = [
+        // {
+        //   key: "/main-layout/trangchu",
+        //   icon: <HomeOutlined />,
+        //   label: <Link to="/main-layout/trangchu">Trang Chủ</Link>,
+        // },
+        {
+          key: "/main-layout/chamcong",
+          icon: <ScheduleOutlined />,
+          label: <Link to="/main-layout/chamcong">Chấm Công</Link>,
+        },
+        {
+          key: "/main-layout/maychamcong",
+          icon: <DesktopOutlined />,
+          label: <Link to="/main-layout/maychamcong">Máy Chấm Công</Link>,
+        },
+        {
+          key: "/main-layout/luong",
+          icon: <DollarOutlined />,
+          label: <Link to="/main-layout/luong">Lương</Link>,
+        },
+        // {
+        //   key: "/main-layout/baocao",
+        //   icon: <BarChartOutlined />,
+        //   label: <Link to="/main-layout/baocao">Báo Cáo</Link>,
+        // },
+        {
+          key: "/main-layout/caidat",
+          icon: <SettingFilled />,
+          label: <Link to="/main-layout/caidat">Cài đặt</Link>,
+        },
+      ];
+
+      if (collapsed && !isMobile) {
+        return [
+          ...baseItems.slice(0, 1), 
           {
             key: "/main-layout/nhanvien",
-            icon: <UnorderedListOutlined />,
+            icon: <TeamOutlined />, 
             label: <Link to="/main-layout/nhanvien">Nhân viên</Link>,
           },
           {
@@ -135,25 +170,33 @@ const MainLayout = () => {
             icon: <SolutionOutlined />,
             label: <Link to="/main-layout/nghiphep">Nghỉ Phép</Link>,
           },
-        ],
-      },
-      {
-        key: "/main-layout/maychamcong",
-        icon: <DesktopOutlined />,
-        label: <Link to="/main-layout/maychamcong">Máy Chấm Công</Link>,
-      },
-      {
-        key: "/main-layout/luong",
-        icon: <DollarOutlined />,
-        label: <Link to="/main-layout/luong">Lương</Link>,
-      },
-      {
-        key: "/main-layout/caidat",
-        icon: <SettingFilled />,
-        label: <Link to="/main-layout/caidat/he-thong">Cài đặt</Link>,
-      },
-    ],
-    []
+          ...baseItems.slice(1), 
+        ];
+      } else {
+        return [
+          ...baseItems.slice(0, 1), 
+          {
+            key: "sub1",
+            icon: <UserOutlined />, 
+            label: "Quản Lý Nhân Viên",
+            children: [
+              {
+                key: "/main-layout/nhanvien",
+                icon: <TeamOutlined />, 
+                label: <Link to="/main-layout/nhanvien">Nhân viên</Link>,
+              },
+              {
+                key: "/main-layout/nghiphep",
+                icon: <SolutionOutlined />,
+                label: <Link to="/main-layout/nghiphep">Nghỉ Phép</Link>,
+              },
+            ],
+          },
+          ...baseItems.slice(1), 
+        ];
+      }
+    },
+    [collapsed, isMobile]
   );
 
   const getSelectedKeys = useMemo(() => {
@@ -174,6 +217,11 @@ const MainLayout = () => {
     if (hasExactMatch) {
       return [currentPath];
     }
+
+    if (currentPath.startsWith("/main-layout/nhanvien") || currentPath.startsWith("/main-layout/nghiphep")) {
+        return [currentPath];
+    }
+
 
     return ["/main-layout/trangchu"];
   }, [location.pathname, menuItems]);
@@ -396,9 +444,9 @@ const MainLayout = () => {
             <Button
               icon={<ReloadOutlined />}
               onClick={executeReload}
-              size="middle"
+              size="large"
             />
-            <span style={{ fontSize: 16 }}>
+            <span style={{ fontSize: 24 }}>
               Chào, <strong>{taiKhoan.tenVaiTro || "User"}</strong>
             </span>
             <Button
@@ -406,7 +454,7 @@ const MainLayout = () => {
               onClick={handleLogout}
               type="primary"
               danger
-              size="middle"
+              size="large"
             >
               Đăng xuất
             </Button>

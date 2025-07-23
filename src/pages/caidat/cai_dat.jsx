@@ -17,6 +17,12 @@ export default function CaiDat() {
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
 
+  useEffect(() => {
+    if (location.pathname === "/main-layout/caidat") {
+      navigate("/main-layout/caidat/he-thong", { replace: true });
+    }
+  }, [location.pathname, navigate]);
+
   // map tab key to route path
   const tabItems = [
     { key: "he-thong", label: "Hệ thống" },
