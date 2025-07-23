@@ -240,10 +240,10 @@ export default function DoiTuongUuTienComponent() {
         hoTen: record.hoTen,
         maUuTien: record.maUuTien,
         thoiGianHieuLucBatDau: record.thoiGianHieuLucBatDau
-          ? dayjs(record.thoiGianHieuLucBatDau, "YYYY-MM-DD")
+          ? dayjs(record.thoiGianHieuLucBatDau, "DD/MM/YYYY")
           : null,
         thoiGianHieuLucKetThuc: record.thoiGianHieuLucKetThuc
-          ? dayjs(record.thoiGianHieuLucKetThuc, "YYYY-MM-DD")
+          ? dayjs(record.thoiGianHieuLucKetThuc, "DD/MM/YYYY")
           : null,
         lyDo: record.lyDo,
         trangThai: record.trangThai,
