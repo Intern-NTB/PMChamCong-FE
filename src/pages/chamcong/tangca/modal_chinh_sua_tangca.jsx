@@ -45,10 +45,16 @@ export default function ModalChinhSuaTangCa({
   // Gọi Api để lấy ca làm việc trong tuần
   useEffect(() => {
     if (isSelectedPhongBan !== 0 && isSelectedDateTangCa !== null) {
-      getAllCaLamTrongTuanByPhongBan(isSelectedPhongBan);
+      // Tìm phòng ban đã chọn để lấy maCa
+      const phongBanSelected = danhSachPhongBan.find(
+        (pb) => pb.maPhongBan === isSelectedPhongBan
+      );
+      if (phongBanSelected && phongBanSelected.maCa) {
+        getAllCaLamTrongTuanByPhongBan(phongBanSelected.maCa);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSelectedPhongBan, isSelectedDateTangCa]);
+  }, [isSelectedPhongBan, isSelectedDateTangCa, danhSachPhongBan]);
 
   useEffect(() => {
     if (record) {
@@ -241,14 +247,20 @@ export default function ModalChinhSuaTangCa({
             {/* Hiển thị thông tin ca làm việc */}
             <div>
               {isSelectedPhongBan !== 0 && date ? (
-                <Tag color="green">
-                  Ca làm việc {weekdays[date.getDay()]}:{" "}
-                  {danhSachCaLamTrongTuanTheoPhongBanFind?.gioBatDau ??
-                    "Không có"}{" "}
-                  -{" "}
-                  {danhSachCaLamTrongTuanTheoPhongBanFind?.gioKetThuc ??
-                    "Không có"}
-                </Tag>
+                danhSachCaLamTrongTuanTheoPhongBanFind?.coLamViec === 0 ? (
+                  <Tag color="red">
+                    Hôm nay không có ca làm ({weekdays[date.getDay()]})
+                  </Tag>
+                ) : (
+                  <Tag color="green">
+                    Ca làm việc {weekdays[date.getDay()]}:{" "}
+                    {danhSachCaLamTrongTuanTheoPhongBanFind?.gioBatDau ??
+                      "Không có"}{" "}
+                    -{" "}
+                    {danhSachCaLamTrongTuanTheoPhongBanFind?.gioKetThuc ??
+                      "Không có"}
+                  </Tag>
+                )
               ) : null}
             </div>
           </Col>
