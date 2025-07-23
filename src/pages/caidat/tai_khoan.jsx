@@ -110,15 +110,17 @@ export default function TaiKhoanComponent() {
     (_, value) => {
       if (!value) return Promise.resolve();
 
-      // Chỉ kiểm tra khi tạo mới (không có editingId)
-      if (!editingId) {
-        const isExisting = danhsachTaiKhoan.some(
-          (tk) => tk.tenDangNhap.toLowerCase() === value.toLowerCase()
-        );
-
-        if (isExisting) {
-          return Promise.reject("Tên đăng nhập đã tồn tại!");
+      // Kiểm tra tên đăng nhập trùng lặp cho cả tạo mới và cập nhật
+      const isExisting = danhsachTaiKhoan.some((tk) => {
+        // Nếu đang chỉnh sửa, loại trừ bản ghi hiện tại khỏi việc kiểm tra
+        if (editingId && tk.maNhanVien === editingId) {
+          return false;
         }
+        return tk.tenDangNhap.toLowerCase() === value.toLowerCase();
+      });
+
+      if (isExisting) {
+        return Promise.reject("Tên đăng nhập đã tồn tại!");
       }
 
       return Promise.resolve();
