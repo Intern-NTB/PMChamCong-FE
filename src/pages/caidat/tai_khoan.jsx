@@ -105,6 +105,27 @@ export default function TaiKhoanComponent() {
     }));
   };
 
+  // Custom validator để kiểm tra tên đăng nhập trùng lặp
+  const validateTenDangNhap = useCallback(
+    (_, value) => {
+      if (!value) return Promise.resolve();
+
+      // Chỉ kiểm tra khi tạo mới (không có editingId)
+      if (!editingId) {
+        const isExisting = danhsachTaiKhoan.some(
+          (tk) => tk.tenDangNhap.toLowerCase() === value.toLowerCase()
+        );
+
+        if (isExisting) {
+          return Promise.reject("Tên đăng nhập đã tồn tại!");
+        }
+      }
+
+      return Promise.resolve();
+    },
+    [danhsachTaiKhoan, editingId]
+  );
+
   // Handle form submission
   const onFinish = useCallback(
     async (values) => {
@@ -114,7 +135,7 @@ export default function TaiKhoanComponent() {
             maNhanVien: Number(editingId),
             ...values,
           };
-          await updateTaiKhoan(updatedData); 
+          await updateTaiKhoan(updatedData);
         } else {
           await createTaiKhoan(values);
         }
@@ -335,6 +356,9 @@ export default function TaiKhoanComponent() {
               rules={[
                 { required: true, message: "Vui lòng nhập tên tài khoản!" },
                 { min: 2, message: "Tên tài khoản phải có ít nhất 2 ký tự!" },
+                {
+                  validator: validateTenDangNhap,
+                },
               ]}
             >
               <Input
